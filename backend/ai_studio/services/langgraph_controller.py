@@ -26,6 +26,7 @@ class AudioDramaState(TypedDict):
     filename: Optional[str]
     narration_mode: Optional[str]
     action: str  # 'chat', 'upload_book', 'approve_casting', 'execute_scene', 'execute_chapter'
+    tool: Optional[str]
     chapter_number: Optional[int]
     history: List[Dict[str, str]]
     
@@ -344,24 +345,29 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
                 }
                 return state
 
-    # 2. Check if user is requesting a new story or drama topic
-    story_keywords = [
-        "قصة", "مشهد", "سيناريو", "رواية", "حكاية", "حوار", "طيارة", "تسقط", 
-        "سقوط", "حادث", "رعب", "بوليسي", "غموض", "ألف", "اكتب", "جديدة", "جديد", "فكرة"
-    ]
-    is_new_story = any(k in prompt_lower for k in story_keywords)
+    tool = state.get("tool")
 
-    # If it's a new story request OR there is no project active yet:
-    if is_new_story or not project:
+    # 2. Check if user EXPLICITLY requested the Story / Scenario Generator tool
+    explicit_drama_starters = [
+        "أريد تأليف سيناريو", "اريد تاليف سيناريو", "ألف سيناريو", "الف سيناريو",
+        "ألف لي سيناريو", "الف لي سيناريو", "اكتب سيناريو درامي", "ألف مشهد درامي",
+        "الف مشهد درامي", "ألف قصة درامية صوتية", "اكتب مشهد صوتي"
+    ]
+    is_explicit_story = (
+        tool == "story_generator" or
+        any(prompt.startswith(phrase) for phrase in explicit_drama_starters)
+    )
+
+    if is_explicit_story:
         system_instruction = (
             "أنت 'المخرج الصوتي الذكي' (Audio Drama Director) داخل استوديو HexMedia. "
             "مهمتك تأليف وإخراج دراما صوتية سينمائية مشوقة تلبي رغبة المستخدم بدقة متناهية. "
-            "المستخدم يقترح موضوعاً أو قصة. التزم تماماً بموضوعه وفكرته دون الخروج عنها مطلقاً:\n"
+            "المستخدم يقترح موضوعاً أو قصة سيناريو. التزم تماماً بموضوعه وفكرته دون الخروج عنها مطلقاً:\n"
             "1. قم بتأليف مشهد درامي حواري سينمائي مشوق (يتضمن راوياً وشخصيتين أو ثلاث شخصيات على الأقل).\n"
             "2. ضع علامات التشكيل العربي الكاملة والواضحة على كلمات الحوار لضبط النطق بدقة في Gemini TTS.\n"
             "3. ضع المؤثرات الصوتية المقترحة بين قوسين مثل: [مؤثر صوتي: صوت إنذار الطائرة ورياح عاصفة].\n"
             "4. في نهاية النص، اعرض أسماء الشخصيات ونبرات أصواتهم المقترحة (Puck, Charon, Kore, Fenrir, Aoede).\n"
-            "5. أخبر المستخدم بوضوح أنه يستطيع الضغط على '🎙️ نفذ الصوت لهذا المشهد الآن' لسماع المشهد فوراً بالأصوات البشرية والمؤثرات."
+            "5. أخبر المستخدم بوضوح أنه يستطيع الضغط على '🎙️ توليد الصوت لهذا المشهد الآن' لسماع المشهد فوراً بالأصوات البشرية والمؤثرات."
         )
 
         reply = call_gemini_chat(prompt, history=history, system_instruction=system_instruction)
@@ -387,6 +393,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             narration_mode=n_mode,
             target_duration_minutes=target_duration,
             status='CASTING_PENDING',
+            genre='دراما صوتية',
             progress_percentage=25
         )
 
@@ -432,38 +439,70 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
         }
         return state
 
-    # 3. Existing project conversation (continuing or refining the existing story)
-    chars_str = ", ".join([f"{c.name} ({c.assigned_voice})" for c in project.characters.all()])
-    project_context = f"\nالسياق الحالي: نعمل على رواية '{project.title}'. الشخصيات: {chars_str}\nنص المشهد الحالي:\n{project.raw_text[:1200]}"
-    
+    # 3. Existing Audio Drama Project conversation
+    if project and project.status != 'CHAT':
+        chars_str = ", ".join([f"{c.name} ({c.assigned_voice})" for c in project.characters.all()])
+        project_context = f"\nالسياق الحالي: نعمل على عمل درامي بعنوان '{project.title}'. الشخصيات: {chars_str}\nنص المشهد الحالي:\n{project.raw_text[:1200]}"
+        
+        system_instruction = (
+            "أنت 'المخرج الصوتي الذكي' (Audio Drama Director) داخل استوديو HexMedia. "
+            "مهمتك مساعدة المستخدم في تحسين وتعديل المشهد الحالي أو توجيه الأداء التمثيلي للعمل الدرامي. "
+            "إذا اقترح المستخدم تعديلاً في الحوار، أعد كتابة الحوار المشكل بدقة، وأخبره أنه يمكنه الضغط على 'نفذ الصوت'."
+            + project_context
+        )
+
+        reply = call_gemini_chat(prompt, history=history, system_instruction=system_instruction)
+        
+        if ":" in reply and len(reply.split()) > 20:
+            project.raw_text = reply
+            project.save(update_fields=['raw_text'])
+
+        chips = []
+        if project.target_duration_minutes > 0:
+            chips.append(f"🎙️ بدء توليد الصوت للمدة المطلوبة ({project.target_duration_minutes} دقيقة)")
+            chips.append("🎙️ نفذ الصوت لهذا المشهد فقط")
+        else:
+            chips.append("🎙️ توليد الصوت لهذا المشهد الآن")
+        chips.extend(["🎭 تعديل كاستينغ الشخصيات", "🎬 فتح استوديو DesignCombo"])
+
+        state["response_text"] = reply
+        state["msg_type"] = "TEXT"
+        state["metadata"] = {
+            "project_id": str(project.id),
+            "target_duration_minutes": project.target_duration_minutes,
+            "action_chips": chips
+        }
+        return state
+
+    # 4. DEFAULT: GENERAL AI CHAT (ChatGPT Mode - Like ChatGPT / Gemini)
+    # Answers any user inquiry naturally, politely, with clean markdown and NO forced drama
     system_instruction = (
-        "أنت 'المخرج الصوتي الذكي' (Audio Drama Director) داخل استوديو HexMedia. "
-        "مهمتك مساعدة المستخدم في تحسين وتعديل المشهد الحالي أو توجيه الأداء التمثيلي. "
-        "إذا اقترح المستخدم تعديلاً في الحوار، أعد كتابة الحوار المشكل بدقة، وأخبره أنه يمكنه الضغط على 'نفذ الصوت'."
-        + project_context
+        "أنت مساعد ذكاء اصطناعي محترف، ذكي، وودود (شبيه تماماً بـ ChatGPT و Gemini). "
+        "مهمتك التفاعل والتحاور بأسلوب طبيعي ومريح وسلس باللغة العربية، والإجابة عن جميع استفسارات المستخدم وأسئلته، سواء كانت نقاشات عامة، شروحات علمية، برمجية، إجابات على أسئلة، تلخيص نصوص، أو مساعدة في الأفكار. "
+        "نسق إجاباتك بشكل جميل ومريح للقراءة باستخدام Markdown (عناوين، نقاط، كتل كود عند الحاجة). "
+        "مهم جداً: لا تقم بتأليف سيناريو درامي أو فرض شخصيات تمثيلية أو وضع علامات تشكيل كاملة أو اقتراح أصوات ما لم يطلب المستخدم ذلك صراحة."
     )
 
     reply = call_gemini_chat(prompt, history=history, system_instruction=system_instruction)
-    
-    # If the reply contains modified dialogue, update project.raw_text so execution uses it
-    if ":" in reply and len(reply.split()) > 20:
-        project.raw_text = reply
-        project.save(update_fields=['raw_text'])
 
-    chips = []
-    if project.target_duration_minutes > 0:
-        chips.append(f"🎙️ بدء توليد الصوت للمدة المطلوبة ({project.target_duration_minutes} دقيقة)")
-        chips.append("🎙️ نفذ الصوت لهذا المشهد فقط")
-    else:
-        chips.append("🎙️ توليد الصوت لهذا المشهد الآن")
-    chips.extend(["🎭 تعديل كاستينغ الشخصيات", "🎬 فتح استوديو DesignCombo"])
+    # Persist in a CHAT project so user's conversation history appears cleanly in sidebar
+    if not project or project.status != 'CHAT':
+        clean_prompt = prompt.strip().replace("\n", " ")
+        short_title = clean_prompt[:35].rsplit(" ", 1)[0] if len(clean_prompt) > 35 else clean_prompt
+        if not short_title:
+            short_title = "محادثة جديدة"
+        project = BookProject.objects.create(
+            title=short_title,
+            author="المستخدم",
+            genre="محادثة عامة",
+            status='CHAT'
+        )
 
+    state["project_id"] = str(project.id)
     state["response_text"] = reply
     state["msg_type"] = "TEXT"
     state["metadata"] = {
-        "project_id": str(project.id),
-        "target_duration_minutes": project.target_duration_minutes,
-        "action_chips": chips
+        "project_id": str(project.id)
     }
     return state
 
@@ -638,53 +677,18 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
         state["chapter_number"] = ch_num
         return execute_chapter_node(state)
 
-    # If no project exists, OR if project has no raw_text to execute:
-    if not project or not project.raw_text:
-        theme_to_use = ""
-        
-        # Check history to find what story was being discussed
-        if history:
-            for msg in reversed(history):
-                content = msg.get("content", "")
-                if any(w in content for w in ["طيارة", "تسقط", "سقوط", "حادث", "قصة", "مشهد", "سفينة", "قراصنة"]):
-                    theme_to_use = content
-                    break
-
-        if not theme_to_use:
-            theme_to_use = "سقوط طائرة ركاب في عاصفة رعدية ومحاولة الطيارين النجاة"
-
-        compose_prompt = f"""
-أنت كاتب سيناريو ومخرج درامي صوتي محترف.
-قم بتأليف مشهد درامي حواري مشوق وقصير (3 إلى 5 مقاطع حوارية وسردية) يدور بالتحديد حول: {theme_to_use}.
-يجب أن يتضمن راوياً وشخصيتين على الأقل يتحدثان بإثارة وتوتر.
-اكتب النص مع التشكيل العربي الكامل والواضح لجميع الكلمات لضبط نطق الصوت.
-اكتب النص السينمائي مباشرة بدون مقدمات:
-"""
-        fresh_story = call_gemini_chat(compose_prompt, system_instruction="أنت كاتب سيناريو ومخرج دراما صوتية.")
-        
-        analysis = analyze_book_text(fresh_story, filename="مشهد_جديد.txt")
-        title = analysis.get("title") or "مشهد صوتي مباشر"
-        summary = analysis.get("summary") or f"مشهد صوتي مباشر يدور حول {theme_to_use[:50]}."
-
-        project = BookProject.objects.create(
-            title=title,
-            author="Gemini 3.8 Flash",
-            original_filename="live_scene.txt",
-            raw_text=fresh_story,
-            summary=summary,
-            status='GENERATING_AUDIO'
+    # If no project exists, OR if project has no raw_text to execute, or is CHAT:
+    if not project or not project.raw_text or project.status == 'CHAT':
+        reply = (
+            "⚠️ **لا يوجد سيناريو أو مشروع درامي لتوليد صوته حالياً.**\n\n"
+            "لتوليد الصوت، يمكنك:\n"
+            "1. اختيار **'✍️ تأليف وتطوير قصة وسيناريو'** من زر **(+)** بالأسفل وتحديد فكرة المشهد.\n"
+            "2. أو اختيار **'📚 تحويل كتاب إلى دراما مسموعة'** لرفع رواية (PDF, EPUB, TXT)."
         )
-        state["project_id"] = str(project.id)
-
-        for c in analysis.get("characters", []):
-            Character.objects.create(
-                project=project,
-                name=c.get("name", "شخصية"),
-                role_type=c.get("role_type", "SUPPORTING"),
-                gender=c.get("gender", "MALE"),
-                description=c.get("description", ""),
-                assigned_voice=c.get("assigned_voice", "Puck")
-            )
+        state["response_text"] = reply
+        state["msg_type"] = "TEXT"
+        state["metadata"] = {}
+        return state
 
     # Clear old scenes to ensure fresh real audio generation
     project.scenes.all().delete()
@@ -995,11 +999,13 @@ def build_audio_drama_graph():
 
     def route_action(state: AudioDramaState):
         action = state.get("action", "")
+        tool = state.get("tool")
         prompt = state.get("user_prompt", "").lower().strip()
+        project_id = state.get("project_id")
         
         if action == "execute_chapter":
             return "execute_chapter"
-        elif action == "upload_book":
+        elif action == "upload_book" or state.get("file_content"):
             return "book_ingestion"
         elif action in ["approve_casting", "execute_scene"]:
             ch_num = state.get("chapter_number") or extract_chapter_number_from_prompt(prompt)
@@ -1007,16 +1013,17 @@ def build_audio_drama_graph():
                 return "execute_chapter"
             return "execute_scene"
 
-        # Check if user typed novel text or pasted a chapter directly
-        if len(prompt.split()) > 40 or prompt.startswith("رواية") or prompt.startswith("قصة:"):
-            return "book_ingestion"
-
         # Check explicit audio execution commands (clicks or specific commands)
-        if is_audio_execution_request(prompt):
-            ch_num = state.get("chapter_number") or extract_chapter_number_from_prompt(prompt)
-            if ch_num:
-                return "execute_chapter"
-            return "execute_scene"
+        if (is_audio_execution_request(prompt) or tool == "execute_audio") and project_id:
+            try:
+                p = BookProject.objects.get(id=project_id)
+                if p.status != 'CHAT' and (p.scenes.exists() or p.raw_text):
+                    ch_num = state.get("chapter_number") or extract_chapter_number_from_prompt(prompt)
+                    if ch_num:
+                        return "execute_chapter"
+                    return "execute_scene"
+            except BookProject.DoesNotExist:
+                pass
 
         return "chat_agent"
 

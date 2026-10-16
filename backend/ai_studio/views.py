@@ -82,6 +82,7 @@ def chat_home_view(request):
         "id": str(p.id),
         "title": p.title,
         "status": p.status,
+        "genre": p.genre or "",
         "scenes_count": p.scenes.count(),
         "total_duration_seconds": round(p.total_duration_seconds, 1)
     } for p in recent_projects_qs]

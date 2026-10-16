@@ -50,6 +50,7 @@ class AIConfiguration(models.Model):
 
 class BookProject(models.Model):
     STATUS_CHOICES = [
+        ('CHAT', 'محادثة عامة'),
         ('DRAFT', 'مسودة'),
         ('UPLOADED', 'تم الرفع'),
         ('ANALYZING', 'جاري تحليل الرواية واستخراج الشخصيات'),

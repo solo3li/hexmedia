@@ -21,6 +21,7 @@ class ChatRequest(Schema):
     project_id: Optional[str] = None
     session_id: Optional[str] = "default"
     narration_mode: Optional[str] = None
+    tool: Optional[str] = None
 
 class ChatResponse(Schema):
     response: str
@@ -119,6 +120,7 @@ def chat_endpoint(request, data: ChatRequest):
         "filename": None,
         "narration_mode": data.narration_mode or (project.narration_mode if project else "SMART"),
         "action": "chat",
+        "tool": data.tool,
         "history": history_msgs,
         "response_text": "",
         "msg_type": "TEXT",

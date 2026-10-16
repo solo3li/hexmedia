@@ -38,6 +38,9 @@
 
   <!-- FontAwesome for essential status & icon cues -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Marked.js for ChatGPT-grade Markdown Rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
     * {
@@ -170,7 +173,7 @@
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
-        <h1 id="headerTitle" class="text-sm font-medium text-white truncate max-w-[200px] sm:max-w-xs">محادثة جديدة مع المخرج</h1>
+        <h1 id="headerTitle" class="text-sm font-medium text-white truncate max-w-[200px] sm:max-w-xs">محادثة جديدة</h1>
         
         <div id="chapterSelectorContainer" class="hidden flex items-center gap-2">
           <span class="text-borderSubtle">/</span>
@@ -185,8 +188,8 @@
         </div>
       </div>
 
-      <!-- Center: Narrator Mode Minimalist Segmented Pill Control -->
-      <div class="hidden sm:flex items-center bg-surface p-1 rounded-full border border-borderSubtle">
+      <!-- Center: Narrator Mode Minimalist Segmented Pill Control (Visible only in Audio Drama Mode) -->
+      <div id="narratorModeControls" class="hidden items-center bg-surface p-1 rounded-full border border-borderSubtle">
         <button onclick="setNarratorMode('SMART')" id="mode-SMART" class="px-3.5 py-1 rounded-full text-xs font-medium bg-obsidian text-white border border-borderSubtle transition-all">
           سرد ذكي
         </button>
@@ -200,7 +203,7 @@
 
       <!-- Left: Open Studio & Export Button -->
       <div class="flex items-center gap-2.5">
-        <button onclick="openDesignComboStudio()" title="فتح في استوديو المونتاج" class="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface hover:bg-surfaceHover border border-borderSubtle text-xs text-muted hover:text-white transition-colors">
+        <button id="studioHeaderBtn" onclick="openDesignComboStudio()" title="فتح في استوديو المونتاج" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface hover:bg-surfaceHover border border-borderSubtle text-xs text-muted hover:text-white transition-colors">
           <svg class="w-3 h-3 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="4" y1="21" x2="4" y2="14"></line>
             <line x1="4" y1="10" x2="4" y2="3"></line>
@@ -212,7 +215,7 @@
           <span>الاستوديو</span>
         </button>
 
-        <button onclick="exportAudioMaster()" class="px-4 py-1.5 rounded-full bg-white hover:bg-limeAccent text-obsidian font-medium text-xs flex items-center gap-2 transition-colors active:scale-95 shadow-sm">
+        <button id="exportHeaderBtn" onclick="exportAudioMaster()" class="hidden items-center gap-2 px-4 py-1.5 rounded-full bg-white hover:bg-limeAccent text-obsidian font-medium text-xs transition-colors active:scale-95 shadow-sm">
           <span>تصدير</span>
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -236,7 +239,12 @@
               <circle cx="12" cy="12" r="2" fill="#e2ff44" stroke="none"></circle>
             </svg>
           </div>
-          <h2 class="text-xl md:text-2xl font-medium text-white tracking-tight">بماذا يمكنني مساعدتك في مشروعك اليوم؟</h2>
+          <div class="space-y-1.5">
+            <h2 class="text-xl md:text-2xl font-medium text-white tracking-tight">بماذا يمكنني مساعدتك اليوم؟</h2>
+            <p class="text-xs text-muted max-w-md mx-auto leading-relaxed">
+              تحاور معي كشات ذكاء اصطناعي عادي، أو استخدم زر <strong class="text-white font-mono">(+)</strong> بالأسفل لاختيار أدوات تحويل الكتب وتأليف السيناريو الدرامي.
+            </p>
+          </div>
         </div>
 
         <!-- Dynamic Chat Stream Area (User & Assistant Messages) -->
@@ -299,7 +307,7 @@
           </button>
 
           <!-- Tool 3: Execute TTS Audio -->
-          <button onclick="sendQuickPrompt('نفذ')" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
+          <button onclick="triggerAudioExecution()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
             <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-emerald-400 shrink-0">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
             </div>
@@ -311,7 +319,7 @@
         </div>
 
         <!-- The Floating Dock Body -->
-        <div class="floating-dock border border-borderSubtle rounded-full p-2 pl-3 pr-2.5 shadow-2xl flex items-center gap-3">
+        <div class="floating-dock border border-borderSubtle rounded-full p-2 pl-3 pr-2.5 shadow-2xl flex items-center gap-2.5">
           
           <!-- Plus (+) Button for Tools Menu (ChatGPT style) -->
           <button id="toolsBtn" onclick="toggleToolsMenu()" title="الأدوات وإرفاق الملفات" class="w-8 h-8 rounded-full bg-surface hover:bg-white text-muted hover:text-obsidian border border-borderSubtle flex items-center justify-center shrink-0 transition-all active:scale-95">
@@ -328,18 +336,25 @@
             </svg>
           </button>
 
-          <!-- Active File / Tool Pill (if attached) -->
+          <!-- Active Tool Pill (e.g. Story Authoring Mode) -->
+          <div id="activeToolPill" class="hidden items-center gap-1.5 bg-obsidian border border-limeAccent/50 px-2.5 py-1 rounded-full text-[11px] text-white shrink-0">
+            <span id="activeToolIcon">✍️</span>
+            <span id="activeToolLabel" class="truncate max-w-[130px] font-medium text-limeAccent">تأليف سيناريو درامي</span>
+            <button type="button" onclick="clearActiveTool()" title="إلغاء والعودة للشات العادي" class="text-muted hover:text-white mr-1 text-xs font-bold leading-none">×</button>
+          </div>
+
+          <!-- Active File Pill (if novel attached) -->
           <div id="filePreviewPill" class="hidden items-center gap-1.5 bg-obsidian border border-borderSubtle px-2.5 py-1 rounded-full text-[11px] text-light shrink-0">
             <span class="w-1.5 h-1.5 rounded-full bg-limeAccent"></span>
             <span id="fileNameLabel" class="truncate max-w-[120px] font-mono">book.pdf</span>
-            <button type="button" onclick="clearSelectedFile()" class="text-muted hover:text-red-400 mr-1">×</button>
+            <button type="button" onclick="clearSelectedFile()" class="text-muted hover:text-red-400 mr-1 text-xs font-bold leading-none">×</button>
           </div>
 
           <!-- Clean Input Field -->
           <input 
             id="chatInput" 
             type="text" 
-            placeholder="تحدث مع المخرج أو اكتب 'نفذ' لتوليد الصوت..." 
+            placeholder="اسأل أي شيء أو اكتب رسالتك... (اختر أداة من +)" 
             onkeydown="if(event.key === 'Enter') handleSendMessage()"
             class="flex-1 bg-transparent text-xs text-white placeholder-muted focus:outline-none px-2"
           >
@@ -412,6 +427,7 @@
     let activeBlockId = null;
     let isMasterPlaying = false;
     let currentNarratorMode = activeProject ? (activeProject.narration_mode || 'SMART') : 'SMART';
+    let currentActiveTool = null;
     let currentAudioElement = null;
     let masterSequenceList = [];
     let masterSequenceIndex = 0;
@@ -425,6 +441,22 @@
     // =========================================================================
     window.addEventListener('DOMContentLoaded', () => {
       renderSidebarProjects();
+
+      // Sync Header and Controls depending on whether project is a Chat or an Audio Drama
+      if (activeProject) {
+        const isChat = activeProject.status === 'CHAT';
+        document.getElementById('headerTitle').textContent = (isChat ? '💬 ' : '🎧 ') + activeProject.title;
+        if (!isChat) {
+          const narratorCtrls = document.getElementById('narratorModeControls');
+          if (narratorCtrls) narratorCtrls.classList.remove('hidden');
+          const studioBtn = document.getElementById('studioHeaderBtn');
+          if (studioBtn) studioBtn.classList.remove('hidden');
+          const exportBtn = document.getElementById('exportHeaderBtn');
+          if (exportBtn) exportBtn.classList.remove('hidden');
+        }
+      } else {
+        document.getElementById('headerTitle').textContent = 'محادثة جديدة';
+      }
 
       // Render conversation messages if available
       if (serverMessages && serverMessages.length > 0) {
@@ -491,15 +523,40 @@
 
     function triggerBookUploadFromTool() {
       toggleToolsMenu();
+      clearActiveTool();
       document.getElementById('bookFileInput').click();
     }
 
     function activateStoryTool() {
       toggleToolsMenu();
+      clearSelectedFile();
+      currentActiveTool = 'story_generator';
+      const pill = document.getElementById('activeToolPill');
+      pill.classList.remove('hidden');
+      pill.classList.add('flex');
+      document.getElementById('activeToolLabel').textContent = 'تأليف قصة وسيناريو';
       const input = document.getElementById('chatInput');
-      input.value = 'أريد تأليف سيناريو درامي عن ';
+      input.placeholder = 'اكتب فكرة القصة أو السيناريو الدرامي المطلوب تأليفه وإخراجه صوتياً...';
       input.focus();
-      showToast('أداة تأليف وتطوير السيناريو مفعلة');
+      showToast('✍️ تم تفعيل أداة تأليف وتطوير السيناريو الدرامي');
+    }
+
+    function clearActiveTool() {
+      currentActiveTool = null;
+      const pill = document.getElementById('activeToolPill');
+      pill.classList.add('hidden');
+      pill.classList.remove('flex');
+      const input = document.getElementById('chatInput');
+      input.placeholder = 'اسأل أي شيء أو اكتب رسالتك... (اختر أداة من +)';
+    }
+
+    function triggerAudioExecution() {
+      toggleToolsMenu();
+      if (activeProjectId && activeProject && activeProject.status !== 'CHAT') {
+        sendQuickPrompt('نفذ الصوت');
+      } else {
+        showToast('⚠️ لا يوجد سيناريو درامي نشط. اختر أداة التأليف من (+) أولاً.', true);
+      }
     }
 
     function openDesignComboStudio() {
@@ -524,23 +581,33 @@
 
       list.innerHTML = projectsList.map(proj => {
         const isActive = proj.id === activeProjectId;
-        const dotColor = proj.status === 'READY' 
-          ? 'bg-limeAccent' 
-          : proj.status === 'GENERATING_AUDIO' || proj.status === 'CONTINUOUS_GENERATING'
-            ? 'bg-amber-400 pulse-live' 
-            : 'bg-zinc-600';
+        const isChat = proj.status === 'CHAT';
+        const dotColor = isChat 
+          ? 'bg-zinc-600'
+          : proj.status === 'READY' 
+            ? 'bg-limeAccent' 
+            : proj.status === 'GENERATING_AUDIO' || proj.status === 'CONTINUOUS_GENERATING'
+              ? 'bg-amber-400 pulse-live' 
+              : 'bg-zinc-600';
+
+        const iconSvg = isChat 
+          ? `<svg class="w-3.5 h-3.5 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`
+          : `<svg class="w-3.5 h-3.5 text-limeAccent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>`;
 
         return `
           <button 
             onclick="selectProject('${proj.id}')" 
-            class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between text-right transition-all ${
+            class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between text-right transition-all group ${
               isActive 
                 ? 'bg-obsidian text-white border border-borderSubtle' 
                 : 'text-muted hover:text-light hover:bg-obsidian/40 border border-transparent'
             }"
           >
-            <span class="text-xs font-normal truncate">${escapeHtml(proj.title)}</span>
-            <span class="w-1.5 h-1.5 rounded-full ${dotColor} shrink-0"></span>
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+              ${iconSvg}
+              <span class="text-xs font-normal truncate">${escapeHtml(proj.title)}</span>
+            </div>
+            ${isChat ? '' : `<span class="w-1.5 h-1.5 rounded-full ${dotColor} shrink-0 mr-1.5"></span>`}
           </button>
         `;
       }).join('');
@@ -1016,10 +1083,12 @@
       const file = event.target.files[0];
       if (!file) return;
       selectedFile = file;
+      clearActiveTool();
 
       document.getElementById('filePreviewPill').classList.remove('hidden');
       document.getElementById('filePreviewPill').classList.add('flex');
       document.getElementById('fileNameLabel').textContent = file.name;
+      document.getElementById('chatInput').placeholder = 'أضف أي توجيهات لتحليل الرواية أو اضغط Enter مباشرة...';
       document.getElementById('chatInput').focus();
       showToast(`تم إرفاق: ${file.name}`);
     }
@@ -1029,6 +1098,7 @@
       document.getElementById('bookFileInput').value = '';
       document.getElementById('filePreviewPill').classList.add('hidden');
       document.getElementById('filePreviewPill').classList.remove('flex');
+      document.getElementById('chatInput').placeholder = 'اسأل أي شيء أو اكتب رسالتك... (اختر أداة من +)';
     }
 
     async function handleSendMessage() {
@@ -1041,7 +1111,10 @@
       renderUserMessage(prompt || `📁 جاري رفع وتحليل الرواية: ${selectedFile.name}`);
 
       input.value = '';
-      showTyping(selectedFile ? "جاري قراءة الرواية واستخراج الفصول والشخصيات..." : "المخرج الذكي يفكر ويولد الرد الدرامي...");
+      const typingMsg = selectedFile 
+        ? "جاري قراءة الرواية واستخراج الفصول والشخصيات..." 
+        : (currentActiveTool === 'story_generator' ? "المخرج الذكي يؤلف المشهد ويوزع الأصوات..." : "جاري التفكير والتوليد...");
+      showTyping(typingMsg);
 
       try {
         if (selectedFile) {
@@ -1065,17 +1138,22 @@
           renderAssistantMessage(data.response, data.msg_type, data.metadata);
           showToast('تم استيراد الرواية واستخراج الشخصيات!');
         } else {
+          const toolToSend = currentActiveTool;
           const res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               prompt: prompt,
               project_id: activeProjectId || null,
-              narration_mode: currentNarratorMode
+              narration_mode: currentNarratorMode,
+              tool: toolToSend
             })
           });
           const data = await res.json();
           hideTyping();
+          if (toolToSend === 'story_generator') {
+            clearActiveTool();
+          }
           if (data.project_id) {
             activeProjectId = data.project_id;
             window.history.replaceState(null, '', `?project_id=${data.project_id}`);
@@ -1240,6 +1318,13 @@
 
     function formatMarkdown(text) {
       if (!text) return '';
+      if (typeof marked !== 'undefined') {
+        try {
+          return marked.parse(text);
+        } catch (e) {
+          console.error(e);
+        }
+      }
       let s = escapeHtml(text);
       s = s.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
       s = s.replace(/\*(.*?)\*/g, '<em class="text-limeAccent">$1</em>');
