@@ -1,0 +1,49 @@
+services:
+  hexmedia_db:
+    image: postgres:16-alpine
+    container_name: hexmedia_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hexmedia
+      POSTGRES_USER: hexmedia_user
+      POSTGRES_PASSWORD: hexmedia_secret_password
+    ports:
+      - "5439:5432"
+    volumes:
+      - hexmedia_postgres_data:/var/lib/postgresql/data
+    networks:
+      - hexmedia_net
+
+  hexmedia_minio:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: hexmedia_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    ports:
+      - "9100:9000"
+      - "9101:9001"
+    volumes:
+      - hexmedia_minio_data:/data
+    networks:
+      - hexmedia_net
+
+  hexmedia_inngest:
+    image: inngest/inngest:latest
+    container_name: hexmedia_inngest
+    restart: unless-stopped
+    command: inngest dev --host 0.0.0.0
+    ports:
+      - "8388:8288"
+    networks:
+      - hexmedia_net
+
+volumes:
+  hexmedia_postgres_data:
+  hexmedia_minio_data:
+
+networks:
+  hexmedia_net:
+    driver: bridge

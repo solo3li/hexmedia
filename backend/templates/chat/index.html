@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HexMedia | أستوديو الروايات الصوتية والدراما (Gemini 3.8 Flash)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gemini: {
+                            50: '#f0f4ff',
+                            100: '#d9e2ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e3a8a',
+                            900: '#0f172a',
+                            950: '#030712',
+                        },
+                        surface: {
+                            800: '#18181b',
+                            850: '#121215',
+                            900: '#09090b',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Cairo', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+        .gemini-gradient {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 50%, #06b6d4 100%);
+        }
+        .text-gemini-gradient {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-surface-900 text-zinc-100 flex h-screen overflow-hidden antialiased">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <aside id="sidebar" class="w-72 bg-surface-850 border-l border-zinc-800 flex flex-col justify-between transition-all duration-300 z-30">
+        <!-- Sidebar Header -->
+        <div class="p-4 border-b border-zinc-800/80">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl gemini-gradient flex items-center justify-center shadow-lg shadow-blue-500/20 text-white">
+                        <i class="fa-solid fa-microphone-lines text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base leading-tight tracking-wide">HexMedia Studio</h1>
+                        <span class="text-[10px] text-blue-400 font-semibold uppercase tracking-wider">Audio Drama AI</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Project Button -->
+            <button onclick="startNewChat()" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700/80 text-zinc-200 text-sm font-medium border border-zinc-700/50 transition shadow-sm">
+                <i class="fa-solid fa-plus text-xs text-blue-400"></i>
+                <span>رواية / محادثة جديدة</span>
+            </button>
+        </div>
+
+        <!-- Recent Projects List -->
+        <div class="flex-1 overflow-y-auto p-3 space-y-1">
+            <div class="px-2 py-1.5 text-xs font-semibold text-zinc-400 uppercase tracking-wider flex items-center justify-between">
+                <span>سجل الروايات</span>
+                <i class="fa-solid fa-book-open text-[10px]"></i>
+            </div>
+
+            {% for p in recent_projects %}
+            <a href="?project_id={{ p.id }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-300 hover:bg-zinc-800/70 hover:text-white transition group {% if current_project and current_project.id == p.id %}bg-zinc-800 text-blue-400 border border-blue-500/30{% endif %}">
+                <i class="fa-solid fa-headphones text-xs text-zinc-400 group-hover:text-blue-400 transition"></i>
+                <div class="flex-1 truncate">
+                    <div class="truncate font-medium">{{ p.title }}</div>
+                    <div class="text-[10px] text-zinc-400 flex items-center gap-1.5">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full {% if p.status == 'READY' %}bg-emerald-400{% else %}bg-amber-400 animate-pulse{% endif %}"></span>
+                        <span>{{ p.get_status_display }}</span>
+                    </div>
+                </div>
+            </a>
+            {% empty %}
+            <div class="text-xs text-zinc-400 px-3 py-4 text-center">
+                لا توجد مشاريع سابقة.<br>ارفع أول كتاب أو رواية للبدء!
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Sidebar Footer & Settings -->
+        <div class="p-3 border-t border-zinc-800 bg-surface-900/60 space-y-2">
+            <!-- Active Model Badge -->
+            <div class="flex items-center justify-between px-3 py-2 rounded-lg bg-zinc-800/50 border border-zinc-800 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span>
+                    <span class="text-zinc-300 font-mono">{{ config.llm_model }}</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-semibold">Gemini 3.8</span>
+            </div>
+
+            <!-- Admin Key Manager Link -->
+            <a href="/admin/ai_studio/aiconfiguration/" target="_blank" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-800 text-xs text-zinc-300 transition group border border-transparent hover:border-zinc-700">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-key text-amber-400"></i>
+                    <span>إدارة مفتاح API والموديل</span>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-zinc-400 group-hover:text-white transition"></i>
+            </a>
+
+            <!-- MinIO Storage Link -->
+            <a href="#" onclick="window.open(`${window.location.protocol}//${window.location.hostname}:9101`, '_blank'); return false;" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-zinc-800 text-xs text-zinc-400 hover:text-zinc-300 transition text-[11px]">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-server text-blue-400"></i>
+                    <span>سيرفر التخزين (MinIO)</span>
+                </div>
+                <span class="text-[10px] text-zinc-400">Port 9101</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- ==================== MAIN CHAT CONTAINER ==================== -->
+    <main class="flex-1 flex flex-col h-screen relative bg-surface-900 overflow-hidden">
+        
+        <!-- Top Navigation Bar -->
+        <header class="h-14 border-b border-zinc-800/80 px-6 flex items-center justify-between bg-surface-850/80 backdrop-blur-md z-10">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-zinc-200">
+                        {% if current_project %}{{ current_project.title }}{% else %}استوديو الدراما الصوتية الذكي{% endif %}
+                    </span>
+                    {% if current_project %}
+                    <span class="text-xs px-2.5 py-0.5 rounded-full {% if current_project.status == 'READY' %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/30{% else %}bg-blue-500/20 text-blue-300 border border-blue-500/30{% endif %}">
+                        {{ current_project.get_status_display }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Narration Mode Selector -->
+                <div class="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1 text-xs shadow-inner">
+                    <i class="fa-solid fa-microphone-lines text-amber-400 text-[11px]"></i>
+                    <span class="text-zinc-400 text-[11px] hidden sm:inline">تقديم الراوي:</span>
+                    <select id="narrationModeSelect" onchange="changeNarrationMode(this.value)" class="bg-transparent text-zinc-200 text-xs focus:outline-none cursor-pointer font-medium">
+                        <option value="SMART" class="bg-zinc-900 text-zinc-100" {% if current_project and current_project.narration_mode == 'SMART' %}selected{% endif %}>⚡ ربط ذكي سينمائي</option>
+                        <option value="FULL" class="bg-zinc-900 text-zinc-100" {% if current_project and current_project.narration_mode == 'FULL' %}selected{% endif %}>🎙️ ربط شامل لكل جملة</option>
+                        <option value="NONE" class="bg-zinc-900 text-zinc-100" {% if current_project and current_project.narration_mode == 'NONE' %}selected{% endif %}>🎭 حوار مباشر (بدون تقديم)</option>
+                    </select>
+                </div>
+
+                {% if current_project and current_project.status == 'READY' %}
+                <a href="#" onclick="openStudio('{{ current_project.id }}'); return false;" class="flex items-center gap-2 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-500/20 transition">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>فتح في استوديو DesignCombo</span>
+                </a>
+                {% endif %}
+                <a href="/admin/" target="_blank" class="text-xs text-zinc-400 hover:text-zinc-200 transition flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-zinc-800 border border-zinc-800">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>لوحة الإدارة</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Continuous Production Live Banner -->
+        <div id="continuousBar" class="hidden mx-6 mt-3 p-3.5 rounded-2xl bg-gradient-to-r from-blue-950/90 via-indigo-950/80 to-zinc-900 border border-blue-500/40 shadow-xl flex items-center justify-between gap-4 z-20 backdrop-blur-md transition-all">
+            <div class="flex items-center gap-3">
+                <div class="relative flex items-center justify-center">
+                    <span class="w-3.5 h-3.5 rounded-full bg-blue-400 animate-ping absolute"></span>
+                    <span class="w-3.5 h-3.5 rounded-full bg-blue-500 relative"></span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-microphone-lines text-blue-400"></i>
+                            <span id="continuousTitle">الإنتاج الدرامي الصوتي المستمر (Gemini TTS)</span>
+                        </span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30" id="continuousTarget">الهدف: مفتوح</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30" id="continuousStatus">جاري التوليد...</span>
+                    </div>
+                    <div class="text-[11px] text-zinc-300 flex items-center gap-3 mt-1">
+                        <span>⏱️ المدة المنتجة: <strong id="continuousDuration" class="text-blue-300 font-mono">00:00:00</strong></span>
+                        <span>•</span>
+                        <span>🎧 المقاطع الصوتية: <strong id="continuousScenesCount" class="text-emerald-400 font-mono">0</strong></span>
+                        <span>•</span>
+                        <span>🎬 الفصل الحالي: <strong id="continuousAct" class="text-purple-300 font-mono">1</strong></span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="togglePauseBtn" onclick="toggleContinuousPause()" class="py-1.5 px-3.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 font-semibold border border-zinc-700 transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-pause text-amber-400" id="togglePauseIcon"></i>
+                    <span id="togglePauseText">إيقاف مؤقت</span>
+                </button>
+                <button onclick="openStudio()" class="py-1.5 px-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs text-white font-bold transition flex items-center gap-1.5 shadow-md shadow-blue-500/20">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>فتح في DesignCombo</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Scroll Container -->
+        <div id="messagesContainer" class="flex-1 overflow-y-auto px-4 py-6 md:px-16 lg:px-32 space-y-6">
+            
+            <!-- Welcome Hero (Shown if no messages) -->
+            <div id="welcomeHero" class="text-center py-12 max-w-xl mx-auto space-y-4">
+                <div class="w-16 h-16 mx-auto rounded-2xl gemini-gradient flex items-center justify-center text-white text-2xl shadow-xl shadow-blue-500/20">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+                    اصنع <span class="text-gemini-gradient">دراما صوتية سينمائية</span> من أي رواية أو كتاب
+                </h2>
+                <p class="text-sm text-zinc-400 leading-relaxed">
+                    محرك ذكي متكامل يعمل بـ <strong class="text-zinc-200">Gemini 3.8 Flash</strong> و <strong class="text-zinc-200">LangGraph</strong>.
+                    ارفع كتابك أو اكتب ما تريده، لنقوم فوراً بتحليل القصة، استخراج الشخصيات، توزيع الأصوات، وتنفيذ مشاهد صوتية تفاعلية مباشرة داخل الشات!
+                </p>
+
+                <!-- Quick Action Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-6 text-right">
+                    <div onclick="triggerFileUpload()" class="p-4 rounded-xl bg-zinc-850/80 border border-zinc-800 hover:border-blue-500/50 hover:bg-zinc-800/50 transition cursor-pointer group">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-bold text-zinc-200 group-hover:text-blue-400 transition">ارفع كتاب أو رواية</span>
+                            <i class="fa-solid fa-file-arrow-up text-blue-400"></i>
+                        </div>
+                        <p class="text-xs text-zinc-400 leading-normal">يدعم الكتب حتى 500 صفحة (PDF, EPUB, TXT) لتحليلها فوراً.</p>
+                    </div>
+
+                    <div onclick="sendQuickPrompt('نفذ')" class="p-4 rounded-xl bg-zinc-850/80 border border-zinc-800 hover:border-emerald-500/50 hover:bg-zinc-800/50 transition cursor-pointer group">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-bold text-emerald-300 group-hover:text-emerald-400 transition">🎙️ نفذ الصوت للمشاهد الآن</span>
+                            <i class="fa-solid fa-play text-emerald-400"></i>
+                        </div>
+                        <p class="text-xs text-zinc-400 leading-normal">اطلب تنفيذ وتوليد مشاهد الدراما الصوتية والاستماع لها داخل الشات فوراً.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Messages Area (All messages rendered with full interactivity) -->
+            <div id="dynamicMessagesArea" class="space-y-6"></div>
+
+            <!-- Loading Indicator -->
+            <div id="typingIndicator" class="hidden flex gap-4 items-start">
+                <div class="w-8 h-8 rounded-xl gemini-gradient flex items-center justify-center text-xs text-white shrink-0 shadow-md animate-pulse">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div class="bg-zinc-850/80 border border-zinc-800 px-4 py-3 rounded-2xl rounded-tr-sm flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-400 animate-bounce"></span>
+                    <span class="w-2 h-2 rounded-full bg-purple-400 animate-bounce [animation-delay:0.2s]"></span>
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.4s]"></span>
+                    <span class="text-xs text-zinc-400 mr-2 font-medium" id="typingStatusText">الوكيل الذكي يحلل ويولد الصوت...</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ==================== BOTTOM INPUT AREA ==================== -->
+        <footer class="p-4 md:px-16 lg:px-32 border-t border-zinc-800/80 bg-surface-850/90 backdrop-blur-md">
+            <!-- Hidden File Input for Books -->
+            <input type="file" id="bookFileInput" accept=".pdf,.epub,.txt" class="hidden" onchange="handleFileSelected(event)">
+
+            <!-- Input Box Container -->
+            <div class="relative bg-zinc-900 border border-zinc-700/60 rounded-2xl shadow-xl focus-within:border-blue-500/80 transition p-2">
+                
+                <!-- Selected File Pill (if attached) -->
+                <div id="filePreviewPill" class="hidden flex items-center justify-between bg-zinc-800/80 border border-zinc-700 px-3 py-1.5 rounded-xl mb-2 text-xs text-zinc-200">
+                    <div class="flex items-center gap-2 truncate">
+                        <i class="fa-solid fa-file-pdf text-red-400" id="fileIcon"></i>
+                        <span id="fileNameLabel" class="font-medium truncate">book.pdf</span>
+                    </div>
+                    <button type="button" onclick="clearSelectedFile()" class="text-zinc-400 hover:text-red-400 transition ml-2">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-end gap-2">
+                    <!-- File Upload Button -->
+                    <button type="button" onclick="triggerFileUpload()" title="ارفع رواية أو كتاب (PDF, EPUB, TXT)" class="p-2.5 text-zinc-400 hover:text-blue-400 hover:bg-zinc-800 rounded-xl transition shrink-0">
+                        <i class="fa-solid fa-paperclip text-lg"></i>
+                    </button>
+
+                    <!-- Textarea -->
+                    <textarea 
+                        id="chatInput" 
+                        rows="1" 
+                        placeholder="تحدث مع المخرج أو اكتب 'نفذ' لتوليد وسماع المشاهد الصوتية فوراً..." 
+                        class="w-full bg-transparent text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none resize-none py-2 px-1 max-h-32 leading-relaxed"
+                        onkeydown="handleKeyDown(event)"
+                        oninput="autoResizeTextarea(this)"></textarea>
+
+                    <!-- Send Button -->
+                    <button type="button" id="sendBtn" onclick="handleSendMessage()" class="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0 shadow-md shadow-blue-500/20">
+                        <i class="fa-solid fa-arrow-up text-sm"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="text-[11px] text-zinc-400 text-center mt-2 flex items-center justify-center gap-2">
+                <span>مدعوم بنموذج <strong>Gemini 3.8 Flash</strong> و <strong>LangGraph Controller</strong></span>
+                <span>•</span>
+                <a href="/admin/ai_studio/aiconfiguration/" target="_blank" class="text-blue-400 hover:underline">لوحة مفاتيح API</a>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let currentProjectId = "{{ current_project.id|default:'' }}";
+        let currentProjectStatus = "{{ current_project.status|default:'' }}";
+        let selectedNarrationMode = "{{ current_project.narration_mode|default:'SMART' }}";
+        let selectedFile = null;
+        let isPlayingSequence = false;
+        let sequenceIndex = 0;
+        let pollInterval = null;
+        let lastSceneOrder = 0;
+        let isContinuousPaused = false;
+
+        async function changeNarrationMode(mode) {
+            selectedNarrationMode = mode;
+            const modeLabels = {
+                'SMART': '⚡ ربط ذكي سينمائي (عند التحولات وتغير المتحدث)',
+                'FULL': '🎙️ ربط شامل لكل جملة (تقديم الراوي لجميع الشخصيات)',
+                'NONE': '🎭 حوار مباشر (بدون تقديم الراوي)'
+            };
+            const label = modeLabels[mode] || mode;
+
+            if (currentProjectId) {
+                try {
+                    const res = await fetch(`/api/projects/${currentProjectId}/set-narration-mode`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ narration_mode: mode })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        showToast(`تم تفعيل: ${label}`);
+                    }
+                } catch (e) {
+                    console.error("Failed to update narration mode:", e);
+                }
+            } else {
+                showToast(`تم اختيار النمط: ${label} (سيُطبق على الرواية القادمة)`);
+            }
+        }
+
+        function showToast(message) {
+            let toast = document.getElementById('studioToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'studioToast';
+                toast.className = 'fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-xl bg-zinc-900/95 border border-blue-500/40 text-blue-200 text-xs shadow-2xl backdrop-blur-md transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-2';
+                document.body.appendChild(toast);
+            }
+            toast.innerHTML = `<i class="fa-solid fa-circle-check text-blue-400"></i><span>${escapeHtml(message)}</span>`;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3200);
+        }
+
+        // Load historical messages passed from server
+        const serverMessages = {{ messages_json|safe }};
+
+        function formatDuration(totalSeconds) {
+            const s = Math.floor(totalSeconds || 0);
+            const hrs = Math.floor(s / 3600);
+            const mins = Math.floor((s % 3600) / 60);
+            const secs = s % 60;
+            return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (serverMessages && serverMessages.length > 0) {
+                const hero = document.getElementById('welcomeHero');
+                if (hero) hero.classList.add('hidden');
+
+                serverMessages.forEach(msg => {
+                    if (msg.role === 'USER') {
+                        renderUserMessage(msg.content);
+                    } else {
+                        renderAssistantMessage(msg.content, msg.msg_type, msg.metadata);
+                    }
+                });
+            }
+
+            // Resume live polling if project is in continuous generation mode
+            if (currentProjectId && (currentProjectStatus === 'CONTINUOUS_GENERATING' || currentProjectStatus === 'PAUSED')) {
+                startLivePolling(currentProjectId);
+            }
+        });
+
+        function startLivePolling(projectId) {
+            const pid = projectId || currentProjectId;
+            if (!pid) return;
+
+            const banner = document.getElementById('continuousBar');
+            if (banner) banner.classList.remove('hidden');
+
+            if (pollInterval) clearInterval(pollInterval);
+
+            async function poll() {
+                try {
+                    const res = await fetch(`/api/projects/${pid}/live-progress?after=${lastSceneOrder}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+
+                    // Update live banner
+                    document.getElementById('continuousDuration').textContent = formatDuration(data.total_duration_seconds);
+                    document.getElementById('continuousScenesCount').textContent = data.scenes_count;
+                    document.getElementById('continuousAct').textContent = data.current_act;
+                    
+                    const targetEl = document.getElementById('continuousTarget');
+                    targetEl.textContent = (data.target_duration_minutes === 0) 
+                        ? "الهدف: مفتوح ولانهائي" 
+                        : `الهدف: ${data.target_duration_minutes} دقيقة`;
+
+                    const statusEl = document.getElementById('continuousStatus');
+                    const pauseIcon = document.getElementById('togglePauseIcon');
+                    const pauseText = document.getElementById('togglePauseText');
+
+                    if (data.status === 'PAUSED') {
+                        isContinuousPaused = true;
+                        statusEl.textContent = 'متوقف مؤقتاً';
+                        statusEl.className = 'text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30';
+                        pauseIcon.className = 'fa-solid fa-play text-emerald-400';
+                        pauseText.textContent = 'استئناف';
+                    } else if (data.status === 'CONTINUOUS_GENERATING') {
+                        isContinuousPaused = false;
+                        statusEl.textContent = 'جاري التوليد حي...';
+                        statusEl.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30';
+                        pauseIcon.className = 'fa-solid fa-pause text-amber-400';
+                        pauseText.textContent = 'إيقاف مؤقت';
+                    } else if (data.status === 'READY') {
+                        statusEl.textContent = 'اكتمل العمل بنجاح 🎉';
+                        statusEl.className = 'text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30';
+                        clearInterval(pollInterval);
+                    }
+
+                    // Dynamically stream new scenes directly into the chat!
+                    if (data.new_scenes && data.new_scenes.length > 0) {
+                        appendLiveScenesToChat(data.new_scenes, pid);
+                        data.new_scenes.forEach(sc => {
+                            if (sc.order > lastSceneOrder) lastSceneOrder = sc.order;
+                        });
+                    }
+                } catch (err) {
+                    console.error("Live progress polling error:", err);
+                }
+            }
+
+            poll();
+            pollInterval = setInterval(poll, 2500);
+        }
+
+        async function toggleContinuousPause() {
+            if (!currentProjectId) return;
+            try {
+                const endpoint = isContinuousPaused ? 'resume-continuous' : 'pause-continuous';
+                const res = await fetch(`/api/projects/${currentProjectId}/${endpoint}`, { method: 'POST' });
+                if (res.ok) {
+                    isContinuousPaused = !isContinuousPaused;
+                }
+            } catch (e) {
+                console.error("Pause/resume error:", e);
+            }
+        }
+
+        function appendLiveScenesToChat(newScenes, projectId) {
+            let container = document.getElementById(`live_scenes_list_${projectId}`);
+            if (!container) {
+                const area = document.getElementById('dynamicMessagesArea');
+                const div = document.createElement('div');
+                div.className = 'flex gap-4 items-start';
+                div.innerHTML = `
+                    <div class="w-8 h-8 rounded-xl gemini-gradient flex items-center justify-center text-xs text-white shrink-0 shadow-md">
+                        <i class="fa-solid fa-tower-broadcast"></i>
+                    </div>
+                    <div class="flex-1 space-y-3">
+                        <div class="text-xs font-semibold text-zinc-400">بث المشاهد الصوتية المباشر (Gemini TTS Live Stream)</div>
+                        <div class="text-sm text-zinc-200 leading-relaxed bg-zinc-850/80 p-4 rounded-2xl border border-blue-500/40 shadow-xl rounded-tr-sm space-y-3">
+                            <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                                <span class="font-bold text-blue-300 text-xs flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    المشاهد الصوتية الجاري إنتاجها الآن
+                                </span>
+                                <button onclick="playAllScenesSequence('${projectId}')" id="playAllBtn_${projectId}" class="py-1.5 px-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                                    <i class="fa-solid fa-play text-[10px]"></i>
+                                    <span>تشغيل الكل</span>
+                                </button>
+                            </div>
+                            <div id="live_scenes_list_${projectId}" class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1"></div>
+                        </div>
+                    </div>
+                `;
+                area.appendChild(div);
+                container = document.getElementById(`live_scenes_list_${projectId}`);
+            }
+
+            newScenes.forEach(sc => {
+                if (document.getElementById(`scene_card_${sc.id}`)) return;
+
+                const row = document.createElement('div');
+                row.id = `scene_card_${sc.id}`;
+                row.className = 'p-3 rounded-xl bg-zinc-900 border border-zinc-800 space-y-2 transition hover:border-zinc-700';
+                row.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 font-mono text-[11px] flex items-center justify-center font-bold">
+                                ${sc.order}
+                            </span>
+                            <span class="font-bold text-white text-xs">${escapeHtml(sc.speaker_name)}</span>
+                            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-mono border border-zinc-700">
+                                صوت ${sc.voice || 'Gemini'}
+                            </span>
+                            ${sc.sfx_name ? `
+                            <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+                                ⚡ مؤثر: ${sc.sfx_name}
+                            </span>` : ''}
+                        </div>
+                        <span class="text-[10px] text-zinc-400 font-mono">${sc.duration}s</span>
+                    </div>
+                    <p class="text-xs text-zinc-200 leading-relaxed font-medium bg-zinc-950/60 p-2 rounded-lg border border-zinc-800/60">
+                        ${escapeHtml(sc.vocalized_text || sc.raw_text)}
+                    </p>
+                    <div class="flex items-center gap-2 pt-0.5">
+                        <audio id="scene_audio_${sc.id}" class="w-full h-7 rounded-lg" controls src="${sc.audio_url}" preload="none"></audio>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            scrollToBottom();
+        }
+
+        function autoResizeTextarea(el) {
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight) + 'px';
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+            }
+        }
+
+        function triggerFileUpload() {
+            document.getElementById('bookFileInput').click();
+        }
+
+        function handleFileSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            selectedFile = file;
+
+            document.getElementById('filePreviewPill').classList.remove('hidden');
+            document.getElementById('fileNameLabel').textContent = file.name;
+            
+            const icon = document.getElementById('fileIcon');
+            if (file.name.endsWith('.pdf')) icon.className = 'fa-solid fa-file-pdf text-red-400';
+            else if (file.name.endsWith('.epub')) icon.className = 'fa-solid fa-book text-emerald-400';
+            else icon.className = 'fa-solid fa-file-lines text-blue-400';
+
+            document.getElementById('chatInput').focus();
+        }
+
+        function clearSelectedFile() {
+            selectedFile = null;
+            document.getElementById('bookFileInput').value = '';
+            document.getElementById('filePreviewPill').classList.add('hidden');
+        }
+
+        function startNewChat() {
+            window.location.href = '/';
+        }
+
+        function openStudio(projectId) {
+            const pid = projectId || currentProjectId;
+            const studioUrl = `${window.location.protocol}//${window.location.hostname}:5173/?project_id=${pid}`;
+            window.open(studioUrl, '_blank');
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('chatInput').value = promptText;
+            handleSendMessage();
+        }
+
+        function sendActionChip(chipText) {
+            if (chipText.includes("فتح استوديو")) {
+                openStudio();
+                return;
+            }
+            if (chipText.includes("تحميل")) {
+                exportAudioFinal(currentProjectId);
+                return;
+            }
+            if (chipText.includes("إيقاف مؤقت")) {
+                toggleContinuousPause();
+                return;
+            }
+            if (chipText.includes("استئناف")) {
+                toggleContinuousPause();
+                return;
+            }
+            // Strip emojis and send as message
+            const clean = chipText.replace(/^[🎙️🎭🎬⬇️📁✨🚀🔄⏸️▶️]+\s*/, '').trim();
+            document.getElementById('chatInput').value = clean;
+            handleSendMessage();
+        }
+
+        async function handleSendMessage() {
+            const input = document.getElementById('chatInput');
+            const prompt = input.value.trim();
+
+            if (!prompt && !selectedFile) return;
+
+            const hero = document.getElementById('welcomeHero');
+            if (hero) hero.classList.add('hidden');
+
+            renderUserMessage(prompt || `📁 جاري رفع الملف: ${selectedFile.name}`);
+            input.value = '';
+            input.style.height = 'auto';
+
+            showTyping(selectedFile ? "جاري قراءة الرواية واستخراج الشخصيات..." : "الوكيل الذكي ينفذ الأمر ويجهز الرد الصوتي...");
+
+            try {
+                if (selectedFile) {
+                    const formData = new FormData();
+                    formData.append('file', selectedFile);
+                    formData.append('prompt', prompt || "يرجى تحليل هذه الرواية واستخراج الشخصيات والأصوات");
+                    if (selectedNarrationMode) {
+                        formData.append('narration_mode', selectedNarrationMode);
+                    }
+
+                    const res = await fetch('/api/upload-book', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const data = await res.json();
+                    hideTyping();
+                    clearSelectedFile();
+
+                    if (data.project_id) currentProjectId = data.project_id;
+                    if (data.narration_mode) {
+                        selectedNarrationMode = data.narration_mode;
+                        const sel = document.getElementById('narrationModeSelect');
+                        if (sel) sel.value = data.narration_mode;
+                    }
+                    renderAssistantMessage(data.response, data.msg_type, data.metadata);
+                } else {
+                    const res = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            prompt: prompt,
+                            project_id: currentProjectId || null,
+                            narration_mode: selectedNarrationMode
+                        })
+                    });
+                    const data = await res.json();
+                    hideTyping();
+                    if (data.project_id) currentProjectId = data.project_id;
+                    
+                    const mode = data.narration_mode || (data.metadata && data.metadata.narration_mode);
+                    if (mode) {
+                        selectedNarrationMode = mode;
+                        const sel = document.getElementById('narrationModeSelect');
+                        if (sel) sel.value = mode;
+                    }
+                    renderAssistantMessage(data.response, data.msg_type, data.metadata);
+                }
+            } catch (err) {
+                hideTyping();
+                renderAssistantMessage("حدث خطأ في الاتصال بالخادم: " + err.message, "TEXT", {});
+            }
+        }
+
+        function showTyping(statusText) {
+            const indicator = document.getElementById('typingIndicator');
+            document.getElementById('typingStatusText').textContent = statusText;
+            indicator.classList.remove('hidden');
+            scrollToBottom();
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').classList.add('hidden');
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('messagesContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function renderUserMessage(text) {
+            const area = document.getElementById('dynamicMessagesArea');
+            const div = document.createElement('div');
+            div.className = 'flex gap-3 justify-end items-start';
+            div.innerHTML = `
+                <div class="max-w-[75%] rounded-2xl px-4 py-3 bg-blue-600 text-white text-sm shadow-md rounded-tl-sm whitespace-pre-wrap">${escapeHtml(text)}</div>
+                <div class="w-8 h-8 rounded-full bg-blue-500/30 flex items-center justify-center text-xs text-blue-200 font-bold shrink-0">أنت</div>
+            `;
+            area.appendChild(div);
+            scrollToBottom();
+        }
+
+        function renderAssistantMessage(text, msgType, metadata) {
+            const area = document.getElementById('dynamicMessagesArea');
+            const div = document.createElement('div');
+            div.className = 'flex gap-4 items-start';
+
+            if (metadata && metadata.is_continuous) {
+                startLivePolling(metadata.project_id || currentProjectId);
+            }
+
+            let cardHtml = '';
+
+            // 1. Interactive Chapters Card (if chapters present in metadata)
+            if (metadata && metadata.chapters && metadata.chapters.length) {
+                cardHtml += buildChaptersCardHtml(metadata.chapters, metadata.project_id || currentProjectId);
+            }
+
+            // 2. Casting Card
+            if (msgType === 'CASTING_CARD' && metadata && metadata.characters) {
+                cardHtml += buildCastingCardHtml(metadata.characters, metadata.available_voices, metadata.project_id || currentProjectId);
+            } 
+            // 3. Interactive Scene Audio Cards (When user says "نفذ" or executes a chapter)
+            else if (msgType === 'SCENE_AUDIO_CARDS' && metadata && metadata.scenes) {
+                cardHtml += buildSceneAudioCardsHtml(metadata.scenes, metadata.project_id || currentProjectId, metadata.chapter_title);
+            }
+            // 4. Studio Link Card
+            else if (msgType === 'STUDIO_LINK' && metadata) {
+                const studioUrl = `${window.location.protocol}//${window.location.hostname}:5173/?project_id=${metadata.project_id || currentProjectId}`;
+                cardHtml = `
+                    <div class="mt-4 p-5 rounded-2xl bg-gradient-to-r from-blue-900/40 via-purple-900/40 to-zinc-900 border border-blue-500/40 shadow-xl space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-emerald-300">الدراما الصوتية جاهزة للمعاينة والمونتاج!</h4>
+                                <p class="text-xs text-zinc-300">المدة الإجمالية: ${Math.round(metadata.total_duration || 0)} ثانية • المشاهد: ${metadata.scenes_count || 0}</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <a href="${studioUrl}" target="_blank" class="flex-1 text-center py-3 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-500/30 transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-sliders"></i>
+                                <span>فتح استوديو DesignCombo (نافذة جديدة)</span>
+                            </a>
+                            <button onclick="exportAudioFinal('${metadata.project_id || currentProjectId}')" class="py-3 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold border border-zinc-700 transition flex items-center gap-2">
+                                <i class="fa-solid fa-download"></i>
+                                <span>تحميل العمل الكامل (MP3/WAV)</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Quick Action Chips
+            let chipsHtml = '';
+            if (metadata && metadata.action_chips && metadata.action_chips.length) {
+                chipsHtml = buildActionChipsHtml(metadata.action_chips);
+            }
+
+            div.innerHTML = `
+                <div class="w-8 h-8 rounded-xl gemini-gradient flex items-center justify-center text-xs text-white shrink-0 shadow-md">
+                    <i class="fa-solid fa-robot"></i>
+                </div>
+                <div class="flex-1 space-y-3">
+                    <div class="text-xs font-semibold text-zinc-400">مخرج الدراما الصوتية (Gemini 3.8)</div>
+                    <div class="text-sm text-zinc-200 leading-relaxed bg-zinc-850/80 p-4 rounded-2xl border border-zinc-800/80 shadow-sm rounded-tr-sm">
+                        <div class="whitespace-pre-wrap">${formatMarkdown(text)}</div>
+                        ${cardHtml}
+                        ${chipsHtml}
+                    </div>
+                </div>
+            `;
+
+            area.appendChild(div);
+            scrollToBottom();
+        }
+
+        // Build Interactive Chapters Navigator Card
+        function buildChaptersCardHtml(chapters, projectId) {
+            if (!chapters || !chapters.length) return '';
+
+            const rows = chapters.map(ch => {
+                let statusBadge = '';
+                let actionBtn = '';
+
+                if (ch.status === 'READY') {
+                    statusBadge = `
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[11px] font-semibold">
+                            <i class="fa-solid fa-circle-check text-[10px]"></i>
+                            <span>جاهز (${ch.scenes_count || 0} مشهد • ${ch.total_duration_seconds || 0}s)</span>
+                        </span>
+                    `;
+                    actionBtn = `
+                        <button onclick="executeChapter('${projectId}', ${ch.number})" class="py-1.5 px-3 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold border border-zinc-700 transition flex items-center gap-1.5 shadow-sm active:scale-95">
+                            <i class="fa-solid fa-arrows-rotate text-blue-400 text-[10px]"></i>
+                            <span>إعادة تنفيذ</span>
+                        </button>
+                    `;
+                } else if (ch.status === 'GENERATING') {
+                    statusBadge = `
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[11px] font-semibold animate-pulse">
+                            <i class="fa-solid fa-spinner fa-spin text-[10px]"></i>
+                            <span>جاري التوليد...</span>
+                        </span>
+                    `;
+                    actionBtn = `
+                        <button disabled class="py-1.5 px-3 rounded-lg bg-zinc-800/50 text-zinc-500 text-xs font-semibold border border-zinc-800 cursor-not-allowed flex items-center gap-1.5">
+                            <i class="fa-solid fa-spinner fa-spin text-[10px]"></i>
+                            <span>قيد الإنتاج</span>
+                        </button>
+                    `;
+                } else {
+                    statusBadge = `
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 text-[11px]">
+                            <i class="fa-regular fa-clock text-[10px]"></i>
+                            <span>لم ينفذ بعد</span>
+                        </span>
+                    `;
+                    actionBtn = `
+                        <button onclick="executeChapter('${projectId}', ${ch.number})" class="py-1.5 px-3.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-500/20 border border-blue-400/30 transition flex items-center gap-1.5 active:scale-95">
+                            <i class="fa-solid fa-microphone-lines text-xs"></i>
+                            <span>🎙️ تنفيذ هذا الفصل</span>
+                        </button>
+                    `;
+                }
+
+                return `
+                <div class="p-3.5 rounded-xl bg-zinc-900/90 border border-zinc-800/90 hover:border-zinc-700 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1.5 flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="w-6 h-6 rounded-lg bg-blue-500/20 text-blue-400 font-mono text-xs flex items-center justify-center font-bold">
+                                ${ch.number}
+                            </span>
+                            <span class="font-bold text-white text-sm truncate">${escapeHtml(ch.title)}</span>
+                            ${statusBadge}
+                        </div>
+                        ${ch.summary ? `<p class="text-xs text-zinc-400 leading-relaxed pr-8 line-clamp-2">${escapeHtml(ch.summary)}</p>` : ''}
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                        ${actionBtn}
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            return `
+            <div class="mt-4 p-4 rounded-2xl bg-zinc-950/90 border border-blue-500/30 space-y-3.5 shadow-xl">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm shadow-sm">
+                            <i class="fa-solid fa-book-bookmark"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-zinc-100 text-sm">فصول الرواية (${chapters.length} فصول مستخرجة)</h4>
+                            <span class="text-[11px] text-zinc-400">يمكنك توليد واستماع صوت كل فصل بشكل مستقل</span>
+                        </div>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20">
+                        تنفيذ فصل فصل
+                    </span>
+                </div>
+
+                <div class="space-y-2.5 max-h-[460px] overflow-y-auto pr-1">
+                    ${rows}
+                </div>
+            </div>
+            `;
+        }
+
+        // Build In-Chat Interactive Scene Audio Cards
+        function buildSceneAudioCardsHtml(scenes, projectId, chapterTitle) {
+            if (!scenes || !scenes.length) return '';
+
+            const sceneRows = scenes.map((sc, idx) => {
+                return `
+                <div class="p-3.5 rounded-xl bg-zinc-900 border border-zinc-800 space-y-2.5 transition hover:border-zinc-700">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 font-mono text-xs flex items-center justify-center font-bold">
+                                ${sc.order}
+                            </span>
+                            <span class="font-bold text-white text-sm">${escapeHtml(sc.speaker_name)}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-mono border border-zinc-700">
+                                صوت ${sc.voice || 'Gemini'}
+                            </span>
+                            ${sc.chapter ? `
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/30">
+                                فصل ${sc.chapter}
+                            </span>` : ''}
+                            ${sc.sfx_name ? `
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+                                ⚡ مؤثر: ${sc.sfx_name}
+                            </span>` : ''}
+                        </div>
+                        <span class="text-[11px] text-zinc-400 font-mono">${sc.duration}s</span>
+                    </div>
+
+                    <!-- Dialogue text -->
+                    <p class="text-xs text-zinc-200 leading-relaxed font-medium bg-zinc-950/60 p-2.5 rounded-lg border border-zinc-800/60">
+                        ${escapeHtml(sc.vocalized_text || sc.raw_text)}
+                    </p>
+
+                    <!-- Dedicated Scene Audio Player -->
+                    <div class="flex items-center gap-2 pt-1">
+                        <audio id="scene_audio_${sc.id}" class="w-full h-8 rounded-lg" controls src="${sc.audio_url}" preload="none"></audio>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            const titleHeader = chapterTitle ? `مشاهد ${escapeHtml(chapterTitle)} (${scenes.length} مشهد)` : `المشاهد الصوتية المنفذة (${scenes.length} مشهد)`;
+
+            return `
+            <div class="mt-4 p-4 rounded-2xl bg-zinc-950 border border-blue-500/30 space-y-3 shadow-xl">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-headphones-simple"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-zinc-100 text-sm">${titleHeader}</h4>
+                            <span class="text-[11px] text-zinc-400">استمع لكل مشهد منفرداً أو شغل المشاهد كاملة بالتتابع</span>
+                        </div>
+                    </div>
+
+                    <!-- Play All Scenes in Sequence Button -->
+                    <button onclick="playAllScenesSequence('${projectId}')" id="playAllBtn_${projectId}" class="py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-blue-500/20">
+                        <i class="fa-solid fa-play"></i>
+                        <span>▶️ تشغيل كل المشاهد بالتتابع</span>
+                    </button>
+                </div>
+
+                <div class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+                    ${sceneRows}
+                </div>
+            </div>
+            `;
+        }
+
+        async function executeChapter(projectId, chapterNumber) {
+            const pid = projectId || currentProjectId;
+            if (!pid) return;
+
+            showTyping(`جاري توليد المشاهد الصوتية للفصل (${chapterNumber}) عبر Gemini TTS ومزامنة المؤثرات...`);
+            try {
+                const res = await fetch(`/api/projects/${pid}/execute-chapter`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chapter_number: chapterNumber })
+                });
+                const data = await res.json();
+                hideTyping();
+                if (data.project_id) currentProjectId = data.project_id;
+                renderAssistantMessage(data.response, data.msg_type, data.metadata);
+            } catch (err) {
+                hideTyping();
+                renderAssistantMessage("حدث خطأ أثناء تنفيذ الفصل: " + err.message, "TEXT", {});
+            }
+        }
+
+        // Sequential Scene Audio Player
+        function playAllScenesSequence(projectId) {
+            const audios = Array.from(document.querySelectorAll('audio[id^="scene_audio_"]'));
+            if (!audios.length) return;
+
+            const btn = document.getElementById(`playAllBtn_${projectId}`);
+
+            if (isPlayingSequence) {
+                audios.forEach(a => a.pause());
+                isPlayingSequence = false;
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-play"></i><span>▶️ تشغيل كل المشاهد بالتتابع</span>';
+                return;
+            }
+
+            isPlayingSequence = true;
+            sequenceIndex = 0;
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-pause"></i><span>⏸️ إيقاف التشغيل المتتابع</span>';
+
+            function playNext(idx) {
+                if (!isPlayingSequence || idx >= audios.length) {
+                    isPlayingSequence = false;
+                    if (btn) btn.innerHTML = '<i class="fa-solid fa-play"></i><span>▶️ تشغيل كل المشاهد بالتتابع</span>';
+                    return;
+                }
+                const audio = audios[idx];
+                audio.currentTime = 0;
+                audio.play().catch(e => console.log(e));
+                audio.onended = () => {
+                    playNext(idx + 1);
+                };
+            }
+
+            playNext(0);
+        }
+
+        // Quick Action Chips Builder
+        function buildActionChipsHtml(chips) {
+            if (!chips || !chips.length) return '';
+            const chipsHtml = chips.map(chip => {
+                const isExecute = chip.includes("توليد الصوت") || chip.includes("نفذ الصوت") || chip.includes("بدء توليد") || chip.includes("بدء الإنتاج");
+                const btnClass = isExecute
+                    ? "inline-flex items-center gap-2 py-2 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/25 border border-blue-400/40 transition active:scale-95"
+                    : "inline-flex items-center gap-1.5 py-1.5 px-3 rounded-full bg-zinc-800 hover:bg-blue-600/30 text-zinc-200 hover:text-blue-300 border border-zinc-700/80 hover:border-blue-500/50 text-xs font-medium transition shadow-sm active:scale-95";
+                return `
+                <button onclick="sendActionChip('${escapeHtml(chip)}')" class="${btnClass}">
+                    <span>${escapeHtml(chip)}</span>
+                </button>
+                `;
+            }).join('');
+
+            return `
+            <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-800/60 mt-3">
+                ${chipsHtml}
+            </div>
+            `;
+        }
+
+        // Casting Card Builder
+        function buildCastingCardHtml(characters, availableVoices, projectId) {
+            const rows = characters.map(c => `
+                <div class="p-3.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-white text-sm">${escapeHtml(c.name)}</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-medium">${c.role_type}</span>
+                        </div>
+                        <p class="text-xs text-zinc-400 leading-tight">${escapeHtml(c.description || '')}</p>
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        <select id="voice_select_${c.id}" class="bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
+                            ${(availableVoices || []).map(v => `<option value="${v.name}" ${v.name === c.assigned_voice ? 'selected' : ''}>صوت ${v.name} (${v.description})</option>`).join('')}
+                        </select>
+
+                        ${c.sample_audio_url ? `
+                        <audio controls class="h-8 max-w-[140px]" src="${c.sample_audio_url}"></audio>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            return `
+                <div class="mt-4 p-4 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-3">
+                    <div class="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+                        <span class="text-xs font-bold text-zinc-200 flex items-center gap-2">
+                            <i class="fa-solid fa-users text-blue-400"></i>
+                            <span>توزيع أصوات الشخصيات (Casting Studio)</span>
+                        </span>
+                        <span class="text-[11px] text-zinc-400">${characters.length} شخصيات مستخرجة</span>
+                    </div>
+
+                    <div class="space-y-2">
+                        ${rows}
+                    </div>
+
+                    <div class="pt-2">
+                        <button onclick="approveCasting('${projectId}', ${JSON.stringify(characters.map(c => c.id))})" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>🚀 اعتماد الأصوات وتنفيذ المشاهد الصوتية فوراً</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function approveCasting(projectId, characterIds) {
+            showTyping("جاري اعتماد الأصوات وتوليد مشاهد الدراما الصوتية عبر Gemini TTS وربط المؤثرات...");
+
+            const updates = characterIds.map(id => {
+                const sel = document.getElementById(`voice_select_${id}`);
+                return {
+                    character_id: id,
+                    assigned_voice: sel ? sel.value : "Puck"
+                };
+            });
+
+            try {
+                await fetch(`/api/projects/${projectId}/update-characters`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ updates })
+                });
+
+                const res = await fetch(`/api/projects/${projectId}/approve-casting`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                hideTyping();
+                renderAssistantMessage(data.response, data.msg_type, data.metadata);
+            } catch (err) {
+                hideTyping();
+                renderAssistantMessage("حدث خطأ أثناء الإنتاج: " + err.message, "TEXT", {});
+            }
+        }
+
+        async function exportAudioFinal(projectId) {
+            showTyping("جاري دمج المقاطع وريندر العمل الصوتي الكامل...");
+            try {
+                const res = await fetch(`/api/projects/${projectId}/export`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                hideTyping();
+                if (data.audio_url) {
+                    window.open(data.audio_url, '_blank');
+                } else {
+                    alert(data.message);
+                }
+            } catch (err) {
+                hideTyping();
+                alert("خطأ أثناء التصدير: " + err.message);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatMarkdown(text) {
+            if (!text) return '';
+            let s = escapeHtml(text);
+            s = s.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            s = s.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            s = s.replace(/`(.*?)`/g, '<code class="bg-zinc-800 text-blue-300 px-1.5 py-0.5 rounded text-xs">$1</code>');
+            return s;
+        }
+    </script>
+</body>
+</html>
