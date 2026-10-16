@@ -491,3 +491,51 @@ def set_narration_mode_endpoint(request, project_id: str, data: SetNarrationMode
     }
 
 
+class RegenerateSceneRequest(Schema):
+    text: Optional[str] = None
+
+
+@api.post("/scenes/{scene_id}/regenerate")
+def regenerate_scene_endpoint(request, scene_id: str, data: Optional[RegenerateSceneRequest] = None):
+    scene = get_object_or_404(Scene, id=scene_id)
+    if data and data.text:
+        scene.raw_text = data.text.strip()
+        scene.vocalized_text = data.text.strip()
+
+    from .services.gemini_service import generate_voice_audio
+    from .services.minio_service import upload_bytes
+
+    voice = scene.speaker.assigned_voice if scene.speaker else "Charon"
+    text_to_synth = scene.vocalized_text or scene.raw_text
+    audio_bytes = generate_voice_audio(text_to_synth, voice_name=voice, emotion=scene.emotion or "cinematic")
+    audio_url = upload_bytes(audio_bytes, f"audio/{scene.project.id}/scene_{scene.order}_regen.wav")
+
+    duration = max(2.5, min(20.0, len(text_to_synth.split()) * 0.45))
+    scene.audio_url = audio_url
+    scene.duration_seconds = duration
+    scene.save(update_fields=['raw_text', 'vocalized_text', 'audio_url', 'duration_seconds'])
+
+    return {
+        "success": True,
+        "scene": {
+            "id": str(scene.id),
+            "order": scene.order,
+            "speaker_name": scene.speaker_name,
+            "voice": voice,
+            "raw_text": scene.raw_text,
+            "vocalized_text": scene.vocalized_text,
+            "audio_url": scene.audio_url,
+            "duration": round(scene.duration_seconds, 1),
+            "sfx_name": scene.sfx_name or ""
+        }
+    }
+
+
+@api.delete("/scenes/{scene_id}")
+def delete_scene_endpoint(request, scene_id: str):
+    scene = get_object_or_404(Scene, id=scene_id)
+    scene.delete()
+    return {"success": True, "message": "تم حذف المشهد بنجاح"}
+
+
+
