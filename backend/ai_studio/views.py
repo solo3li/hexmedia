@@ -88,10 +88,26 @@ def chat_home_view(request):
         "total_duration_seconds": round(p.total_duration_seconds, 1)
     } for p in recent_projects_qs]
 
+    messages = []
+    if current_project:
+        messages = list(current_project.messages.all().order_by('created_at'))
+
+    messages_data = [
+        {
+            'id': str(m.id),
+            'role': m.role,
+            'content': m.content,
+            'msg_type': m.msg_type,
+            'metadata': m.metadata or {}
+        }
+        for m in messages
+    ]
+
     return render(request, 'chat/index.html', {
         'config': config,
         'recent_projects': recent_projects_qs,
         'current_project': current_project,
+        'messages_json': json.dumps(messages_data, ensure_ascii=False),
         'initial_project_json': json.dumps(initial_project_data, ensure_ascii=False),
         'projects_list_json': json.dumps(projects_list, ensure_ascii=False),
         'available_voices_json': json.dumps(available_voices, ensure_ascii=False)
