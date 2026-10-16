@@ -228,39 +228,15 @@
     <main class="flex-1 overflow-y-auto px-4 md:px-8 pt-8 pb-36" id="messagesContainer">
       <div class="max-w-[820px] mx-auto space-y-7">
 
-        <!-- Welcome Hero (Shown if brand new conversation with no messages) -->
-        <div id="welcomeHero" class="text-center py-12 space-y-5 border border-dashed border-borderSubtle rounded-3xl p-8 my-4">
-          <div class="w-12 h-12 mx-auto rounded-2xl bg-surface border border-borderSubtle flex items-center justify-center">
-            <svg class="w-6 h-6 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <!-- Welcome Hero (ChatGPT-Style Clean Minimal Centerpiece, No Cards) -->
+        <div id="welcomeHero" class="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4 my-auto select-none">
+          <div class="w-10 h-10 rounded-2xl bg-surface border border-borderSubtle flex items-center justify-center shadow-lg">
+            <svg class="w-5 h-5 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"></polygon>
               <circle cx="12" cy="12" r="2" fill="#e2ff44" stroke="none"></circle>
             </svg>
           </div>
-          <div class="space-y-1.5">
-            <h2 class="text-lg md:text-xl font-medium text-white tracking-tight">أستوديو الدراما والروايات الصوتية الذكي</h2>
-            <p class="text-xs text-muted max-w-md mx-auto leading-relaxed">
-              تحاور مع المخرج الذكي لتأليف القصص والحوارات، أو استخدم زر <strong class="text-white">(+)</strong> بالأسفل لرفع كتابك وتحويله لرواية مسموعة.
-            </p>
-          </div>
-
-          <!-- Quick Action Starter Chips -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 text-right max-w-lg mx-auto">
-            <div onclick="sendQuickPrompt('أريد تأليف مشهد درامي مشوق عن طائرة ركاب تفقد الاتصال في عاصفة رعدية')" class="p-3.5 rounded-2xl bg-surface hover:bg-surfaceHover border border-borderSubtle hover:border-limeAccent/40 transition cursor-pointer group">
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-xs font-medium text-white group-hover:text-limeAccent transition">✍️ تأليف قصة وسيناريو</span>
-                <span class="text-[10px] text-muted">حوار حي</span>
-              </div>
-              <p class="text-[11px] text-muted leading-normal">تأليف سيناريو تفاعلي مشوق وتوزيع الشخصيات وتوليد الصوت مباشرة.</p>
-            </div>
-
-            <div onclick="triggerBookUploadFromTool()" class="p-3.5 rounded-2xl bg-surface hover:bg-surfaceHover border border-borderSubtle hover:border-limeAccent/40 transition cursor-pointer group">
-              <div class="flex items-center justify-between mb-1.5">
-                <span class="text-xs font-medium text-white group-hover:text-limeAccent transition">📚 تحويل كتاب إلى مسموع</span>
-                <span class="text-[10px] text-muted">PDF / EPUB</span>
-              </div>
-              <p class="text-[11px] text-muted leading-normal">رفع رواية كاملة وتفكيكها إلى فصول ومشاهد درامية متتالية.</p>
-            </div>
-          </div>
+          <h2 class="text-xl md:text-2xl font-medium text-white tracking-tight">بماذا يمكنني مساعدتك في مشروعك اليوم؟</h2>
         </div>
 
         <!-- Dynamic Chat Stream Area (User & Assistant Messages) -->
@@ -431,7 +407,7 @@
     const serverMessages = {{ messages_json|safe }};
 
     let activeProject = initialProject || null;
-    let activeProjectId = activeProject ? activeProject.id : (projectsList[0] ? projectsList[0].id : null);
+    let activeProjectId = activeProject ? activeProject.id : null;
     let activeChapterNumber = 1;
     let activeBlockId = null;
     let isMasterPlaying = false;

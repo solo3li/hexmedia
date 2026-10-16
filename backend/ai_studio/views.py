@@ -20,8 +20,6 @@ def chat_home_view(request):
             current_project = BookProject.objects.get(id=project_id)
         except BookProject.DoesNotExist:
             pass
-    if not current_project:
-        current_project = recent_projects_qs.first()
 
     available_voices = [
         {"name": "Charon", "description": "صوت جهوري عميق ورزين (مثالي للراوي)", "gender": "MALE", "pitch": 95},
