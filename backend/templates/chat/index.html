@@ -101,16 +101,19 @@
     }
   </style>
 </head>
-<body class="h-screen w-screen overflow-hidden flex select-none bg-obsidian text-light">
+<body class="h-[100dvh] min-h-[100dvh] w-screen overflow-hidden flex select-none bg-obsidian text-light antialiased">
 
-  <!-- 1. ULTRA-CLEAN RIGHT SIDEBAR (RTL) -->
-  <aside id="sidebar" class="w-64 bg-surface border-l border-borderSubtle flex flex-col justify-between shrink-0 transition-all duration-300 z-30">
+  <!-- Mobile & Tablet Backdrop Blur Overlay -->
+  <div id="sidebarBackdrop" onclick="toggleSidebar(false)" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity duration-300 opacity-0"></div>
+
+  <!-- 1. ULTRA-CLEAN RIGHT SIDEBAR (RTL - Drawer on Mobile/Tablet, Static on Desktop) -->
+  <aside id="sidebar" class="fixed lg:relative inset-y-0 right-0 w-72 lg:w-64 bg-surface border-l border-borderSubtle flex flex-col justify-between shrink-0 transition-transform duration-300 z-50 transform translate-x-full lg:translate-x-0 shadow-2xl lg:shadow-none">
     
-    <div class="p-5">
+    <div class="p-4 sm:p-5 flex-1 flex flex-col min-h-0">
       <!-- Minimal Brand Header -->
-      <div class="flex items-center justify-between mb-7">
+      <div class="flex items-center justify-between mb-5 sm:mb-7 shrink-0">
         <div class="flex items-center gap-2.5">
-          <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center">
+          <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center shadow-sm">
             <svg class="w-4 h-4 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"></polygon>
               <circle cx="12" cy="12" r="2" fill="#e2ff44" stroke="none"></circle>
@@ -119,7 +122,7 @@
           <span class="font-medium tracking-wide text-sm text-white">HexMedia</span>
         </div>
 
-        <button onclick="toggleSidebar()" title="طي القائمة" class="p-1.5 rounded-lg text-muted hover:text-white hover:bg-obsidian transition-colors md:hidden">
+        <button onclick="toggleSidebar(false)" title="إغلاق القائمة" class="p-1.5 rounded-lg text-muted hover:text-white hover:bg-obsidian transition-colors lg:hidden active:scale-95">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -128,7 +131,7 @@
       </div>
 
       <!-- New Chat / Project Button (Raycast / ChatGPT style) -->
-      <button onclick="startNewChat()" class="w-full py-2.5 px-3.5 rounded-xl bg-obsidian hover:bg-surfaceHover border border-borderSubtle hover:border-limeAccent/40 text-xs font-medium text-light flex items-center justify-between transition-all group shadow-sm active:scale-[0.98]">
+      <button onclick="startNewChat()" class="w-full py-2.5 px-3.5 rounded-xl bg-obsidian hover:bg-surfaceHover border border-borderSubtle hover:border-limeAccent/40 text-xs font-medium text-light flex items-center justify-between transition-all group shadow-sm active:scale-[0.98] shrink-0">
         <div class="flex items-center gap-2">
           <svg class="w-3.5 h-3.5 text-muted group-hover:text-limeAccent transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -136,20 +139,20 @@
           </svg>
           <span>محادثة / رواية جديدة</span>
         </div>
-        <kbd class="px-1.5 py-0.5 text-[9px] font-mono bg-surface text-muted border border-borderSubtle rounded">Ctrl+K</kbd>
+        <kbd class="hidden sm:inline px-1.5 py-0.5 text-[9px] font-mono bg-surface text-muted border border-borderSubtle rounded">Ctrl+K</kbd>
       </button>
 
       <!-- Projects / Chats List -->
-      <div class="mt-7">
-        <span class="block text-[11px] text-muted mb-3 px-2 font-normal">سجل المحادثات والأعمال</span>
-        <div id="projectsList" class="space-y-1 overflow-y-auto max-h-[calc(100vh-270px)] pr-0.5">
+      <div class="mt-5 sm:mt-7 flex-1 min-h-0 flex flex-col">
+        <span class="block text-[11px] text-muted mb-2 sm:mb-3 px-2 font-normal shrink-0">سجل المحادثات والأعمال</span>
+        <div id="projectsList" class="space-y-1 overflow-y-auto flex-1 pr-0.5">
           <!-- Populated by JS -->
         </div>
       </div>
     </div>
 
     <!-- Minimal Footer -->
-    <div class="p-5 border-t border-borderSubtle flex items-center justify-between text-[11px] text-muted">
+    <div class="p-4 sm:p-5 border-t border-borderSubtle flex items-center justify-between text-[11px] text-muted shrink-0">
       <div class="flex items-center gap-1.5">
         <span class="w-1.5 h-1.5 rounded-full bg-limeAccent"></span>
         <span class="font-mono text-[10px]">Gemini 3.8 Flash</span>
@@ -159,29 +162,29 @@
   </aside>
 
   <!-- MAIN AREA -->
-  <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+  <div class="flex-1 flex flex-col h-full overflow-hidden relative min-w-0">
 
     <!-- 2. MINIMAL TOP HEADER -->
-    <header class="h-16 px-6 md:px-8 border-b border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/90 backdrop-blur-md z-10">
+    <header class="h-14 sm:h-16 px-3.5 sm:px-6 md:px-8 border-b border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/90 backdrop-blur-md z-10">
       
       <!-- Right: Title & Breadcrumb -->
-      <div class="flex items-center gap-3">
-        <button onclick="toggleSidebar()" class="p-1.5 rounded-lg text-muted hover:text-white md:hidden">
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button onclick="toggleSidebar(true)" title="فتح سجل المحادثات" class="p-2 rounded-xl text-muted hover:text-white bg-surface/80 border border-borderSubtle lg:hidden active:scale-95 transition-all shrink-0">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
-        <h1 id="headerTitle" class="text-sm font-medium text-white truncate max-w-[200px] sm:max-w-xs">محادثة جديدة</h1>
+        <h1 id="headerTitle" class="text-xs sm:text-sm font-medium text-white truncate max-w-[150px] sm:max-w-xs">محادثة جديدة</h1>
         
-        <div id="chapterSelectorContainer" class="hidden flex items-center gap-2">
+        <div id="chapterSelectorContainer" class="hidden flex items-center gap-1.5 sm:gap-2">
           <span class="text-borderSubtle">/</span>
           <div class="relative">
-            <select id="chapterSelector" onchange="handleChapterChange(this.value)" class="appearance-none bg-surface hover:bg-surfaceHover border border-borderSubtle rounded-lg pl-7 pr-3 py-1 text-xs text-muted hover:text-white focus:outline-none cursor-pointer transition-colors font-mono">
+            <select id="chapterSelector" onchange="handleChapterChange(this.value)" class="appearance-none bg-surface hover:bg-surfaceHover border border-borderSubtle rounded-lg pl-6 sm:pl-7 pr-2.5 sm:pr-3 py-1 text-[11px] sm:text-xs text-muted hover:text-white focus:outline-none cursor-pointer transition-colors font-mono">
               <!-- Populated by JS -->
             </select>
-            <svg class="w-3 h-3 text-muted absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg class="w-3 h-3 text-muted absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
@@ -189,7 +192,7 @@
       </div>
 
       <!-- Center: Narrator Mode Minimalist Segmented Pill Control (Visible only in Audio Drama Mode) -->
-      <div id="narratorModeControls" class="hidden items-center bg-surface p-1 rounded-full border border-borderSubtle">
+      <div id="narratorModeControls" class="hidden md:flex items-center bg-surface p-1 rounded-full border border-borderSubtle">
         <button onclick="setNarratorMode('SMART')" id="mode-SMART" class="px-3.5 py-1 rounded-full text-xs font-medium bg-obsidian text-white border border-borderSubtle transition-all">
           سرد ذكي
         </button>
@@ -202,8 +205,8 @@
       </div>
 
       <!-- Left: Open Studio & Export Button -->
-      <div class="flex items-center gap-2.5">
-        <button id="studioHeaderBtn" onclick="openDesignComboStudio()" title="فتح في استوديو المونتاج" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface hover:bg-surfaceHover border border-borderSubtle text-xs text-muted hover:text-white transition-colors">
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="studioHeaderBtn" onclick="openDesignComboStudio()" title="فتح في استوديو المونتاج" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface hover:bg-surfaceHover border border-borderSubtle text-xs text-muted hover:text-white transition-colors">
           <svg class="w-3 h-3 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="4" y1="21" x2="4" y2="14"></line>
             <line x1="4" y1="10" x2="4" y2="3"></line>
@@ -212,10 +215,10 @@
             <line x1="20" y1="21" x2="20" y2="16"></line>
             <line x1="20" y1="12" x2="20" y2="3"></line>
           </svg>
-          <span>الاستوديو</span>
+          <span class="hidden md:inline">الاستوديو</span>
         </button>
 
-        <button id="exportHeaderBtn" onclick="exportAudioMaster()" class="hidden items-center gap-2 px-4 py-1.5 rounded-full bg-white hover:bg-limeAccent text-obsidian font-medium text-xs transition-colors active:scale-95 shadow-sm">
+        <button id="exportHeaderBtn" onclick="exportAudioMaster()" class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-limeAccent text-obsidian font-medium text-xs transition-colors active:scale-95 shadow-sm">
           <span>تصدير</span>
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -228,8 +231,8 @@
     </header>
 
     <!-- 3. MAIN CONVERSATIONAL WORKSPACE (Centered, Max-Width 820px) -->
-    <main class="flex-1 overflow-y-auto px-4 md:px-8 pt-8 pb-36" id="messagesContainer">
-      <div class="max-w-[820px] mx-auto space-y-7">
+    <main class="flex-1 overflow-y-auto px-3 sm:px-6 md:px-8 pt-4 sm:pt-8 pb-32 sm:pb-36" id="messagesContainer">
+      <div class="max-w-[820px] mx-auto space-y-5 sm:space-y-7">
 
         <!-- Welcome Hero (ChatGPT-Style Clean Minimal Centerpiece, No Cards) -->
         <div id="welcomeHero" class="flex flex-col items-center justify-center min-h-[50vh] text-center space-y-4 my-auto select-none">
@@ -269,11 +272,28 @@
     </main>
 
     <!-- 4. FLOATING MINIMAL BOTTOM DOCK (ChatGPT-Style with (+) Tools Menu) -->
-    <div class="absolute bottom-6 inset-x-0 px-4 md:px-8 pointer-events-none z-20">
+    <div class="absolute bottom-3 sm:bottom-6 inset-x-0 px-3 sm:px-6 md:px-8 pointer-events-none z-20">
       <div class="max-w-[760px] mx-auto relative pointer-events-auto">
 
+        <!-- Active Pills container floating above the dock bar -->
+        <div id="pillsBar" class="flex items-center gap-2 mb-2 px-1 overflow-x-auto no-scrollbar pointer-events-auto">
+          <!-- Active Tool Pill (e.g. Story Authoring Mode) -->
+          <div id="activeToolPill" class="hidden items-center gap-1.5 bg-surface/95 border border-limeAccent/60 px-3 py-1 rounded-full text-xs text-white shrink-0 shadow-lg backdrop-blur-md">
+            <span id="activeToolIcon">✍️</span>
+            <span id="activeToolLabel" class="truncate max-w-[150px] sm:max-w-xs font-medium text-limeAccent">تأليف سيناريو درامي</span>
+            <button type="button" onclick="clearActiveTool()" title="إلغاء والعودة للشات العادي" class="text-muted hover:text-white mr-1 text-sm font-bold leading-none">×</button>
+          </div>
+
+          <!-- Active File Pill (if novel attached) -->
+          <div id="filePreviewPill" class="hidden items-center gap-1.5 bg-surface/95 border border-borderSubtle px-3 py-1 rounded-full text-xs text-light shrink-0 shadow-lg backdrop-blur-md">
+            <span class="w-1.5 h-1.5 rounded-full bg-limeAccent"></span>
+            <span id="fileNameLabel" class="truncate max-w-[130px] sm:max-w-xs font-mono">book.pdf</span>
+            <button type="button" onclick="clearSelectedFile()" title="إلغاء الملف" class="text-muted hover:text-red-400 mr-1 text-sm font-bold leading-none">×</button>
+          </div>
+        </div>
+
         <!-- ChatGPT-Style Tools Popover Menu (Opens above the (+) button) -->
-        <div id="toolsMenu" class="hidden absolute bottom-16 right-0 w-72 bg-surface border border-borderSubtle rounded-2xl p-2 shadow-2xl space-y-1 backdrop-blur-xl z-50">
+        <div id="toolsMenu" class="hidden absolute bottom-14 sm:bottom-16 right-0 max-w-[calc(100vw-1.5rem)] sm:max-w-none w-72 bg-surface border border-borderSubtle rounded-2xl p-2 shadow-2xl space-y-1 backdrop-blur-xl z-50">
           <div class="px-3 py-1.5 text-[10px] font-mono text-muted uppercase tracking-wider border-b border-borderSubtle/60 mb-1">
             أدوات HexMedia الذكية
           </div>
@@ -319,10 +339,10 @@
         </div>
 
         <!-- The Floating Dock Body -->
-        <div class="floating-dock border border-borderSubtle rounded-full p-2 pl-3 pr-2.5 shadow-2xl flex items-center gap-2.5">
+        <div class="floating-dock border border-borderSubtle rounded-full p-1.5 sm:p-2 pl-2 sm:pl-3 pr-2 sm:pr-2.5 shadow-2xl flex items-center gap-1.5 sm:gap-2.5 bg-surface/90 backdrop-blur-xl">
           
           <!-- Plus (+) Button for Tools Menu (ChatGPT style) -->
-          <button id="toolsBtn" onclick="toggleToolsMenu()" title="الأدوات وإرفاق الملفات" class="w-8 h-8 rounded-full bg-surface hover:bg-white text-muted hover:text-obsidian border border-borderSubtle flex items-center justify-center shrink-0 transition-all active:scale-95">
+          <button id="toolsBtn" onclick="toggleToolsMenu()" title="الأدوات وإرفاق الملفات" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface hover:bg-white text-muted hover:text-obsidian border border-borderSubtle flex items-center justify-center shrink-0 transition-all active:scale-95">
             <svg id="toolsIcon" class="w-4 h-4 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -330,25 +350,11 @@
           </button>
 
           <!-- Master Sequential Audio Playback Button -->
-          <button id="masterPlayBtn" onclick="toggleMasterPlay()" title="تشغيل كل المشاهد بالتتابع" class="w-8 h-8 rounded-full bg-obsidian hover:bg-limeAccent text-light hover:text-obsidian border border-borderSubtle flex items-center justify-center shrink-0 transition-transform active:scale-95">
+          <button id="masterPlayBtn" onclick="toggleMasterPlay()" title="تشغيل كل المشاهد بالتتابع" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-obsidian hover:bg-limeAccent text-light hover:text-obsidian border border-borderSubtle flex items-center justify-center shrink-0 transition-transform active:scale-95">
             <svg id="masterPlayIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" stroke="none">
               <polygon points="6 4 20 12 6 20 6 4"></polygon>
             </svg>
           </button>
-
-          <!-- Active Tool Pill (e.g. Story Authoring Mode) -->
-          <div id="activeToolPill" class="hidden items-center gap-1.5 bg-obsidian border border-limeAccent/50 px-2.5 py-1 rounded-full text-[11px] text-white shrink-0">
-            <span id="activeToolIcon">✍️</span>
-            <span id="activeToolLabel" class="truncate max-w-[130px] font-medium text-limeAccent">تأليف سيناريو درامي</span>
-            <button type="button" onclick="clearActiveTool()" title="إلغاء والعودة للشات العادي" class="text-muted hover:text-white mr-1 text-xs font-bold leading-none">×</button>
-          </div>
-
-          <!-- Active File Pill (if novel attached) -->
-          <div id="filePreviewPill" class="hidden items-center gap-1.5 bg-obsidian border border-borderSubtle px-2.5 py-1 rounded-full text-[11px] text-light shrink-0">
-            <span class="w-1.5 h-1.5 rounded-full bg-limeAccent"></span>
-            <span id="fileNameLabel" class="truncate max-w-[120px] font-mono">book.pdf</span>
-            <button type="button" onclick="clearSelectedFile()" class="text-muted hover:text-red-400 mr-1 text-xs font-bold leading-none">×</button>
-          </div>
 
           <!-- Clean Input Field -->
           <input 
@@ -356,11 +362,11 @@
             type="text" 
             placeholder="اسأل أي شيء أو اكتب رسالتك... (اختر أداة من +)" 
             onkeydown="if(event.key === 'Enter') handleSendMessage()"
-            class="flex-1 bg-transparent text-xs text-white placeholder-muted focus:outline-none px-2"
+            class="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder-muted focus:outline-none px-2 min-w-0"
           >
 
           <!-- Send / Generate Button -->
-          <button id="sendBtn" onclick="handleSendMessage()" title="إرسال" class="w-8 h-8 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-sm">
+          <button id="sendBtn" onclick="handleSendMessage()" title="إرسال" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-sm">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
@@ -477,8 +483,17 @@
         );
       }
 
-      // Keyboard shortcut Ctrl+K for new chat
+      // Keyboard shortcut Ctrl+K for new chat, Escape to close drawers/menus
       window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          toggleSidebar(false);
+          const menu = document.getElementById('toolsMenu');
+          if (menu && !menu.classList.contains('hidden')) {
+            menu.classList.add('hidden');
+            const icon = document.getElementById('toolsIcon');
+            if (icon) icon.classList.remove('rotate-45');
+          }
+        }
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
           e.preventDefault();
           startNewChat();
@@ -509,9 +524,37 @@
       }, 2600);
     }
 
-    function toggleSidebar() {
+    function toggleSidebar(forceState) {
       const sb = document.getElementById('sidebar');
-      sb.classList.toggle('hidden');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (!sb) return;
+
+      const isCurrentlyOpen = !sb.classList.contains('translate-x-full');
+      const shouldOpen = (typeof forceState === 'boolean') ? forceState : !isCurrentlyOpen;
+
+      if (shouldOpen) {
+        sb.classList.remove('translate-x-full');
+        sb.classList.add('translate-x-0');
+        if (backdrop) {
+          backdrop.classList.remove('hidden');
+          requestAnimationFrame(() => {
+            backdrop.classList.remove('opacity-0');
+            backdrop.classList.add('opacity-100');
+          });
+        }
+      } else {
+        sb.classList.add('translate-x-full');
+        sb.classList.remove('translate-x-0');
+        if (backdrop) {
+          backdrop.classList.remove('opacity-100');
+          backdrop.classList.add('opacity-0');
+          setTimeout(() => {
+            if (sb.classList.contains('translate-x-full')) {
+              backdrop.classList.add('hidden');
+            }
+          }, 300);
+        }
+      }
     }
 
     function toggleToolsMenu() {
@@ -566,6 +609,7 @@
     }
 
     function startNewChat() {
+      toggleSidebar(false);
       window.location.href = '/';
     }
 
@@ -614,6 +658,7 @@
     }
 
     function selectProject(id) {
+      toggleSidebar(false);
       window.location.href = `?project_id=${id}`;
     }
 
@@ -658,9 +703,9 @@
     function renderUserMessage(text) {
       const area = document.getElementById('dynamicChatFeed');
       const div = document.createElement('div');
-      div.className = 'flex gap-3 justify-end items-start';
+      div.className = 'flex gap-2.5 sm:gap-3 justify-end items-start';
       div.innerHTML = `
-        <div class="max-w-[80%] rounded-2xl px-4 py-3 bg-surface border border-borderSubtle text-light text-xs md:text-sm leading-relaxed rounded-tl-sm whitespace-pre-wrap">${escapeHtml(text)}</div>
+        <div class="max-w-[85%] sm:max-w-[80%] rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3 bg-surface border border-borderSubtle text-light text-xs sm:text-sm leading-relaxed rounded-tl-sm whitespace-pre-wrap">${escapeHtml(text)}</div>
         <div class="w-7 h-7 rounded-full bg-obsidian border border-borderSubtle flex items-center justify-center text-[10px] text-muted font-mono shrink-0">أنت</div>
       `;
       area.appendChild(div);
@@ -670,7 +715,7 @@
     function renderAssistantMessage(text, msgType, metadata) {
       const area = document.getElementById('dynamicChatFeed');
       const div = document.createElement('div');
-      div.className = 'flex gap-3.5 items-start';
+      div.className = 'flex gap-2.5 sm:gap-3.5 items-start';
 
       let cardHtml = '';
 
@@ -693,15 +738,15 @@
       if (msgType === 'STUDIO_LINK' && metadata) {
         const studioUrl = `${window.location.protocol}//${window.location.hostname}:5173/?project_id=${metadata.project_id || activeProjectId}`;
         cardHtml += `
-          <div class="mt-4 p-4 rounded-2xl bg-surface border border-borderSubtle flex items-center justify-between gap-4">
+          <div class="mt-4 p-3 sm:p-4 rounded-2xl bg-surface border border-borderSubtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
             <div>
               <div class="text-xs font-medium text-white flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-limeAccent"></span>
+                <span class="w-2 h-2 rounded-full bg-limeAccent shrink-0"></span>
                 <span>الدراما الصوتية جاهزة للمعاينة في الاستوديو</span>
               </div>
               <p class="text-[11px] text-muted mt-0.5">المدة: ${Math.round(metadata.total_duration || 0)}s • المشاهد: ${metadata.scenes_count || 0}</p>
             </div>
-            <a href="${studioUrl}" target="_blank" class="px-4 py-2 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition active:scale-95 shrink-0">
+            <a href="${studioUrl}" target="_blank" class="self-end sm:self-auto px-4 py-1.5 sm:py-2 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition active:scale-95 shrink-0 text-center">
               فتح DesignCombo
             </a>
           </div>
@@ -722,7 +767,7 @@
         </div>
         <div class="flex-1 space-y-2 min-w-0">
           <div class="text-[11px] font-mono text-muted">المخرج الذكي (Gemini 3.8)</div>
-          <div class="text-xs md:text-sm text-light leading-relaxed bg-surface p-4 rounded-2xl border border-borderSubtle rounded-tr-sm space-y-3">
+          <div class="text-xs sm:text-sm text-light leading-relaxed bg-surface p-3.5 sm:p-4 rounded-2xl border border-borderSubtle rounded-tr-sm space-y-3">
             <div class="whitespace-pre-wrap">${formatMarkdown(text)}</div>
             ${cardHtml}
           </div>
@@ -762,20 +807,20 @@
 
     function buildChaptersCardHtml(chapters, projectId) {
       const rows = chapters.map(ch => `
-        <div class="p-3 rounded-xl bg-obsidian border border-borderSubtle flex items-center justify-between gap-3">
+        <div class="p-2.5 sm:p-3 rounded-xl bg-obsidian border border-borderSubtle flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
           <div class="space-y-0.5 flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="w-5 h-5 rounded-md bg-surface text-limeAccent font-mono text-[10px] flex items-center justify-center font-bold">
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span class="w-5 h-5 rounded-md bg-surface text-limeAccent font-mono text-[10px] flex items-center justify-center font-bold shrink-0">
                 ${ch.number}
               </span>
-              <span class="font-medium text-white text-xs truncate">${escapeHtml(ch.title)}</span>
+              <span class="font-medium text-white text-xs truncate max-w-[200px] sm:max-w-none">${escapeHtml(ch.title)}</span>
               <span class="text-[9px] font-mono px-2 py-0.5 rounded-full ${ch.status === 'READY' ? 'bg-limeAccent/10 text-limeAccent border border-limeAccent/20' : 'bg-surface text-muted'}">
                 ${ch.status === 'READY' ? 'جاهز' : 'لم ينفذ بعد'}
               </span>
             </div>
-            ${ch.summary ? `<p class="text-[10px] text-muted leading-relaxed truncate pr-7">${escapeHtml(ch.summary)}</p>` : ''}
+            ${ch.summary ? `<p class="text-[10px] text-muted leading-relaxed line-clamp-1 pr-6 sm:pr-7">${escapeHtml(ch.summary)}</p>` : ''}
           </div>
-          <button onclick="executeChapterFromCard('${projectId}', ${ch.number})" class="px-3 py-1 rounded-full bg-surface hover:bg-white text-light hover:text-obsidian border border-borderSubtle text-[11px] font-medium transition active:scale-95 shrink-0">
+          <button onclick="executeChapterFromCard('${projectId}', ${ch.number})" class="self-end sm:self-auto px-3 py-1 rounded-full bg-surface hover:bg-white text-light hover:text-obsidian border border-borderSubtle text-[10px] sm:text-[11px] font-medium transition active:scale-95 shrink-0">
             🎙️ تنفيذ الصوت
           </button>
         </div>
@@ -785,7 +830,7 @@
         <div class="space-y-2 pt-2 border-t border-borderSubtle/60">
           <div class="text-[11px] font-mono text-muted flex items-center justify-between">
             <span>فصول الرواية المستخرجة (${chapters.length})</span>
-            <span class="text-[10px]">تنفيذ فصل تلو الآخر</span>
+            <span class="text-[10px] hidden sm:inline">تنفيذ فصل تلو الآخر</span>
           </div>
           <div class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
             ${rows}
@@ -800,32 +845,32 @@
       const blocks = scenes.map((block, idx) => {
         const isNarrator = block.speaker_name === 'الراوي';
 
-        // 24-bar waveform
+        // 20-bar waveform for responsive display
         let bars = '';
-        for (let i = 0; i < 24; i++) {
+        for (let i = 0; i < 20; i++) {
           const h = 25 + ((i * 17 + idx * 11) % 70);
           bars += `<span class="wave-bar w-[2px] rounded-full bg-zinc-700" data-base="${h}" style="height: ${h}%" id="wave_bar_${block.id}_${i}"></span>`;
         }
 
         return `
-          <div id="block-${block.id}" class="group p-3.5 rounded-2xl bg-obsidian border border-borderSubtle hover:border-limeAccent/40 flex items-center justify-between gap-4 transition-all">
+          <div id="block-${block.id}" class="group p-2.5 sm:p-3.5 rounded-2xl bg-obsidian border border-borderSubtle hover:border-limeAccent/40 flex items-center justify-between gap-2.5 sm:gap-4 transition-all">
             
             <!-- Play/Pause Button -->
             <button 
               type="button"
               onclick="toggleBlockPlay('${block.id}', '${block.audio_url}', ${idx})" 
               id="play_btn_${block.id}"
-              class="w-8 h-8 rounded-full bg-surface hover:border-limeAccent/50 border border-borderSubtle text-light flex items-center justify-center shrink-0 transition-all active:scale-95"
+              class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-surface hover:border-limeAccent/50 border border-borderSubtle text-light flex items-center justify-center shrink-0 transition-all active:scale-95"
               title="تشغيل المقطع"
             >
-              <svg id="play_icon_${block.id}" class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+              <svg id="play_icon_${block.id}" class="w-2.5 h-2.5 sm:w-3 sm:h-3" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
             </button>
 
             <!-- Text & Speaker -->
             <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2 mb-1">
+              <div class="flex items-center gap-1.5 sm:gap-2 mb-1">
                 <span class="text-[11px] font-medium ${isNarrator ? 'text-limeAccent' : 'text-muted'}">${escapeHtml(block.speaker_name)}</span>
-                ${block.sfx_name ? `<span class="text-[9px] font-mono px-1.5 rounded bg-surface border border-borderSubtle text-amber-300">⚡ ${block.sfx_name}</span>` : ''}
+                ${block.sfx_name ? `<span class="text-[9px] font-mono px-1 sm:px-1.5 rounded bg-surface border border-borderSubtle text-amber-300">⚡ ${block.sfx_name}</span>` : ''}
               </div>
               <p 
                 contenteditable="true" 
@@ -837,9 +882,9 @@
             </div>
 
             <!-- Waveform & Actions -->
-            <div class="flex items-center gap-3 shrink-0">
-              <div class="hidden sm:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button type="button" onclick="regenerateBlock('${block.id}')" title="إعادة توليد صوت المقطع" class="p-1 rounded text-muted hover:text-white transition">
+            <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
+              <div class="flex items-center gap-1 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                <button type="button" onclick="regenerateBlock('${block.id}')" title="إعادة توليد صوت المقطع" class="p-1 sm:p-1.5 rounded-lg text-muted hover:text-white transition active:scale-90">
                   <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <polyline points="23 4 23 10 17 10"></polyline>
                     <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -847,11 +892,11 @@
                 </button>
               </div>
 
-              <div onclick="toggleBlockPlay('${block.id}', '${block.audio_url}', ${idx})" class="w-20 h-6 flex items-center justify-between gap-[2px] cursor-pointer">
+              <div onclick="toggleBlockPlay('${block.id}', '${block.audio_url}', ${idx})" class="w-14 sm:w-20 h-5 sm:h-6 flex items-center justify-between gap-[2px] cursor-pointer">
                 ${bars}
               </div>
 
-              <span class="font-mono text-[10px] text-muted w-9 text-left">${formatDurationMinSec(block.duration)}</span>
+              <span class="font-mono text-[9px] sm:text-[10px] text-muted w-8 sm:w-9 text-left">${formatDurationMinSec(block.duration)}</span>
             </div>
 
           </div>
@@ -860,13 +905,13 @@
 
       return `
         <div class="space-y-2 pt-2 border-t border-borderSubtle/60">
-          <div class="flex items-center justify-between pb-1">
-            <span class="text-xs font-medium text-white flex items-center gap-2">
-              <span class="w-1.5 h-1.5 rounded-full bg-limeAccent"></span>
-              <span>${headerTitle}</span>
+          <div class="flex items-center justify-between pb-1 gap-2">
+            <span class="text-xs font-medium text-white flex items-center gap-1.5 sm:gap-2 truncate">
+              <span class="w-1.5 h-1.5 rounded-full bg-limeAccent shrink-0"></span>
+              <span class="truncate">${headerTitle}</span>
             </span>
-            <button onclick="playAllScenesDirectly()" class="px-3 py-1 rounded-full bg-surface hover:bg-limeAccent hover:text-obsidian text-light border border-borderSubtle text-[11px] font-medium transition active:scale-95">
-              ▶️ تشغيل الكل بالتتابع
+            <button onclick="playAllScenesDirectly()" class="px-2.5 sm:px-3 py-1 rounded-full bg-surface hover:bg-limeAccent hover:text-obsidian text-light border border-borderSubtle text-[10px] sm:text-[11px] font-medium transition active:scale-95 shrink-0">
+              ▶️ تشغيل الكل
             </button>
           </div>
           <div class="space-y-2 max-h-[460px] overflow-y-auto pr-0.5">
