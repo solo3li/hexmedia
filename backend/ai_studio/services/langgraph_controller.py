@@ -142,7 +142,9 @@ def is_audio_execution_request(prompt: str) -> bool:
         "طلع الصوت", "اعمل الصوت", "سمعني الصوت", "شغل المشاهد الصوتية",
         "اعتماد الأصوات وتنفيذ", "تنفيذ المشاهد الصوتية", "نفذ لهذا المشهد",
         "نفذ هذا المشهد", "نفذ المشهد", "تنفيذ الفصل", "نفذ الفصل", "صوت الفصل",
-        "تنفيذ صوت الفصل", "توليد صوت الفصل", "ابدأ هذا الفصل"
+        "تنفيذ صوت الفصل", "توليد صوت الفصل", "ابدأ هذا الفصل",
+        "إنتاج المشاهد المصورة", "انتاج المشاهد المصورة", "توليد المشاهد المصورة",
+        "توليد مشاهد الفيديو", "نفذ الفيديو", "انتاج الفيديو", "إنتاج المشاهد المصورة والصوت الآن"
     ]
     if any(phrase in p for phrase in exec_phrases):
         return True
@@ -166,6 +168,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
     prompt = state.get("user_prompt", "").strip()
     history = state.get("history", [])
     project_id = state.get("project_id")
+    tool = state.get("tool")
 
     project = None
     if project_id:
@@ -214,10 +217,14 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
 
     # 0.1 Check if user explicitly clicked/commanded to start continuous audio generation
     from .continuous_engine import parse_duration_from_prompt, start_continuous_generation
-    is_continuous_trigger = any(k in prompt_lower for k in [
-        "بدء توليد الصوت للمدة", "بدء الإنتاج الصوتي للمدة", "ابدأ توليد الصوت للمدة", 
-        "بدء توليد الصوت المستمر", "ابدأ الإنتاج المستمر", "شغل الإنتاج المستمر", "توليد الصوت للمدة"
-    ]) or (project and project.target_duration_minutes > 0 and is_audio_execution_request(prompt) and not any(k in prompt_lower for k in ["لهذا المشهد فقط", "مشهد واحد"]))
+    is_continuous_trigger = (
+        getattr(project, 'project_type', 'AUDIO_DRAMA') != 'VIDEO_STUDIO' and
+        any(k in prompt_lower for k in [
+            "بدء توليد الصوت للمدة", "بدء الإنتاج الصوتي للمدة", "ابدأ توليد الصوت للمدة", 
+            "بدء توليد الصوت المستمر", "ابدأ الإنتاج المستمر", "شغل الإنتاج المستمر", "توليد الصوت للمدة",
+            "إنتاج مستمر", "توليد مستمر"
+        ])
+    )
 
     if is_continuous_trigger and project:
         target_dur = project.target_duration_minutes or 0
@@ -345,7 +352,102 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
                 }
                 return state
 
-    tool = state.get("tool")
+    # 2.0 Check if user EXPLICITLY requested the Video & Film Studio tool
+    explicit_video_starters = [
+        "أنتج فيلم", "انتج فيلم", "اصنع فيلم", "توليد فيلم", "فيلم وثائقي",
+        "فيلم كرتون", "انتاج فيديو", "اصنع فيديو", "أريد عمل فيلم", "فيديو كرتوني",
+        "مشهد مصور", "فيلم سينمائي", "مانجا فيديو", "فيديو مانجا", "فيديو درامي"
+    ]
+    is_explicit_video = (
+        tool == "video_studio" or
+        any(prompt.startswith(phrase) for phrase in explicit_video_starters)
+    )
+
+    if is_explicit_video:
+        p_lower = prompt.lower()
+        if any(w in p_lower for w in ['وثائق', 'تاريخ', 'حرب', 'شاهد', 'معركة', 'حقيقة', 'documentary', 'history']):
+            v_style = 'DOCUMENTARY'
+            style_label = 'فيلم وثائقي / أرشيفي واقعي'
+        elif any(w in p_lower for w in ['كرتون', 'أطفال', 'أرنب', 'مضحك', 'رسوم', 'cartoon', 'pixar', 'disney', 'anime']):
+            v_style = 'CARTOON'
+            style_label = 'كرتون / أنيميشن بيكسار ملون'
+        elif any(w in p_lower for w in ['مانجا', 'أنمي', 'كوميك', 'manga']):
+            v_style = 'MANGA'
+            style_label = 'مانجا / كوميك درامي'
+        else:
+            v_style = 'CINEMATIC'
+            style_label = 'سينمائي 35mm واقعي'
+
+        system_instruction = (
+            f"أنت 'المخرج السينمائي الذكي' (AI Film Director) داخل استوديو HexMedia.\n"
+            f"مهمتك إخراج وتأليف فيلم قصير سينمائي مصور يلبي رغبة المستخدم بدقة. النمط البصري المحدد: {style_label}.\n"
+            "1. قم بتأليف سيناريو مصور يحتوي على راوٍ وشخصيات مع حوارات مشكولة بدقة ومؤثرات صوتية.\n"
+            "2. صف الكادر البصري لكل لقطة (Visual Description) باللغة الإنجليزية في سياق المشهد.\n"
+            "3. في نهاية النص اذكر كاستينغ الشخصيات وأخبر المستخدم أنه يمكنه الضغط على '🎬 إنتاج المشاهد المصورة والصوت الآن' لتوليد الكادرات البصرية والأصوات فوراً."
+        )
+
+        reply = call_gemini_chat(prompt, history=history, system_instruction=system_instruction)
+
+        analysis = analyze_book_text(reply, filename="فيلم_سينمائي.txt")
+        title = analysis.get("title") or "فيلم سينمائي مصور"
+        summary = analysis.get("summary") or "عمل سينمائي مرئي ومسموع."
+        characters_data = analysis.get("characters", [])
+
+        n_mode = state.get("narration_mode") or "SMART"
+        new_project = BookProject.objects.create(
+            title=title,
+            author="Gemini 3.8 Flash",
+            original_filename="film_script.txt",
+            raw_text=reply,
+            summary=summary,
+            narration_mode=n_mode,
+            project_type='VIDEO_STUDIO',
+            visual_style=v_style,
+            status='CASTING_PENDING',
+            genre='فيلم ومونتاج فيديو',
+            progress_percentage=25
+        )
+
+        saved_chars = []
+        for c in characters_data:
+            char_obj = Character.objects.create(
+                project=new_project,
+                name=c.get("name", "شخصية"),
+                role_type=c.get("role_type", "SUPPORTING"),
+                gender=c.get("gender", "MALE"),
+                description=c.get("description", ""),
+                assigned_voice=c.get("assigned_voice", "Puck"),
+                speaking_style=c.get("speaking_style", "سينمائي")
+            )
+            saved_chars.append(char_obj)
+
+        if not any(c.role_type == 'NARRATOR' for c in saved_chars):
+            narrator = Character.objects.create(
+                project=new_project,
+                name="الراوي",
+                role_type="NARRATOR",
+                gender="MALE",
+                assigned_voice="Charon",
+                speaking_style="وقور وسينمائي"
+            )
+            saved_chars.append(narrator)
+
+        chips = [
+            "🎬 إنتاج المشاهد المصورة والصوت الآن",
+            "🎭 تعديل كاستينغ الشخصيات",
+            "🎬 فتح استوديو DesignCombo"
+        ]
+
+        state["project_id"] = str(new_project.id)
+        state["response_text"] = reply
+        state["msg_type"] = "TEXT"
+        state["metadata"] = {
+            "project_id": str(new_project.id),
+            "project_type": "VIDEO_STUDIO",
+            "visual_style": v_style,
+            "action_chips": chips
+        }
+        return state
 
     # 2. Check if user EXPLICITLY requested the Story / Scenario Generator tool
     explicit_drama_starters = [
@@ -645,8 +747,8 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
     # Check if this execution request is intended for continuous duration production
     prompt_lower = user_prompt.lower()
     is_continuous_exec = (
-        any(k in prompt_lower for k in ["للمدة", "مستمر", "كامل المدة", "بدء الإنتاج الصوتي", "بدء توليد الصوت للمدة"]) or
-        (project and project.target_duration_minutes > 0 and "فقط" not in prompt_lower and "لهذا المشهد" not in prompt_lower)
+        getattr(project, 'project_type', 'AUDIO_DRAMA') != 'VIDEO_STUDIO' and
+        any(k in prompt_lower for k in ["للمدة", "مستمر", "كامل المدة", "بدء توليد الصوت للمدة", "الإنتاج المستمر", "توليد مستمر"])
     )
     if is_continuous_exec and project:
         from .continuous_engine import start_continuous_generation
@@ -728,6 +830,26 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
         audio_bytes = generate_voice_audio(text, voice_name=matched_char.assigned_voice, emotion=emotion)
         audio_url = upload_bytes(audio_bytes, f"audio/{project.id}/scene_{idx+1}.wav")
         duration = max(2.5, min(15.0, len(text.split()) * 0.45))
+
+        # Visual / Video Scene Card Generation
+        from .visual_service import produce_scene_visual
+        visual_url = ""
+        visual_prompt = sc.get("visual_prompt") or f"{speaker_name}: {text[:90]}"
+        media_type = "AI_IMAGE"
+        motion_type = "zoom_in"
+
+        if getattr(project, 'project_type', 'AUDIO_DRAMA') == 'VIDEO_STUDIO' or sc.get("visual_prompt"):
+            v_res = produce_scene_visual(
+                scene_id=f"{project.id}_{idx+1}",
+                raw_prompt=visual_prompt,
+                visual_style=getattr(project, 'visual_style', 'AUTO'),
+                character_dna=matched_char.description or ""
+            )
+            visual_url = v_res.get("image_url", "")
+            media_type = v_res.get("media_type", "AI_IMAGE")
+            motion_type = v_res.get("motion_type", "zoom_in")
+            visual_prompt = v_res.get("visual_prompt", visual_prompt)
+
         return {
             "idx": idx,
             "matched_char": matched_char,
@@ -736,6 +858,10 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
             "sfx_key": sfx_key,
             "sfx_url": sfx_url,
             "audio_url": audio_url,
+            "visual_url": visual_url,
+            "visual_prompt": visual_prompt,
+            "media_type": media_type,
+            "motion_type": motion_type,
             "duration": duration
         }
 
@@ -754,6 +880,10 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
             vocalized_text=item["text"],
             emotion=item["emotion"],
             audio_url=item["audio_url"],
+            image_url=item.get("visual_url", ""),
+            visual_prompt=item.get("visual_prompt", ""),
+            media_type=item.get("media_type", "AI_IMAGE"),
+            motion_type=item.get("motion_type", "zoom_in"),
             duration_seconds=item["duration"],
             sfx_name=item["sfx_key"],
             sfx_url=item["sfx_url"],
@@ -768,6 +898,10 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
             "raw_text": scene_obj.raw_text,
             "vocalized_text": scene_obj.vocalized_text or scene_obj.raw_text,
             "audio_url": scene_obj.audio_url,
+            "image_url": scene_obj.image_url,
+            "visual_prompt": scene_obj.visual_prompt,
+            "media_type": scene_obj.media_type,
+            "motion_type": scene_obj.motion_type,
             "duration": round(scene_obj.duration_seconds, 1),
             "sfx_name": scene_obj.sfx_name or ""
         })
@@ -777,6 +911,30 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
     project.status = 'READY'
     project.progress_percentage = 100
     project.save(update_fields=['status', 'progress_percentage'])
+
+    is_video = getattr(project, 'project_type', 'AUDIO_DRAMA') == 'VIDEO_STUDIO'
+    if is_video:
+        response_text = (
+            f"🎬 **تم إنتاج وتجهيز المشاهد المصورة والصوتية بنجاح!**\n\n"
+            f"📖 **الفيلم:** {project.title}\n"
+            f"🎥 تم إخراج **{len(scenes_list)} مشهد مصور** بجودة عالية وأصوات حية متزامنة. "
+            f"عاين الكادرات بالأسفل، أو اضغط **'🎬 تجميع وريندر الفيلم الكامل بـ Remotion'**:"
+        )
+        state["response_text"] = response_text
+        state["msg_type"] = "SCENE_VIDEO_CARDS"
+        state["metadata"] = {
+            "project_id": str(project.id),
+            "project_type": "VIDEO_STUDIO",
+            "visual_style": getattr(project, 'visual_style', 'AUTO'),
+            "scenes": scenes_list,
+            "action_chips": [
+                "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
+                "▶️ تشغيل كل المشاهد بالتتابع",
+                "🔄 إعادة توليد الكادرات",
+                "🎬 فتح استوديو DesignCombo"
+            ]
+        }
+        return state
 
     response_text = (
         f"🎙️ **تم تنفيذ وتوليد المشاهد الصوتية بنجاح عبر Gemini 3.8 Flash TTS!**\n\n"
@@ -876,6 +1034,25 @@ def execute_chapter_node(state: AudioDramaState) -> AudioDramaState:
         audio_url = upload_bytes(audio_bytes, f"audio/{project.id}/ch{chapter.number}_scene_{idx+1}.wav")
         duration = max(2.5, min(15.0, len(text.split()) * 0.45))
 
+        # Visual / Video Scene Card Generation
+        from .visual_service import produce_scene_visual
+        visual_url = ""
+        visual_prompt = sc.get("visual_prompt") or f"{speaker_name}: {text[:90]}"
+        media_type = "AI_IMAGE"
+        motion_type = "zoom_in"
+
+        if getattr(project, 'project_type', 'AUDIO_DRAMA') == 'VIDEO_STUDIO' or sc.get("visual_prompt"):
+            v_res = produce_scene_visual(
+                scene_id=f"{project.id}_ch{chapter.number}_{idx+1}",
+                raw_prompt=visual_prompt,
+                visual_style=getattr(project, 'visual_style', 'AUTO'),
+                character_dna=matched_char.description or ""
+            )
+            visual_url = v_res.get("image_url", "")
+            media_type = v_res.get("media_type", "AI_IMAGE")
+            motion_type = v_res.get("motion_type", "zoom_in")
+            visual_prompt = v_res.get("visual_prompt", visual_prompt)
+
         return {
             "idx": idx,
             "matched_char": matched_char,
@@ -884,6 +1061,10 @@ def execute_chapter_node(state: AudioDramaState) -> AudioDramaState:
             "sfx_key": sfx_key,
             "sfx_url": sfx_url,
             "audio_url": audio_url,
+            "visual_url": visual_url,
+            "visual_prompt": visual_prompt,
+            "media_type": media_type,
+            "motion_type": motion_type,
             "duration": duration
         }
 
@@ -904,6 +1085,10 @@ def execute_chapter_node(state: AudioDramaState) -> AudioDramaState:
             vocalized_text=item["text"],
             emotion=item["emotion"],
             audio_url=item["audio_url"],
+            image_url=item.get("visual_url", ""),
+            visual_prompt=item.get("visual_prompt", ""),
+            media_type=item.get("media_type", "AI_IMAGE"),
+            motion_type=item.get("motion_type", "zoom_in"),
             duration_seconds=item["duration"],
             sfx_name=item["sfx_key"],
             sfx_url=item["sfx_url"],
@@ -945,6 +1130,10 @@ def execute_chapter_node(state: AudioDramaState) -> AudioDramaState:
             "raw_text": sc.raw_text,
             "vocalized_text": sc.vocalized_text or sc.raw_text,
             "audio_url": sc.audio_url,
+            "image_url": sc.image_url,
+            "visual_prompt": sc.visual_prompt,
+            "media_type": sc.media_type,
+            "motion_type": sc.motion_type,
             "duration": round(sc.duration_seconds, 1),
             "sfx_name": sc.sfx_name or ""
         })
@@ -962,6 +1151,32 @@ def execute_chapter_node(state: AudioDramaState) -> AudioDramaState:
 
     # Check next chapter
     next_chapter = project.chapters.filter(number__gt=chapter.number).order_by('number').first()
+
+    is_video = getattr(project, 'project_type', 'AUDIO_DRAMA') == 'VIDEO_STUDIO' or any(s.get("image_url") for s in scenes_list)
+    if is_video:
+        chips = ["🎬 تجميع وريندر الفيلم الكامل بـ Remotion", "▶️ تشغيل كل المشاهد بالتتابع"]
+        if next_chapter:
+            chips.append(f"🎬 إنتاج مشاهد {next_chapter.title}")
+        chips.extend(["🔄 إعادة توليد الكادرات", "🎬 فتح استوديو DesignCombo"])
+
+        response_text = (
+            f"🎬 **تم إنتاج وتجهيز المشاهد المصورة والصوتية لـ ({chapter.title}) بنجاح!**\n\n"
+            f"📖 **الفيلم:** {project.title}\n"
+            f"📑 **الفصل:** {chapter.title}\n"
+            f"🎥 تم إخراج **{len(scenes_list)} مشهد مصور** بجودة عالية وأصوات حية متزامنة.\n\n"
+            f"عاين الكادرات بالأسفل أو اضغط **'🎬 تجميع وريندر الفيلم الكامل بـ Remotion'**:"
+        )
+        state["response_text"] = response_text
+        state["msg_type"] = "SCENE_VIDEO_CARDS"
+        state["metadata"] = {
+            "project_id": str(project.id),
+            "chapter_number": chapter.number,
+            "chapter_title": chapter.title,
+            "chapters": all_chapters,
+            "scenes": scenes_list,
+            "action_chips": chips
+        }
+        return state
 
     chips = []
     if next_chapter:

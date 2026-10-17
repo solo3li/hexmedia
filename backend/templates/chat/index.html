@@ -336,6 +336,26 @@
               <div class="text-[10px] text-muted">إنتاج المشاهد بأصوات Gemini TTS</div>
             </div>
           </button>
+
+          <!-- Tool 4: Film & Video Studio -->
+          <button onclick="activateVideoTool()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
+            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-amber-400 group-hover:border-amber-400/40 shrink-0">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                <line x1="7" y1="2" x2="7" y2="22"></line>
+                <line x1="17" y1="2" x2="17" y2="22"></line>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <line x1="2" y1="7" x2="7" y2="7"></line>
+                <line x1="2" y1="17" x2="7" y2="17"></line>
+                <line x1="17" y1="17" x2="22" y2="17"></line>
+                <line x1="17" y1="7" x2="22" y2="7"></line>
+              </svg>
+            </div>
+            <div>
+              <div class="font-medium text-white group-hover:text-amber-300 transition">إنتاج فيلم وفيديو سينمائي</div>
+              <div class="text-[10px] text-muted">مشاهد مصورة (وثائقي، كرتون، مانجا) وريندر Remotion</div>
+            </div>
+          </button>
         </div>
 
         <!-- The Floating Dock Body -->
@@ -577,6 +597,7 @@
       const pill = document.getElementById('activeToolPill');
       pill.classList.remove('hidden');
       pill.classList.add('flex');
+      document.getElementById('activeToolIcon').textContent = '✍️';
       document.getElementById('activeToolLabel').textContent = 'تأليف قصة وسيناريو';
       const input = document.getElementById('chatInput');
       input.placeholder = 'اكتب فكرة القصة أو السيناريو الدرامي المطلوب تأليفه وإخراجه صوتياً...';
@@ -584,11 +605,27 @@
       showToast('✍️ تم تفعيل أداة تأليف وتطوير السيناريو الدرامي');
     }
 
+    function activateVideoTool() {
+      toggleToolsMenu();
+      clearSelectedFile();
+      currentActiveTool = 'video_studio';
+      const pill = document.getElementById('activeToolPill');
+      pill.classList.remove('hidden');
+      pill.classList.add('flex');
+      document.getElementById('activeToolIcon').textContent = '🎬';
+      document.getElementById('activeToolLabel').textContent = 'إنتاج فيلم وفيديو سينمائي';
+      const input = document.getElementById('chatInput');
+      input.placeholder = 'اكتب فكرة الفيلم (وثائقي، كرتون، سينمائي، مانجا) لإنتاج المشاهد المصورة والصوت...';
+      input.focus();
+      showToast('🎬 تم تفعيل استوديو إنتاج الأفلام والفيديو المصور');
+    }
+
     function clearActiveTool() {
       currentActiveTool = null;
       const pill = document.getElementById('activeToolPill');
       pill.classList.add('hidden');
       pill.classList.remove('flex');
+      document.getElementById('activeToolIcon').textContent = '✍️';
       const input = document.getElementById('chatInput');
       input.placeholder = 'اسأل أي شيء أو اكتب رسالتك... (اختر أداة من +)';
     }
@@ -719,6 +756,10 @@
 
       let cardHtml = '';
 
+      if (metadata && metadata.project_id) {
+        activeProjectId = metadata.project_id;
+      }
+
       // 1. Cast Bar if characters present
       if (metadata && metadata.characters && metadata.characters.length) {
         cardHtml += buildCastBarHtml(metadata.characters);
@@ -729,9 +770,32 @@
         cardHtml += buildChaptersCardHtml(metadata.chapters, metadata.project_id || activeProjectId);
       }
 
-      // 3. Scene Audio Blocks (The Obsidian Waveform Rows)
+      // 3. Scene Audio or Video Blocks
       if (metadata && metadata.scenes && metadata.scenes.length) {
-        cardHtml += buildSceneBlocksHtml(metadata.scenes, metadata.chapter_title);
+        const isVideoScenes = msgType === 'SCENE_VIDEO_CARDS' || metadata.scenes.some(s => s.image_url);
+        if (isVideoScenes) {
+          cardHtml += buildVideoSceneBlocksHtml(metadata.scenes, metadata.chapter_title, metadata.project_id || activeProjectId);
+        } else {
+          cardHtml += buildSceneBlocksHtml(metadata.scenes, metadata.chapter_title);
+        }
+      }
+
+      // 3.5 Full Film Rendered Player (Remotion Video Output)
+      if (msgType === 'FULL_FILM_RENDERED' && metadata && metadata.video_url) {
+        cardHtml += `
+          <div class="mt-4 p-3.5 sm:p-4 rounded-2xl bg-surface border border-limeAccent/50 space-y-3 shadow-xl">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div class="text-xs font-medium text-white flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-limeAccent pulse-live"></span>
+                <span>الفيلم الكامل جاهز للعرض والمونتاج (Remotion Render)</span>
+              </div>
+              <a href="${metadata.video_url}" target="_blank" download class="px-3 py-1 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold font-mono transition active:scale-95">⬇️ تحميل MP4</a>
+            </div>
+            <div class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-borderSubtle shadow-2xl">
+              <video src="${metadata.video_url}" controls class="w-full h-full object-contain"></video>
+            </div>
+          </div>
+        `;
       }
 
       // 4. Studio Ready Link
@@ -742,7 +806,7 @@
             <div>
               <div class="text-xs font-medium text-white flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-limeAccent shrink-0"></span>
-                <span>الدراما الصوتية جاهزة للمعاينة في الاستوديو</span>
+                <span>العمل جاهز للمعاينة والمونتاج في الاستوديو</span>
               </div>
               <p class="text-[11px] text-muted mt-0.5">المدة: ${Math.round(metadata.total_duration || 0)}s • المشاهد: ${metadata.scenes_count || 0}</p>
             </div>
@@ -915,6 +979,132 @@
             </button>
           </div>
           <div class="space-y-2 max-h-[460px] overflow-y-auto pr-0.5">
+            ${blocks}
+          </div>
+        </div>
+      `;
+    }
+
+    function buildVideoSceneBlocksHtml(scenes, chapterTitle, projectId) {
+      const headerTitle = chapterTitle ? `مشاهد الفيديو (${escapeHtml(chapterTitle)}) - ${scenes.length} مشهد` : `مشاهد الفيديو والفيلم المنفذة (${scenes.length})`;
+
+      const blocks = scenes.map((block, idx) => {
+        const isNarrator = block.speaker_name === 'الراوي';
+        const isArchive = block.media_type === 'ARCHIVE_WEB';
+        const imgSrc = block.image_url || '/static/placeholder.jpg';
+
+        return `
+          <div id="block-${block.id}" class="group p-2.5 sm:p-3 rounded-2xl bg-obsidian border border-borderSubtle hover:border-limeAccent/40 flex flex-col gap-2.5 transition-all">
+            
+            <!-- 16:9 Visual Thumbnail Container -->
+            <div class="relative aspect-video w-full rounded-xl overflow-hidden bg-black/80 border border-borderSubtle group/thumb">
+              <img 
+                id="scene_img_${block.id}" 
+                src="${imgSrc}" 
+                alt="Scene ${block.order}" 
+                class="w-full h-full object-cover transition-transform duration-500 group-hover/thumb:scale-105"
+                loading="lazy"
+                onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'640\\' height=\\'360\\' viewBox=\\'0 0 640 360\\'><rect width=\\'640\\' height=\\'360\\' fill=\\'%23121218\\'/><text x=\\'50%\\' y=\\'50%\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\' fill=\\'%23666\\' font-family=\\'sans-serif\\' font-size=\\'18\\'>HexMedia Scene</text></svg>'"
+              />
+              
+              <!-- Badges Overlay -->
+              <div class="absolute top-2 right-2 flex items-center gap-1.5 z-10">
+                ${isArchive 
+                  ? `<span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/75 backdrop-blur border border-amber-500/40 text-amber-300 flex items-center gap-1">🏛️ أرشيف وثائقي</span>`
+                  : `<span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/75 backdrop-blur border border-limeAccent/40 text-limeAccent flex items-center gap-1">🎨 Imagen 3</span>`
+                }
+                ${block.motion_type ? `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/70 backdrop-blur text-zinc-300 uppercase">${escapeHtml(block.motion_type)}</span>` : ''}
+              </div>
+
+              <div class="absolute top-2 left-2 flex items-center gap-1 z-10">
+                <span class="text-[9px] font-medium px-2 py-0.5 rounded-full bg-black/75 backdrop-blur ${isNarrator ? 'text-limeAccent' : 'text-white'}">
+                  ${escapeHtml(block.speaker_name)}
+                </span>
+              </div>
+
+              <div class="absolute bottom-2 right-2 flex items-center gap-1.5 z-10">
+                ${block.sfx_name ? `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/80 backdrop-blur border border-amber-500/30 text-amber-200">⚡ ${escapeHtml(block.sfx_name)}</span>` : ''}
+                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/80 backdrop-blur text-muted">${formatDurationMinSec(block.duration)}</span>
+              </div>
+
+              <!-- Center Play/Pause Preview Button -->
+              <button 
+                type="button"
+                onclick="toggleBlockPlay('${block.id}', '${block.audio_url}', ${idx})" 
+                id="play_btn_${block.id}"
+                class="absolute inset-0 m-auto w-11 h-11 rounded-full bg-black/60 hover:bg-limeAccent hover:text-obsidian text-white border border-white/20 flex items-center justify-center transition-all backdrop-blur shadow-xl active:scale-90"
+                title="معاينة الصوت والمشهد"
+              >
+                <svg id="play_icon_${block.id}" class="w-4 h-4 ml-0.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+              </button>
+            </div>
+
+            <!-- Dialogue Text & Actions -->
+            <div class="space-y-2">
+              <p 
+                contenteditable="true" 
+                spellcheck="false" 
+                class="text-xs text-light leading-relaxed font-normal p-1 -m-1 rounded hover:bg-surface/50 transition cursor-text"
+                onblur="handleInlineTextEdit('${block.id}', this)"
+                onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); this.blur(); }"
+                title="اضغط لتعديل النص"
+              >${escapeHtml(block.vocalized_text || block.raw_text)}</p>
+
+              <div class="flex items-center justify-between pt-1 border-t border-borderSubtle/40 gap-2">
+                <div class="flex items-center gap-1.5">
+                  <button 
+                    type="button" 
+                    onclick="regenerateSceneVisual('${block.id}')" 
+                    id="regen_vis_${block.id}" 
+                    class="text-[10px] px-2 py-1 rounded-lg bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-limeAccent flex items-center gap-1 transition active:scale-95" 
+                    title="إعادة توليد الصورة البصرية"
+                  >
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <span>توليد صورة بديلة</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    onclick="regenerateBlock('${block.id}')" 
+                    class="text-[10px] px-2 py-1 rounded-lg bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-limeAccent flex items-center gap-1 transition active:scale-95" 
+                    title="إعادة تسجيل الصوت عبر Gemini TTS"
+                  >
+                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    <span>تجديد الصوت</span>
+                  </button>
+                </div>
+                <span class="text-[10px] font-mono text-zinc-500">مشهد ${block.order}</span>
+              </div>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+
+      const pid = projectId || activeProjectId || '';
+
+      return `
+        <div class="space-y-3 pt-2 border-t border-borderSubtle/60">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-1 gap-2.5">
+            <span class="text-xs font-medium text-white flex items-center gap-1.5 truncate">
+              <span class="w-2 h-2 rounded-full bg-limeAccent shrink-0"></span>
+              <span class="truncate">${headerTitle}</span>
+            </span>
+            <div class="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+              <button 
+                onclick="renderFullFilmWithRemotion('${pid}')" 
+                class="px-3.5 py-1.5 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm"
+              >
+                <span>🎬 تجميع وريندر الفيلم الكامل</span>
+              </button>
+              <button 
+                onclick="playAllScenesDirectly()" 
+                class="px-2.5 py-1.5 rounded-full bg-surface hover:bg-surfaceHover text-light border border-borderSubtle text-xs font-medium transition active:scale-95"
+              >
+                ▶️ تشغيل الكل
+              </button>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[580px] overflow-y-auto pr-0.5">
             ${blocks}
           </div>
         </div>
@@ -1098,6 +1288,80 @@
       }
     }
 
+    async function regenerateSceneVisual(sceneId) {
+      const btn = document.getElementById(`regen_vis_${sceneId}`);
+      const img = document.getElementById(`scene_img_${sceneId}`);
+      if (btn) btn.classList.add('opacity-50', 'pointer-events-none');
+      if (img) img.classList.add('opacity-40', 'animate-pulse');
+
+      showToast('جاري توليد مشهد بصري جديد عبر Imagen 3 / الأرشيف...');
+      try {
+        const res = await fetch(`/api/scenes/${sceneId}/regenerate-visual`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        if (data.success && data.scene && data.scene.image_url) {
+          if (img) {
+            img.src = data.scene.image_url + (data.scene.image_url.includes('?') ? '&' : '?') + 't=' + Date.now();
+          }
+          showToast('تم تجديد المشهد البصري بنجاح!');
+        } else {
+          showToast('تعذر توليد الصورة: ' + (data.message || 'حدث خطأ'), true);
+        }
+      } catch (e) {
+        showToast('خطأ أثناء تجديد المشهد البصري: ' + e.message, true);
+      } finally {
+        if (btn) btn.classList.remove('opacity-50', 'pointer-events-none');
+        if (img) img.classList.remove('opacity-40', 'animate-pulse');
+      }
+    }
+
+    async function renderFullFilmWithRemotion(projectId) {
+      const pid = projectId || activeProjectId;
+      if (!pid) {
+        showToast('يرجى اختيار أو إنشاء مشروع أولاً', true);
+        return;
+      }
+
+      showTyping('جاري تجميع المشاهد وريندر الفيلم الكامل عبر Remotion و FFmpeg (Ken Burns Motion)...');
+      showToast('بدأت عملية ريندر الفيلم الكامل 🎬');
+
+      try {
+        const res = await fetch(`/api/projects/${pid}/render-film`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        hideTyping();
+
+        if (data.success && data.video_url) {
+          renderAssistantMessage(
+            `🎬 **تم اكتمال ريندر الفيلم بنجاح!**\n\n- تم دمج كافة المشاهد البصرية (16:9) بدقة عالية.\n- تم تطبيق حركات الكاميرا السينمائية (Ken Burns Motion) وتناغم المقاطع الصوتية.\n- نمط الريندر: \`${data.mode || 'FFmpeg Studio'}\``,
+            'FULL_FILM_RENDERED',
+            {
+              video_url: data.video_url,
+              project_id: pid
+            }
+          );
+          showToast('تم ريندر الفيلم بنجاح! 🎉');
+        } else if (data.status === 'queued') {
+          renderAssistantMessage(
+            `⏳ **تم إرسال مهمة الريندر إلى طابور Remotion Worker!**\n\nمعرف المهمة: \`${data.job_id}\`\nجاري المعالجة السريعة.`,
+            'TEXT',
+            {}
+          );
+          showToast('تم إرسال الريندر لطابور Remotion Worker');
+        } else {
+          showToast('تعذر ريندر الفيلم: ' + (data.message || 'خطأ غير متوقع'), true);
+        }
+      } catch (err) {
+        hideTyping();
+        showToast('خطأ أثناء الريندر: ' + err.message, true);
+      }
+    }
+
     // =========================================================================
     // CHAT & FILE INTERACTIONS
     // =========================================================================
@@ -1115,8 +1379,12 @@
         exportAudioMaster();
         return;
       }
-      if (chipText.includes("تشغيل كل المشاهد")) {
+      if (chipText.includes("تشغيل كل المشاهد") || chipText.includes("تشغيل الكل")) {
         playAllScenesDirectly();
+        return;
+      }
+      if (chipText.includes("ريندر") || chipText.includes("تجميع")) {
+        renderFullFilmWithRemotion(activeProjectId);
         return;
       }
       const clean = chipText.replace(/^[🎙️🎭🎬⬇️📁✨🚀🔄⏸️▶️]+\s*/, '').trim();

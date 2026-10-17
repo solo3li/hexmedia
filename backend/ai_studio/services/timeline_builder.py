@@ -9,6 +9,7 @@ def build_designcombo_timeline(project: BookProject) -> Dict[str, Any]:
     voice_items = []
     sfx_items = []
     subtitle_items = []
+    image_items = []
 
     for scene in scenes:
         duration = max(2.0, scene.duration_seconds)
@@ -18,6 +19,28 @@ def build_designcombo_timeline(project: BookProject) -> Dict[str, Any]:
         # Update scene start time in db
         scene.start_time_seconds = start_time
         scene.save(update_fields=['start_time_seconds'])
+
+        # 0. Visual Track Item
+        if scene.image_url:
+            image_items.append({
+                "id": str(uuid.uuid4()),
+                "type": "image",
+                "name": f"Visual: {scene.speaker_name}",
+                "display": {
+                    "from": start_time,
+                    "to": end_time
+                },
+                "details": {
+                    "src": scene.image_url,
+                    "width": 1920,
+                    "height": 1080
+                },
+                "metadata": {
+                    "visual_prompt": scene.visual_prompt,
+                    "media_type": scene.media_type,
+                    "motion": scene.motion_type
+                }
+            })
 
         # 1. Voice Track Item
         item_id = str(uuid.uuid4())
@@ -105,6 +128,42 @@ def build_designcombo_timeline(project: BookProject) -> Dict[str, Any]:
             }
         })
 
+    tracks = [
+        {
+            "id": "track_subtitles",
+            "type": "text",
+            "title": "الترجمة والنص التفاعلي",
+            "items": subtitle_items
+        }
+    ]
+    if image_items:
+        tracks.append({
+            "id": "track_visuals",
+            "type": "image",
+            "title": "كادرات الفيديو والصور",
+            "items": image_items
+        })
+    tracks.extend([
+        {
+            "id": "track_dialogue",
+            "type": "audio",
+            "title": "أصوات الشخصيات والراوي",
+            "items": voice_items
+        },
+        {
+            "id": "track_sfx",
+            "type": "audio",
+            "title": "المؤثرات الصوتية (SFX)",
+            "items": sfx_items
+        },
+        {
+            "id": "track_bgm",
+            "type": "audio",
+            "title": "الموسيقى التصويرية (BGM)",
+            "items": bgm_items
+        }
+    ])
+
     timeline_json = {
         "version": "1.0",
         "fps": 30,
@@ -113,32 +172,7 @@ def build_designcombo_timeline(project: BookProject) -> Dict[str, Any]:
             "width": 1920,
             "height": 1080
         },
-        "tracks": [
-            {
-                "id": "track_subtitles",
-                "type": "text",
-                "title": "الترجمة والنص التفاعلي",
-                "items": subtitle_items
-            },
-            {
-                "id": "track_dialogue",
-                "type": "audio",
-                "title": "أصوات الشخصيات والراوي",
-                "items": voice_items
-            },
-            {
-                "id": "track_sfx",
-                "type": "audio",
-                "title": "المؤثرات الصوتية (SFX)",
-                "items": sfx_items
-            },
-            {
-                "id": "track_bgm",
-                "type": "audio",
-                "title": "الموسيقى التصويرية (BGM)",
-                "items": bgm_items
-            }
-        ]
+        "tracks": tracks
     }
 
     # Save to TimelineState

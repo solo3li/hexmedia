@@ -84,6 +84,21 @@ class BookProject(models.Model):
     ]
     narration_mode = models.CharField(max_length=20, choices=NARRATION_MODE_CHOICES, default='SMART', help_text="نمط تقديم الراوي للشخصيات")
 
+    # Video & Visual Attributes
+    PROJECT_TYPE_CHOICES = [
+        ('AUDIO_DRAMA', 'دراما صوتية'),
+        ('VIDEO_STUDIO', 'استوديو فيديو وسينما'),
+    ]
+    project_type = models.CharField(max_length=20, choices=PROJECT_TYPE_CHOICES, default='AUDIO_DRAMA')
+    VISUAL_STYLE_CHOICES = [
+        ('AUTO', 'تلقائي ذكي'),
+        ('DOCUMENTARY', 'فيلم وثائقي / أرشيفي واقعي'),
+        ('CARTOON', 'كرتون / أنيميشن بيكسار ملون'),
+        ('CINEMATIC', 'سينمائي 35mm واقعي'),
+        ('MANGA', 'مانجا / كوميك درامي'),
+    ]
+    visual_style = models.CharField(max_length=30, choices=VISUAL_STYLE_CHOICES, default='AUTO')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -187,6 +202,23 @@ class Scene(models.Model):
     sfx_url = models.CharField(max_length=500, blank=True)
     bgm_name = models.CharField(max_length=100, blank=True)
     bgm_url = models.CharField(max_length=500, blank=True)
+
+    # Visual & Video assets
+    image_url = models.CharField(max_length=500, blank=True)
+    visual_prompt = models.TextField(blank=True, help_text="الوصف البصري الإنجليزي لتوليد الكادر")
+    MEDIA_TYPE_CHOICES = [
+        ('AI_IMAGE', 'توليد ذكاء اصطناعي (Imagen 3)'),
+        ('ARCHIVE_WEB', 'أرشيف وصور ويب واقعية'),
+    ]
+    media_type = models.CharField(max_length=20, choices=MEDIA_TYPE_CHOICES, default='AI_IMAGE')
+    MOTION_TYPE_CHOICES = [
+        ('zoom_in', 'زووم للداخل (Ken Burns)'),
+        ('zoom_out', 'زووم للخارج'),
+        ('pan_left', 'بانوراما لليسار'),
+        ('pan_right', 'بانوراما لليمين'),
+        ('static', 'ثابت'),
+    ]
+    motion_type = models.CharField(max_length=30, choices=MOTION_TYPE_CHOICES, default='zoom_in')
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)

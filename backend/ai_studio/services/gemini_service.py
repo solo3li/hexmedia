@@ -226,26 +226,30 @@ def normalize_gemini_scenes(data) -> list[dict]:
                         text = sub.get('raw_text') or sub.get('content') or sub.get('text') or sub.get('dialogue') or sub.get('line') or ''
                         emotion = sub.get('emotion') or sub.get('audio_direction') or 'calm'
                         sub_sfx = sub.get('sfx_name') or sfx
+                        visual_p = sub.get('visual_prompt') or item.get('visual_prompt') or ''
                         if text and text.strip():
                             normalized.append({
                                 'order': len(normalized) + 1,
                                 'speaker_name': str(speaker).strip(),
                                 'raw_text': str(text).strip(),
                                 'emotion': str(emotion).strip(),
-                                'sfx_name': str(sub_sfx).strip()
+                                'sfx_name': str(sub_sfx).strip(),
+                                'visual_prompt': str(visual_p).strip()
                             })
             else:
                 speaker = item.get('speaker_name') or item.get('speaker') or item.get('character') or 'الراوي'
                 text = item.get('raw_text') or item.get('content') or item.get('text') or item.get('dialogue') or item.get('line') or ''
                 emotion = item.get('emotion') or item.get('audio_direction') or 'calm'
                 sfx = item.get('sfx_name') or item.get('sfx') or ''
+                visual_p = item.get('visual_prompt') or item.get('image_prompt') or item.get('visual_description') or ''
                 if text and text.strip():
                     normalized.append({
                         'order': len(normalized) + 1,
                         'speaker_name': str(speaker).strip(),
                         'raw_text': str(text).strip(),
                         'emotion': str(emotion).strip(),
-                        'sfx_name': str(sfx).strip()
+                        'sfx_name': str(sfx).strip(),
+                        'visual_prompt': str(visual_p).strip()
                     })
     return normalized
 
@@ -383,14 +387,16 @@ def break_into_scenes(book_text: str, character_names: list[str], narration_mode
     "speaker_name": "الراوي",
     "raw_text": "نص سردي مشكل...",
     "emotion": "mysterious and tense",
-    "sfx_name": "suspense_drone"
+    "sfx_name": "suspense_drone",
+    "visual_prompt": "Cinematic visual description of this shot for 16:9 widescreen composition"
   }},
   {{
     "order": 2,
     "speaker_name": "شخصية",
     "raw_text": "نص حواري مشكل...",
     "emotion": "terrified and urgent",
-    "sfx_name": "door_knock"
+    "sfx_name": "door_knock",
+    "visual_prompt": "Dramatic close-up of character with intense lighting"
   }}
 ]
 """

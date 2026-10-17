@@ -540,4 +540,54 @@ def delete_scene_endpoint(request, scene_id: str):
     return {"success": True, "message": "تم حذف المشهد بنجاح"}
 
 
+class RegenerateVisualRequest(Schema):
+    prompt: Optional[str] = None
+    force_archive: Optional[bool] = False
+
+
+@api.post("/scenes/{scene_id}/regenerate-visual")
+def regenerate_scene_visual_endpoint(request, scene_id: str, data: Optional[RegenerateVisualRequest] = None):
+    scene = get_object_or_404(Scene, id=scene_id)
+    from .services.visual_service import produce_scene_visual
+    
+    prompt = data.prompt.strip() if (data and data.prompt) else (scene.visual_prompt or scene.raw_text)
+    force_archive = data.force_archive if data else False
+    
+    v_info = produce_scene_visual(
+        scene_id=str(scene.id),
+        raw_prompt=prompt,
+        visual_style=getattr(scene.project, 'visual_style', 'AUTO'),
+        character_dna=scene.speaker.description if scene.speaker else "",
+        force_archive=force_archive
+    )
+    
+    scene.image_url = v_info.get("image_url", scene.image_url)
+    scene.visual_prompt = v_info.get("visual_prompt", scene.visual_prompt)
+    scene.media_type = v_info.get("media_type", scene.media_type)
+    scene.motion_type = v_info.get("motion_type", scene.motion_type)
+    scene.save(update_fields=['image_url', 'visual_prompt', 'media_type', 'motion_type'])
+    
+    return {
+        "success": True,
+        "scene": {
+            "id": str(scene.id),
+            "order": scene.order,
+            "speaker_name": scene.speaker_name,
+            "image_url": scene.image_url,
+            "visual_prompt": scene.visual_prompt,
+            "media_type": scene.media_type,
+            "motion_type": scene.motion_type
+        }
+    }
+
+
+@api.post("/projects/{project_id}/render-film")
+def render_film_endpoint(request, project_id: str):
+    project = get_object_or_404(BookProject, id=project_id)
+    from .services.remotion_bridge import render_or_queue_project
+    res = render_or_queue_project(project_id)
+    return res
+
+
+
 
