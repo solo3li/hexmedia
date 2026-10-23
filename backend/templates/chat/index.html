@@ -501,7 +501,11 @@
           if (msg.role === 'USER') {
             renderUserMessage(msg.content);
           } else {
-            renderAssistantMessage(msg.content, msg.msg_type, msg.metadata);
+            let meta = msg.metadata || {};
+            if (msg.msg_type === 'SCENE_VIDEO_CARDS' && activeProject && activeProject.scenes && activeProject.scenes.length) {
+              meta.scenes = activeProject.scenes;
+            }
+            renderAssistantMessage(msg.content, msg.msg_type, meta);
           }
         });
       } else if (activeProject && activeProject.scenes && activeProject.scenes.length) {
@@ -784,7 +788,7 @@
       if (metadata && metadata.scenes && metadata.scenes.length) {
         const isVideoScenes = msgType === 'SCENE_VIDEO_CARDS' || metadata.scenes.some(s => s.image_url);
         if (isVideoScenes) {
-          cardHtml += buildVideoSceneBlocksHtml(metadata.scenes, metadata.chapter_title, metadata.project_id || activeProjectId);
+          cardHtml += buildVideoSceneBlocksHtml(metadata.scenes, metadata.chapter_title, metadata.project_id || activeProjectId, metadata);
         } else {
           cardHtml += buildSceneBlocksHtml(metadata.scenes, metadata.chapter_title);
         }
@@ -995,111 +999,136 @@
       `;
     }
 
-    function buildVideoSceneBlocksHtml(scenes, chapterTitle, projectId) {
-      const headerTitle = chapterTitle ? `مشاهد الفيديو (${escapeHtml(chapterTitle)}) - ${scenes.length} مشهد` : `مشاهد الفيديو والفيلم المنفذة (${scenes.length})`;
-
-      const blocks = scenes.map((block, idx) => {
-        const isNarrator = block.speaker_name === 'الراوي';
-        const isArchive = block.media_type === 'ARCHIVE_WEB';
-        const imgSrc = block.image_url || '/static/placeholder.jpg';
-
-        return `
-          <div id="block-${block.id}" class="group p-2.5 sm:p-3 rounded-2xl bg-obsidian border border-borderSubtle hover:border-limeAccent/40 flex flex-col gap-2.5 transition-all">
-            
-            <!-- 16:9 Visual Thumbnail Container -->
-            <div class="relative aspect-video w-full rounded-xl overflow-hidden bg-black/80 border border-borderSubtle group/thumb">
-              <img 
-                id="scene_img_${block.id}" 
-                src="${imgSrc}" 
-                alt="Scene ${block.order}" 
-                class="w-full h-full object-cover transition-transform duration-500 group-hover/thumb:scale-105"
-                loading="lazy"
-                onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'640\\' height=\\'360\\' viewBox=\\'0 0 640 360\\'><rect width=\\'640\\' height=\\'360\\' fill=\\'%23121218\\'/><text x=\\'50%\\' y=\\'50%\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\' fill=\\'%23666\\' font-family=\\'sans-serif\\' font-size=\\'18\\'>HexMedia Scene</text></svg>'"
-              />
-              
-              <!-- Badges Overlay -->
-              <div class="absolute top-2 right-2 flex items-center gap-1.5 z-10">
-                ${isArchive 
-                  ? `<span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/75 backdrop-blur border border-amber-500/40 text-amber-300 flex items-center gap-1">🏛️ أرشيف وثائقي</span>`
-                  : `<span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/75 backdrop-blur border border-limeAccent/40 text-limeAccent flex items-center gap-1">🎨 Imagen 3</span>`
-                }
-                ${block.motion_type ? `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/70 backdrop-blur text-zinc-300 uppercase">${escapeHtml(block.motion_type)}</span>` : ''}
-              </div>
-
-              <div class="absolute top-2 left-2 flex items-center gap-1 z-10">
-                <span class="text-[9px] font-medium px-2 py-0.5 rounded-full bg-black/75 backdrop-blur ${isNarrator ? 'text-limeAccent' : 'text-white'}">
-                  ${escapeHtml(block.speaker_name)}
-                </span>
-              </div>
-
-              <div class="absolute bottom-2 right-2 flex items-center gap-1.5 z-10">
-                ${block.sfx_name ? `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/80 backdrop-blur border border-amber-500/30 text-amber-200">⚡ ${escapeHtml(block.sfx_name)}</span>` : ''}
-                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/80 backdrop-blur text-muted">${formatDurationMinSec(block.duration)}</span>
-              </div>
-
-              <!-- Center Play/Pause Preview Button -->
-              <button 
-                type="button"
-                onclick="toggleBlockPlay('${block.id}', '${block.audio_url}', ${idx})" 
-                id="play_btn_${block.id}"
-                class="absolute inset-0 m-auto w-11 h-11 rounded-full bg-black/60 hover:bg-limeAccent hover:text-obsidian text-white border border-white/20 flex items-center justify-center transition-all backdrop-blur shadow-xl active:scale-90"
-                title="معاينة الصوت والمشهد"
-              >
-                <svg id="play_icon_${block.id}" class="w-4 h-4 ml-0.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
-              </button>
-            </div>
-
-            <!-- Dialogue Text & Actions -->
-            <div class="space-y-2">
-              <p 
-                contenteditable="true" 
-                spellcheck="false" 
-                class="text-xs text-light leading-relaxed font-normal p-1 -m-1 rounded hover:bg-surface/50 transition cursor-text"
-                onblur="handleInlineTextEdit('${block.id}', this)"
-                onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); this.blur(); }"
-                title="اضغط لتعديل النص"
-              >${escapeHtml(block.vocalized_text || block.raw_text)}</p>
-
-              <div class="flex items-center justify-between pt-1 border-t border-borderSubtle/40 gap-2">
-                <div class="flex items-center gap-1.5">
-                  <button 
-                    type="button" 
-                    onclick="regenerateSceneVisual('${block.id}')" 
-                    id="regen_vis_${block.id}" 
-                    class="text-[10px] px-2 py-1 rounded-lg bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-limeAccent flex items-center gap-1 transition active:scale-95" 
-                    title="إعادة توليد الصورة البصرية"
-                  >
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                    <span>توليد صورة بديلة</span>
-                  </button>
-                  <button 
-                    type="button" 
-                    onclick="regenerateBlock('${block.id}')" 
-                    class="text-[10px] px-2 py-1 rounded-lg bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-limeAccent flex items-center gap-1 transition active:scale-95" 
-                    title="إعادة تسجيل الصوت عبر Gemini TTS"
-                  >
-                    <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                    <span>تجديد الصوت</span>
-                  </button>
-                </div>
-                <span class="text-[10px] font-mono text-zinc-500">مشهد ${block.order}</span>
-              </div>
-            </div>
-
-          </div>
-        `;
-      }).join('');
-
-      const pid = projectId || activeProjectId || '';
+    function buildSingleVideoSceneCardHtml(block, idx) {
+      const isNarrator = block.speaker_name === 'الراوي';
+      const isArchive = block.media_type === 'ARCHIVE_WEB';
+      const imgSrc = block.image_url || '/static/placeholder.jpg';
 
       return `
-        <div class="space-y-3 pt-2 border-t border-borderSubtle/60">
+        <div id="block-${block.id}" class="group p-2.5 sm:p-3 rounded-2xl bg-obsidian border border-borderSubtle hover:border-limeAccent/40 flex flex-col gap-2.5 transition-all shadow-md">
+          
+          <!-- 16:9 Visual Thumbnail Container -->
+          <div class="relative aspect-video w-full rounded-xl overflow-hidden bg-black/80 border border-borderSubtle group/thumb">
+            <img 
+              id="scene_img_${block.id}" 
+              src="${imgSrc}" 
+              alt="Scene ${block.order}" 
+              class="w-full h-full object-cover transition-transform duration-500 group-hover/thumb:scale-105"
+              loading="lazy"
+              onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'640\\' height=\\'360\\' viewBox=\\'0 0 640 360\\'><rect width=\\'640\\' height=\\'360\\' fill=\\'%23121218\\'/><text x=\\'50%\\' y=\\'50%\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\' fill=\\'%23666\\' font-family=\\'sans-serif\\' font-size=\\'18\\'>HexMedia Scene</text></svg>'"
+            />
+            
+            <!-- Badges Overlay -->
+            <div class="absolute top-2 right-2 flex items-center gap-1.5 z-10">
+              ${isArchive 
+                ? `<span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/75 backdrop-blur border border-amber-500/40 text-amber-300 flex items-center gap-1">🏛️ أرشيف وثائقي</span>`
+                : `<span class="text-[9px] font-mono px-2 py-0.5 rounded-full bg-black/75 backdrop-blur border border-limeAccent/40 text-limeAccent flex items-center gap-1">🎨 Imagen 3</span>`
+              }
+              ${block.motion_type ? `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/70 backdrop-blur text-zinc-300 uppercase">${escapeHtml(block.motion_type)}</span>` : ''}
+            </div>
+
+            <div class="absolute top-2 left-2 flex items-center gap-1 z-10">
+              <span class="text-[9px] font-medium px-2 py-0.5 rounded-full bg-black/75 backdrop-blur ${isNarrator ? 'text-limeAccent' : 'text-white'}">
+                ${escapeHtml(block.speaker_name)}
+              </span>
+            </div>
+
+            <div class="absolute bottom-2 right-2 flex items-center gap-1.5 z-10">
+              ${block.sfx_name ? `<span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-950/80 backdrop-blur border border-amber-500/30 text-amber-200">⚡ ${escapeHtml(block.sfx_name)}</span>` : ''}
+              <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-black/80 backdrop-blur text-muted">${formatDurationMinSec(block.duration)}</span>
+            </div>
+
+            <!-- Center Play/Pause Preview Button -->
+            <button 
+              type="button"
+              onclick="toggleBlockPlay('${block.id}', '${block.audio_url}', ${idx})" 
+              id="play_btn_${block.id}"
+              class="absolute inset-0 m-auto w-11 h-11 rounded-full bg-black/60 hover:bg-limeAccent hover:text-obsidian text-white border border-white/20 flex items-center justify-center transition-all backdrop-blur shadow-xl active:scale-90"
+              title="معاينة الصوت والمشهد"
+            >
+              <svg id="play_icon_${block.id}" class="w-4 h-4 ml-0.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+            </button>
+          </div>
+
+          <!-- Dialogue Text & Actions -->
+          <div class="space-y-2">
+            <p 
+              contenteditable="true" 
+              spellcheck="false" 
+              class="text-xs text-light leading-relaxed font-normal p-1 -m-1 rounded hover:bg-surface/50 transition cursor-text"
+              onblur="handleInlineTextEdit('${block.id}', this)"
+              onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); this.blur(); }"
+              title="اضغط لتعديل النص"
+            >${escapeHtml(block.vocalized_text || block.raw_text)}</p>
+
+            <div class="flex items-center justify-between pt-1 border-t border-borderSubtle/40 gap-2">
+              <div class="flex items-center gap-1.5">
+                <button 
+                  type="button" 
+                  onclick="regenerateSceneVisual('${block.id}')" 
+                  id="regen_vis_${block.id}" 
+                  class="text-[10px] px-2 py-1 rounded-lg bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-limeAccent flex items-center gap-1 transition active:scale-95" 
+                  title="إعادة توليد الصورة البصرية"
+                >
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                  <span>توليد صورة بديلة</span>
+                </button>
+                <button 
+                  type="button" 
+                  onclick="regenerateBlock('${block.id}')" 
+                  class="text-[10px] px-2 py-1 rounded-lg bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-limeAccent flex items-center gap-1 transition active:scale-95" 
+                  title="إعادة تسجيل الصوت عبر Gemini TTS"
+                >
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                  <span>تجديد الصوت</span>
+                </button>
+              </div>
+              <span class="text-[10px] font-mono text-zinc-500">مشهد ${block.order}</span>
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    function buildVideoSceneBlocksHtml(scenes, chapterTitle, projectId, metadata) {
+      const pid = projectId || activeProjectId || '';
+      const totalSecs = scenes.reduce((acc, s) => acc + (parseFloat(s.duration) || 0), 0);
+      const targetMins = (metadata && metadata.target_duration_minutes) || (activeProject && activeProject.target_duration_minutes) || 0;
+      const targetStr = targetMins > 0 ? `${targetMins} دقيقة` : 'مفتوحة';
+      const progressPct = targetMins > 0 ? Math.min(100, Math.round((totalSecs / (targetMins * 60)) * 100)) : 100;
+      const headerTitle = chapterTitle ? `مشاهد الفيديو (${escapeHtml(chapterTitle)})` : `مشاهد الفيلم المنفذة (${scenes.length})`;
+
+      const blocks = scenes.map((block, idx) => buildSingleVideoSceneCardHtml(block, idx)).join('');
+
+      return `
+        <div id="unified_video_board_${pid}" class="space-y-3 pt-2 border-t border-borderSubtle/60">
+          
+          <!-- Master Progress & Runtime Stats Header -->
+          <div class="p-3 sm:p-3.5 rounded-2xl bg-obsidian border border-borderSubtle space-y-2.5 shadow-lg">
+            <div class="flex items-center justify-between flex-wrap gap-2 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-limeAccent pulse-live shrink-0"></span>
+                <span id="video_scenes_header_title_${pid}" class="font-medium text-white text-xs sm:text-sm">
+                  ${headerTitle}
+                </span>
+              </div>
+              <div class="flex items-center gap-2 font-mono text-[11px] text-muted">
+                <span id="unified_video_progress_stats_${pid}" class="text-white font-medium">
+                  ⏱️ ${formatDurationMinSec(totalSecs)} / ${targetStr}
+                </span>
+              </div>
+            </div>
+            
+            <!-- Live Progress Bar -->
+            <div class="w-full h-1.5 rounded-full bg-surface overflow-hidden border border-borderSubtle/40">
+              <div id="unified_video_progress_bar_${pid}" class="h-full bg-limeAccent transition-all duration-500 rounded-full" style="width: ${progressPct}%"></div>
+            </div>
+          </div>
+
+          <!-- Actions Toolbar -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-1 gap-2.5">
-            <span class="text-xs font-medium text-white flex items-center gap-1.5 truncate">
-              <span class="w-2 h-2 rounded-full bg-limeAccent shrink-0"></span>
-              <span class="truncate">${headerTitle}</span>
-            </span>
-            <div class="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+            <div class="flex items-center gap-2 flex-wrap">
               <button 
                 onclick="renderFullFilmWithRemotion('${pid}')" 
                 class="px-3.5 py-1.5 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm"
@@ -1113,8 +1142,26 @@
                 ▶️ تشغيل الكل
               </button>
             </div>
+            <div class="flex items-center gap-2">
+              <button 
+                id="pause_btn_${pid}"
+                onclick="pauseContinuousGeneration('${pid}')" 
+                class="px-3 py-1.5 rounded-full bg-obsidian hover:bg-surface text-muted hover:text-white border border-borderSubtle text-xs transition active:scale-95"
+              >
+                ⏸️ إيقاف مؤقت للتوليد
+              </button>
+              <button 
+                id="resume_btn_${pid}"
+                onclick="resumeContinuousGeneration('${pid}')" 
+                class="hidden px-3 py-1.5 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition active:scale-95"
+              >
+                ▶️ استئناف التوليد
+              </button>
+            </div>
           </div>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[580px] overflow-y-auto pr-0.5">
+
+          <!-- The Unified Grid of Scenes -->
+          <div id="video_scenes_grid_${pid}" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[620px] overflow-y-auto pr-0.5">
             ${blocks}
           </div>
         </div>
@@ -1401,21 +1448,45 @@
             const targetMins = data.target_duration_minutes > 0 ? `${data.target_duration_minutes} دقيقة` : 'مفتوحة';
 
             if (isVideo) {
-              renderAssistantMessage(
-                `🎬 **تم إنتاج مشاهد مصورة جديدة من الفيلم!**\n\n⏱️ **المدة المنجزة حتى الآن:** ${data.total_duration_seconds}s (~${durMins} دقيقة من أصل ${targetMins}) • **المشاهد:** ${data.scenes_count}\n🎥 الكادرات والأصوات السينمائية جاهزة أدناه:`,
-                'SCENE_VIDEO_CARDS',
-                {
-                  project_id: pid,
-                  project_type: 'VIDEO_STUDIO',
-                  visual_style: data.visual_style,
-                  scenes: data.new_scenes,
-                  action_chips: [
-                    "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
-                    "⏸️ إيقاف مؤقت للتوليد",
-                    "🎬 فتح استوديو DesignCombo"
-                  ]
-                }
-              );
+              const existingGrid = document.getElementById('video_scenes_grid_' + pid);
+              if (existingGrid) {
+                // In-Place Injection into the unified video board!
+                data.new_scenes.forEach(sc => {
+                  if (!document.getElementById('block-' + sc.id)) {
+                    existingGrid.insertAdjacentHTML('beforeend', buildSingleVideoSceneCardHtml(sc, existingGrid.children.length));
+                  }
+                });
+
+                // Update Progress bar & Stats
+                const pBar = document.getElementById('unified_video_progress_bar_' + pid);
+                if (pBar) pBar.style.width = data.progress_percentage + '%';
+
+                const pStats = document.getElementById('unified_video_progress_stats_' + pid);
+                if (pStats) pStats.textContent = `⏱️ ${formatDurationMinSec(data.total_duration_seconds)} / ${targetMins}`;
+
+                const hTitle = document.getElementById('video_scenes_header_title_' + pid);
+                if (hTitle) hTitle.textContent = `مشاهد الفيلم المنفذة (${data.scenes_count})`;
+
+                scrollToBottom();
+              } else {
+                // First time: render the unified board!
+                renderAssistantMessage(
+                  `🎬 **تم تشغيل استوديو الفيديو التفاعلي الموحد!**\n\n⏱️ **الهدف المطلوب:** ${targetMins}\n🎥 تتجمع الكادرات وتتحدث أدناه تباعاً في الوقت الفعلي:`,
+                  'SCENE_VIDEO_CARDS',
+                  {
+                    project_id: pid,
+                    project_type: 'VIDEO_STUDIO',
+                    visual_style: data.visual_style,
+                    scenes: data.new_scenes,
+                    target_duration_minutes: data.target_duration_minutes,
+                    action_chips: [
+                      "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
+                      "⏸️ إيقاف مؤقت للتوليد",
+                      "🎬 فتح استوديو DesignCombo"
+                    ]
+                  }
+                );
+              }
             } else {
               renderAssistantMessage(
                 `🎙️ **مشاهد صوتية جديدة جاهزة!**\n\n⏱️ **المدة المنجزة:** ${data.total_duration_seconds}s (~${durMins} دقيقة من أصل ${targetMins})\n🎧 استمع للمشاهد الجديدة فوراً:`,
@@ -1435,9 +1506,17 @@
 
           if (data.status === 'READY') {
             stopLiveProgressPolling();
+            const pauseBtn = document.getElementById('pause_btn_' + pid);
+            if (pauseBtn) pauseBtn.classList.add('hidden');
+            const resumeBtn = document.getElementById('resume_btn_' + pid);
+            if (resumeBtn) resumeBtn.classList.add('hidden');
             showToast('🎉 اكتمل إنتاج كامل مشاهد العمل بنجاح!');
-          } else if (data.status === 'PAUSED' || data.status === 'FAILED') {
+          } else if (data.status === 'PAUSED') {
             stopLiveProgressPolling();
+            const pauseBtn = document.getElementById('pause_btn_' + pid);
+            if (pauseBtn) pauseBtn.classList.add('hidden');
+            const resumeBtn = document.getElementById('resume_btn_' + pid);
+            if (resumeBtn) resumeBtn.classList.remove('hidden');
           }
         } catch (e) {
           console.error("Live progress polling error:", e);
@@ -1452,18 +1531,12 @@
       try {
         const res = await fetch(`/api/projects/${pid}/pause-continuous`, { method: 'POST' });
         const data = await res.json();
-        renderAssistantMessage(
-          `⏸️ **تم إيقاف التوليد المستمر مؤقتاً.**\n\nيمكنك استئناف التوليد في أي وقت أو ريندر ما تم إنجازه من مشاهد حتى الآن.`,
-          'TEXT',
-          {
-            project_id: pid,
-            action_chips: [
-              "▶️ استئناف التوليد",
-              "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
-              "🎬 فتح استوديو DesignCombo"
-            ]
-          }
-        );
+        const pauseBtn = document.getElementById('pause_btn_' + pid);
+        const resumeBtn = document.getElementById('resume_btn_' + pid);
+        if (pauseBtn && resumeBtn) {
+          pauseBtn.classList.add('hidden');
+          resumeBtn.classList.remove('hidden');
+        }
         showToast('تم إيقاف التوليد مؤقتاً');
       } catch (e) {
         showToast('تعذر إيقاف التوليد: ' + e.message, true);
@@ -1476,21 +1549,14 @@
       try {
         const res = await fetch(`/api/projects/${pid}/resume-continuous`, { method: 'POST' });
         const data = await res.json();
-        renderAssistantMessage(
-          `▶️ **تم استئناف الإنتاج في الخلفية!**\n\nيواصل المخرج الذكي توليد المشاهد والكادرات تباعاً.`,
-          'TEXT',
-          {
-            project_id: pid,
-            is_continuous: true,
-            action_chips: [
-              "⏸️ إيقاف مؤقت للتوليد",
-              "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
-              "🎬 فتح استوديو DesignCombo"
-            ]
-          }
-        );
+        const pauseBtn = document.getElementById('pause_btn_' + pid);
+        const resumeBtn = document.getElementById('resume_btn_' + pid);
+        if (pauseBtn && resumeBtn) {
+          pauseBtn.classList.remove('hidden');
+          resumeBtn.classList.add('hidden');
+        }
         startLiveProgressPolling(pid);
-        showToast('تم استئناف الإنتاج');
+        showToast('تم استئناف التوليد في الخلفية');
       } catch (e) {
         showToast('تعذر استئناف التوليد: ' + e.message, true);
       }

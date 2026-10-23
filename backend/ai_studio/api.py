@@ -413,6 +413,12 @@ class StartContinuousRequest(Schema):
 @api.get("/projects/{project_id}/live-progress")
 def live_progress_endpoint(request, project_id: str, after: int = 0):
     project = get_object_or_404(BookProject, id=project_id)
+
+    # Auto-Healing: Ensure background worker is alive if status is CONTINUOUS_GENERATING
+    from .services.continuous_engine import ensure_worker_running
+    if project.status == 'CONTINUOUS_GENERATING':
+        ensure_worker_running(str(project.id))
+
     new_scenes_qs = project.scenes.filter(order__gt=after).order_by('order')
     new_scenes = []
     for sc in new_scenes_qs:
