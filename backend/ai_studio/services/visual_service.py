@@ -54,8 +54,14 @@ def enhance_visual_prompt(raw_prompt: str, style: str = 'AUTO', character_dna: s
     dna_part = f" Main character visual traits: {character_dna.strip()}." if character_dna else ""
     return f"{cleaned}.{dna_part} Style: {style_suffix} Highly detailed, no watermarks, masterpiece."
 
+WIKIMEDIA_COOLDOWN_UNTIL = 0.0
+
 def search_wikimedia_archive(query: str) -> Optional[str]:
     """Search Wikimedia Commons for authentic public domain documentary images."""
+    global WIKIMEDIA_COOLDOWN_UNTIL
+    if time.time() < WIKIMEDIA_COOLDOWN_UNTIL:
+        return None
+
     try:
         # Extract candidate keywords for reliable Wikimedia search
         fillers = {
@@ -69,13 +75,8 @@ def search_wikimedia_archive(query: str) -> Optional[str]:
         candidate_queries = []
         if len(words) >= 2:
             candidate_queries.append(" ".join(words[:2]))
-        if len(words) >= 3:
-            candidate_queries.append(" ".join(words[:3]))
         if words:
             candidate_queries.append(words[0])
-
-        # Also fallback to full query if short
-        candidate_queries.append(" ".join(query.split()[:4]))
 
         for candidate in candidate_queries:
             clean_query = re.sub(r'[^\w\s]', ' ', candidate).strip()
@@ -89,26 +90,32 @@ def search_wikimedia_archive(query: str) -> Optional[str]:
             )
             req = urllib.request.Request(
                 api_url,
-                headers={'User-Agent': 'HexMediaVideoStudio/1.0 (contact@hexmedia.internal)'}
+                headers={'User-Agent': 'HexMediaStudioBot/1.0 (https://hexmedia.ai; support@hexmedia.ai)'}
             )
-            with urllib.request.urlopen(req, timeout=5) as response:
-                data = json.loads(response.read().decode('utf-8'))
-                pages = data.get('query', {}).get('pages', {})
-                for page_id, page_info in pages.items():
-                    imageinfo = page_info.get('imageinfo', [])
-                    if imageinfo:
-                        img_url = imageinfo[0].get('url', '')
-                        mime = imageinfo[0].get('mime', '')
-                        if mime in ['image/jpeg', 'image/png', 'image/webp'] and img_url:
-                            # Download and re-host to MinIO for ultra-fast local serving
-                            with urllib.request.urlopen(urllib.request.Request(img_url, headers={'User-Agent': 'Mozilla/5.0'}), timeout=8) as img_resp:
-                                img_bytes = img_resp.read()
-                                obj_name = f"archives/wiki_{uuid.uuid4().hex[:10]}.jpg"
-                                uploaded = upload_bytes(img_bytes, obj_name, "image/jpeg")
-                                logger.info(f"✅ Found Wikimedia archive image for '{candidate}': {uploaded}")
-                                return uploaded
+            try:
+                with urllib.request.urlopen(req, timeout=4) as response:
+                    data = json.loads(response.read().decode('utf-8'))
+                    pages = data.get('query', {}).get('pages', {})
+                    for page_id, page_info in pages.items():
+                        imageinfo = page_info.get('imageinfo', [])
+                        if imageinfo:
+                            img_url = imageinfo[0].get('url', '')
+                            mime = imageinfo[0].get('mime', '')
+                            if mime in ['image/jpeg', 'image/png', 'image/webp'] and img_url:
+                                with urllib.request.urlopen(urllib.request.Request(img_url, headers={'User-Agent': 'Mozilla/5.0'}), timeout=6) as img_resp:
+                                    img_bytes = img_resp.read()
+                                    obj_name = f"archives/wiki_{uuid.uuid4().hex[:10]}.jpg"
+                                    uploaded = upload_bytes(img_bytes, obj_name, "image/jpeg")
+                                    logger.info(f"✅ Found Wikimedia archive image for '{candidate}': {uploaded}")
+                                    return uploaded
+            except urllib.error.HTTPError as he:
+                if he.code == 429:
+                    logger.warning("Wikimedia API 429 Too Many Requests received. Enabling 10-minute cooldown and falling back directly to Gemini AI image generation.")
+                    WIKIMEDIA_COOLDOWN_UNTIL = time.time() + 600
+                    return None
+                continue
     except Exception as e:
-        logger.warning(f"Wikimedia search failed for '{query}': {e}")
+        logger.warning(f"Wikimedia search notice for '{query[:40]}': {e}")
     return None
 
 def generate_ai_image(prompt: str, scene_id: str) -> Optional[str]:
