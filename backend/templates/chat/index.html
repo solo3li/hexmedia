@@ -461,6 +461,8 @@
     let selectedFile = null;
     let targetCharForVoice = null;
     let selectedVoiceForModal = null;
+    let liveProgressInterval = null;
+    let lastPolledOrder = 0;
 
     // =========================================================================
     // BOOTSTRAP
@@ -479,6 +481,14 @@
           if (studioBtn) studioBtn.classList.remove('hidden');
           const exportBtn = document.getElementById('exportHeaderBtn');
           if (exportBtn) exportBtn.classList.remove('hidden');
+        }
+
+        if (activeProject.scenes && activeProject.scenes.length) {
+          lastPolledOrder = Math.max(0, ...activeProject.scenes.map(s => s.order || 0));
+        }
+
+        if (activeProject.status === 'CONTINUOUS_GENERATING') {
+          startLiveProgressPolling(activeProjectId);
         }
       } else {
         document.getElementById('headerTitle').textContent = 'محادثة جديدة';
@@ -1362,6 +1372,130 @@
       }
     }
 
+    function stopLiveProgressPolling() {
+      if (liveProgressInterval) {
+        clearInterval(liveProgressInterval);
+        liveProgressInterval = null;
+      }
+    }
+
+    function startLiveProgressPolling(projectId) {
+      const pid = projectId || activeProjectId;
+      if (!pid) return;
+      stopLiveProgressPolling();
+
+      liveProgressInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/projects/${pid}/live-progress?after=${lastPolledOrder}`);
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (data.new_scenes && data.new_scenes.length > 0) {
+            const maxOrder = Math.max(...data.new_scenes.map(s => s.order));
+            if (maxOrder > lastPolledOrder) {
+              lastPolledOrder = maxOrder;
+            }
+
+            const isVideo = data.project_type === 'VIDEO_STUDIO' || data.new_scenes.some(s => s.image_url);
+            const durMins = (data.total_duration_seconds / 60).toFixed(1);
+            const targetMins = data.target_duration_minutes > 0 ? `${data.target_duration_minutes} دقيقة` : 'مفتوحة';
+
+            if (isVideo) {
+              renderAssistantMessage(
+                `🎬 **تم إنتاج مشاهد مصورة جديدة من الفيلم!**\n\n⏱️ **المدة المنجزة حتى الآن:** ${data.total_duration_seconds}s (~${durMins} دقيقة من أصل ${targetMins}) • **المشاهد:** ${data.scenes_count}\n🎥 الكادرات والأصوات السينمائية جاهزة أدناه:`,
+                'SCENE_VIDEO_CARDS',
+                {
+                  project_id: pid,
+                  project_type: 'VIDEO_STUDIO',
+                  visual_style: data.visual_style,
+                  scenes: data.new_scenes,
+                  action_chips: [
+                    "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
+                    "⏸️ إيقاف مؤقت للتوليد",
+                    "🎬 فتح استوديو DesignCombo"
+                  ]
+                }
+              );
+            } else {
+              renderAssistantMessage(
+                `🎙️ **مشاهد صوتية جديدة جاهزة!**\n\n⏱️ **المدة المنجزة:** ${data.total_duration_seconds}s (~${durMins} دقيقة من أصل ${targetMins})\n🎧 استمع للمشاهد الجديدة فوراً:`,
+                'SCENE_AUDIO_CARDS',
+                {
+                  project_id: pid,
+                  scenes: data.new_scenes,
+                  action_chips: [
+                    "⏸️ إيقاف مؤقت للتوليد",
+                    "🎬 فتح استوديو DesignCombo",
+                    "⬇️ تحميل الصوت الكامل"
+                  ]
+                }
+              );
+            }
+          }
+
+          if (data.status === 'READY') {
+            stopLiveProgressPolling();
+            showToast('🎉 اكتمل إنتاج كامل مشاهد العمل بنجاح!');
+          } else if (data.status === 'PAUSED' || data.status === 'FAILED') {
+            stopLiveProgressPolling();
+          }
+        } catch (e) {
+          console.error("Live progress polling error:", e);
+        }
+      }, 3500);
+    }
+
+    async function pauseContinuousGeneration(projectId) {
+      const pid = projectId || activeProjectId;
+      if (!pid) return;
+      stopLiveProgressPolling();
+      try {
+        const res = await fetch(`/api/projects/${pid}/pause-continuous`, { method: 'POST' });
+        const data = await res.json();
+        renderAssistantMessage(
+          `⏸️ **تم إيقاف التوليد المستمر مؤقتاً.**\n\nيمكنك استئناف التوليد في أي وقت أو ريندر ما تم إنجازه من مشاهد حتى الآن.`,
+          'TEXT',
+          {
+            project_id: pid,
+            action_chips: [
+              "▶️ استئناف التوليد",
+              "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
+              "🎬 فتح استوديو DesignCombo"
+            ]
+          }
+        );
+        showToast('تم إيقاف التوليد مؤقتاً');
+      } catch (e) {
+        showToast('تعذر إيقاف التوليد: ' + e.message, true);
+      }
+    }
+
+    async function resumeContinuousGeneration(projectId) {
+      const pid = projectId || activeProjectId;
+      if (!pid) return;
+      try {
+        const res = await fetch(`/api/projects/${pid}/resume-continuous`, { method: 'POST' });
+        const data = await res.json();
+        renderAssistantMessage(
+          `▶️ **تم استئناف الإنتاج في الخلفية!**\n\nيواصل المخرج الذكي توليد المشاهد والكادرات تباعاً.`,
+          'TEXT',
+          {
+            project_id: pid,
+            is_continuous: true,
+            action_chips: [
+              "⏸️ إيقاف مؤقت للتوليد",
+              "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
+              "🎬 فتح استوديو DesignCombo"
+            ]
+          }
+        );
+        startLiveProgressPolling(pid);
+        showToast('تم استئناف الإنتاج');
+      } catch (e) {
+        showToast('تعذر استئناف التوليد: ' + e.message, true);
+      }
+    }
+
     // =========================================================================
     // CHAT & FILE INTERACTIONS
     // =========================================================================
@@ -1387,7 +1521,15 @@
         renderFullFilmWithRemotion(activeProjectId);
         return;
       }
-      const clean = chipText.replace(/^[🎙️🎭🎬⬇️📁✨🚀🔄⏸️▶️]+\s*/, '').trim();
+      if (chipText.includes("إيقاف مؤقت") || chipText.includes("توقف")) {
+        pauseContinuousGeneration(activeProjectId);
+        return;
+      }
+      if (chipText.includes("استئناف")) {
+        resumeContinuousGeneration(activeProjectId);
+        return;
+      }
+      const clean = chipText.replace(/^[🎙️🎭🎬⬇️📁✨🚀🔄⏸️▶️⏱️]+\s*/, '').trim();
       document.getElementById('chatInput').value = clean;
       handleSendMessage();
     }
@@ -1449,6 +1591,9 @@
             window.history.replaceState(null, '', `?project_id=${data.project_id}`);
           }
           renderAssistantMessage(data.response, data.msg_type, data.metadata);
+          if (data.metadata && data.metadata.is_continuous) {
+            startLiveProgressPolling(data.project_id || activeProjectId);
+          }
           showToast('تم استيراد الرواية واستخراج الشخصيات!');
         } else {
           const toolToSend = currentActiveTool;
@@ -1472,6 +1617,9 @@
             window.history.replaceState(null, '', `?project_id=${data.project_id}`);
           }
           renderAssistantMessage(data.response, data.msg_type, data.metadata);
+          if (data.metadata && data.metadata.is_continuous) {
+            startLiveProgressPolling(data.project_id || activeProjectId);
+          }
         }
       } catch (err) {
         hideTyping();

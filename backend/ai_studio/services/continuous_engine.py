@@ -97,6 +97,28 @@ def continuous_generation_worker(project_id: str):
                 project.status = 'READY'
                 project.progress_percentage = 100
                 project.save(update_fields=['status', 'progress_percentage'])
+                from ..models import ChatMessage
+                is_v = getattr(project, 'project_type', 'AUDIO_DRAMA') == 'VIDEO_STUDIO'
+                if is_v:
+                    ChatMessage.objects.create(
+                        project=project,
+                        role='ASSISTANT',
+                        content=(
+                            f"🎉 **تم اكتمال إنتاج كافة مشاهد الفيلم للمدة المطلوبة بنجاح!**\n\n"
+                            f"📖 **الفيلم:** {project.title}\n"
+                            f"⏱️ **إجمالي المدة المنتجة:** {round(project.total_duration_seconds, 1)} ثانية ({project.scenes.count()} مشهد مصور).\n\n"
+                            f"اضغط على زر **'🎬 تجميع وريندر الفيلم الكامل بـ Remotion'** بالأسفل لريندر وتنزيل الفيلم النهائي بجودة 1080p!"
+                        ),
+                        msg_type='TEXT',
+                        metadata={
+                            "project_id": str(project.id),
+                            "action_chips": [
+                                "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
+                                "▶️ تشغيل كل المشاهد بالتتابع",
+                                "🎬 فتح استوديو DesignCombo"
+                            ]
+                        }
+                    )
                 break
 
         # 2. Prepare Story Bible & context for Act N
@@ -135,7 +157,44 @@ def continuous_generation_worker(project_id: str):
         logger.info(f"Generating Act {current_act} for project {project.title} (narration_mode={narration_mode})...")
 
         # 3. Generate script for Act N via Gemini 3.8 Flash
-        act_prompt = f"""
+        is_video = getattr(project, 'project_type', 'AUDIO_DRAMA') == 'VIDEO_STUDIO'
+        v_style = getattr(project, 'visual_style', 'DOCUMENTARY')
+
+        if is_video:
+            act_prompt = f"""
+أنت مخرج ومؤلف سينمائي بارع للأفلام الوثائقية والسينمائية والأنيميشن.
+نحن ننتج فيلماً سينمائياً ومصوراً بعنوان: '{project.title}'.
+النمط البصري المعتمد: {v_style}
+الشخصيات المعتمدة وأصواتها: {char_desc}
+نمط تقديم الراوي: {narration_mode}
+قاعدة السرد: {narration_rule}
+
+ملخص أحداث الفيلم حتى الآن:
+{recap if recap else "بداية أحداث وانطلاق الفيلم."}
+
+المطلوب:
+تأليف الجزء/الفصل الدرامي رقم {current_act} من الفيلم.
+يجب أن يتكون الجزء من 4 إلى 8 مشاهد مصورة متتابعة تصعّد الحبكة والتشويق بسلاسة، مع المحافظة على اتساق الشخصيات.
+لكل مشهد:
+- speaker_name: المتحدث (من قائمة الشخصيات المعتمدة أو الراوي).
+- raw_text: النص مع التشكيل العربي الكامل والواضح لضبط نطق Gemini TTS بدقة.
+- emotion: الانفعال والمشاعر (مثل: cinematic, dramatic, inspiring, tense).
+- sfx_name: المؤثر الصوتي المقترح.
+- visual_prompt: وصف بصري سينمائي دقيق باللغة الإنجليزية للقطة والكادر وزاوية الكاميرا والإضاءة يتناسب مع النمط {v_style}.
+
+أخرج مصفوفة JSON نقية فقط بالهيكل التالي:
+[
+  {{
+    "speaker_name": "اسم الشخصية",
+    "raw_text": "النَّصُّ مَعَ التَّشْكِيلِ الْكَامِلِ...",
+    "emotion": "dramatic and majestic",
+    "sfx_name": "wind",
+    "visual_prompt": "Cinematic 16:9 8k documentary wide angle shot..."
+  }}
+]
+"""
+        else:
+            act_prompt = f"""
 أنت كاتب سيناريو ومخرج درامي صوتي ملحمي.
 نحن نقوم بإنتاج عمل درامي إذاعي صوتي مستمر بعنوان: '{project.title}'.
 الشخصيات المعتمدة وأصواتها: {char_desc}
@@ -216,6 +275,25 @@ def continuous_generation_worker(project_id: str):
             audio_url = upload_bytes(audio_bytes, f"audio/{project.id}/scene_{scene_order}.wav")
             duration = max(2.5, min(20.0, len(text.split()) * 0.45))
 
+            # Visual / Video Scene Card Generation
+            visual_url = ""
+            visual_prompt = sc.get("visual_prompt") or f"{speaker_name}: {text[:90]}"
+            media_type = "AI_IMAGE"
+            motion_type = "zoom_in"
+
+            if is_video:
+                from .visual_service import produce_scene_visual
+                v_res = produce_scene_visual(
+                    scene_id=f"{project.id}_act{current_act}_{idx+1}",
+                    raw_prompt=visual_prompt,
+                    visual_style=v_style,
+                    character_dna=matched_char.description or ""
+                )
+                visual_url = v_res.get("image_url", "")
+                media_type = v_res.get("media_type", "AI_IMAGE")
+                motion_type = v_res.get("motion_type", "zoom_in")
+                visual_prompt = v_res.get("visual_prompt", visual_prompt)
+
             Scene.objects.create(
                 project=project,
                 order=scene_order,
@@ -226,6 +304,10 @@ def continuous_generation_worker(project_id: str):
                 vocalized_text=text,
                 emotion=emotion,
                 audio_url=audio_url,
+                image_url=visual_url,
+                visual_prompt=visual_prompt,
+                media_type=media_type,
+                motion_type=motion_type,
                 duration_seconds=duration,
                 sfx_name=sfx_key,
                 sfx_url=sfx_url,
@@ -247,6 +329,52 @@ def continuous_generation_worker(project_id: str):
 
             # Update timeline state incrementally
             build_designcombo_timeline(project)
+
+        # Emit ChatMessage for completed Act so it appears in chat history
+        from ..models import ChatMessage
+        act_scenes = project.scenes.filter(chapter=current_act).order_by('order')
+        dur_mins = round(project.total_duration_seconds / 60, 1)
+        target_mins = project.target_duration_minutes
+        target_str = f"{target_mins} دقيقة" if target_mins > 0 else "مفتوحة"
+
+        if is_video:
+            scenes_list = [{
+                "id": str(sc.id),
+                "order": sc.order,
+                "speaker_name": sc.speaker_name,
+                "voice": sc.speaker.assigned_voice if sc.speaker else "Gemini",
+                "raw_text": sc.raw_text,
+                "vocalized_text": sc.vocalized_text or sc.raw_text,
+                "audio_url": sc.audio_url,
+                "image_url": sc.image_url,
+                "visual_prompt": sc.visual_prompt,
+                "media_type": sc.media_type,
+                "motion_type": sc.motion_type,
+                "duration": round(sc.duration_seconds, 1),
+                "sfx_name": sc.sfx_name or ""
+            } for sc in act_scenes]
+
+            ChatMessage.objects.create(
+                project=project,
+                role='ASSISTANT',
+                content=(
+                    f"🎬 **اكتمال إنتاج مشاهد الجزء {current_act} من الفيلم!**\n\n"
+                    f"⏱️ **المدة المنجزة حتى الآن:** {round(project.total_duration_seconds, 1)} ثانية (~{dur_mins} دقيقة من أصل {target_str}).\n"
+                    f"🎥 الكادرات جاهزة أدناه، أو اضغط **'🎬 تجميع وريندر الفيلم الكامل بـ Remotion'** لريندر ما تم إنجازه في أي وقت:"
+                ),
+                msg_type='SCENE_VIDEO_CARDS',
+                metadata={
+                    "project_id": str(project.id),
+                    "project_type": "VIDEO_STUDIO",
+                    "visual_style": v_style,
+                    "scenes": scenes_list,
+                    "action_chips": [
+                        "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
+                        "⏸️ إيقاف مؤقت للتوليد",
+                        "🎬 فتح استوديو DesignCombo"
+                    ]
+                }
+            )
 
         # 5. Summarize Act N into the Story Bible recap to preserve continuity
         act_summary_prompt = f"لخص في سطرين ما حدث في هذا الفصل لاستكمال القصة:\n" + "\n".join(new_act_text[:6])

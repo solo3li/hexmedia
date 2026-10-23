@@ -215,63 +215,103 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
         }
         return state
 
-    # 0.1 Check if user explicitly clicked/commanded to start continuous audio generation
+    # 0.1 Check if user explicitly clicked/commanded to start continuous audio/video generation
     from .continuous_engine import parse_duration_from_prompt, start_continuous_generation
-    is_continuous_trigger = (
-        getattr(project, 'project_type', 'AUDIO_DRAMA') != 'VIDEO_STUDIO' and
-        any(k in prompt_lower for k in [
-            "بدء توليد الصوت للمدة", "بدء الإنتاج الصوتي للمدة", "ابدأ توليد الصوت للمدة", 
-            "بدء توليد الصوت المستمر", "ابدأ الإنتاج المستمر", "شغل الإنتاج المستمر", "توليد الصوت للمدة",
-            "إنتاج مستمر", "توليد مستمر"
-        ])
-    )
+    is_continuous_trigger = any(k in prompt_lower for k in [
+        "بدء توليد الصوت للمدة", "بدء الإنتاج الصوتي للمدة", "ابدأ توليد الصوت للمدة", 
+        "بدء توليد الصوت المستمر", "ابدأ الإنتاج المستمر", "شغل الإنتاج المستمر", "توليد الصوت للمدة",
+        "إنتاج مستمر", "توليد مستمر",
+        "بدء إنتاج الفيلم للمدة", "بدء إنتاج الفيلم", "ابدأ إنتاج الفيلم", "توليد الفيلم للمدة", "إنتاج الفيلم للمدة", "بدء التوليد السينمائي",
+        "إنتاج المشاهد المصورة والصوت الآن"
+    ])
 
     if is_continuous_trigger and project:
         target_dur = project.target_duration_minutes or 0
         start_continuous_generation(str(project.id), target_duration_minutes=target_dur)
         dur_label = "مفتوح ولانهائي (حتى توقفه أنت)" if target_dur == 0 else f"{target_dur} دقيقة"
-        reply = (
-            f"🚀 **تم بدء محرك الإنتاج الدرامي المستمر (Continuous Drama Engine)!**\n\n"
-            f"📖 **العمل:** {project.title}\n"
-            f"⏱️ **الهدف:** {dur_label}\n\n"
-            f"⚡ بدأ المخرج الذكي في تأليف وتوليد المشاهد الصوتية فصلاً تلو الآخر في الخلفية عبر **Gemini 3.8 Flash** و **Gemini TTS**.\n"
-            f"🎧 ستظهر المشاهد الصوتية تباعاً في الشات فور اكتمالها لتستمع إليها فوراً دون انتظار!"
-        )
-        state["project_id"] = str(project.id)
-        state["response_text"] = reply
-        state["msg_type"] = "TEXT"
-        state["metadata"] = {
-            "project_id": str(project.id),
-            "is_continuous": True,
-            "target_duration_minutes": target_dur,
-            "action_chips": ["⏸️ إيقاف مؤقت للتوليد", "🎬 فتح استوديو DesignCombo", "⬇️ تحميل الصوت الكامل"]
-        }
-        return state
+        is_video = getattr(project, 'project_type', 'AUDIO_DRAMA') == 'VIDEO_STUDIO'
+        
+        if is_video:
+            reply = (
+                f"🎬 **تم بدء محرك الإنتاج السينمائي المستمر (Continuous Video Engine)!**\n\n"
+                f"📖 **الفيلم:** {project.title}\n"
+                f"⏱️ **الهدف الزمني:** {dur_label}\n\n"
+                f"⚡ بدأ المخرج الذكي في توليد الكادرات البصرية 16:9 والأصوات السينمائية مشهداً تلو الآخر في الخلفية عبر **Gemini 3.8 Flash** و **Gemini TTS**.\n"
+                f"🎥 ستظهر المشاهد المصورة تباعاً في الشات فور اكتمالها لتشاهدها وتستمع إليها فوراً دون انتظار!"
+            )
+            state["project_id"] = str(project.id)
+            state["response_text"] = reply
+            state["msg_type"] = "TEXT"
+            state["metadata"] = {
+                "project_id": str(project.id),
+                "is_continuous": True,
+                "project_type": "VIDEO_STUDIO",
+                "target_duration_minutes": target_dur,
+                "action_chips": ["⏸️ إيقاف مؤقت للتوليد", "🎬 تجميع وريندر الفيلم الكامل بـ Remotion", "🎬 فتح استوديو DesignCombo"]
+            }
+            return state
+        else:
+            reply = (
+                f"🚀 **تم بدء محرك الإنتاج الدرامي المستمر (Continuous Drama Engine)!**\n\n"
+                f"📖 **العمل:** {project.title}\n"
+                f"⏱️ **الهدف:** {dur_label}\n\n"
+                f"⚡ بدأ المخرج الذكي في تأليف وتوليد المشاهد الصوتية فصلاً تلو الآخر في الخلفية عبر **Gemini 3.8 Flash** و **Gemini TTS**.\n"
+                f"🎧 ستظهر المشاهد الصوتية تباعاً في الشات فور اكتمالها لتستمع إليها فوراً دون انتظار!"
+            )
+            state["project_id"] = str(project.id)
+            state["response_text"] = reply
+            state["msg_type"] = "TEXT"
+            state["metadata"] = {
+                "project_id": str(project.id),
+                "is_continuous": True,
+                "target_duration_minutes": target_dur,
+                "action_chips": ["⏸️ إيقاف مؤقت للتوليد", "🎬 فتح استوديو DesignCombo", "⬇️ تحميل الصوت الكامل"]
+            }
+            return state
 
     # 0.2 Check if user is asking to change or set duration WITHOUT starting audio generation
     target_duration = parse_duration_from_prompt(prompt)
-    if target_duration is not None and project and any(k in prompt_lower for k in ["ارفع", "مدد", "خليه", "طول", "ساعة", "دقائق", "دقيقة", "مستمر", "مفتوح", "هدف"]):
+    if target_duration is not None and project and any(k in prompt_lower for k in ["ارفع", "مدد", "خليه", "طول", "ساعة", "دقائق", "دقيقة", "مستمر", "مفتوح", "هدف", "تعديل"]):
         project.target_duration_minutes = target_duration
         project.save(update_fields=['target_duration_minutes'])
         dur_label = "مفتوح ولانهائي" if target_duration == 0 else f"{target_duration} دقيقة"
-        reply = (
-            f"⏱️ **تم تحديث الهدف الزمني للعمل بنجاح: {dur_label}!**\n\n"
-            f"📖 **العمل:** {project.title}\n"
-            f"📝 السيناريو والشخصيات جاهزة تماماً للمراجعة.\n\n"
-            f"اضغط على زر **'🎙️ بدء توليد الصوت للمدة المطلوبة ({dur_label})'** بالأسفل في أي وقت لتشغيل محرك الصوت الفعلي!"
-        )
-        state["project_id"] = str(project.id)
-        state["response_text"] = reply
-        state["msg_type"] = "TEXT"
-        state["metadata"] = {
-            "project_id": str(project.id),
-            "target_duration_minutes": target_duration,
-            "action_chips": [
+        is_video = getattr(project, 'project_type', 'AUDIO_DRAMA') == 'VIDEO_STUDIO'
+        
+        if is_video:
+            reply = (
+                f"⏱️ **تم تحديث الهدف الزمني للفيلم بنجاح: {dur_label}!**\n\n"
+                f"📖 **الفيلم:** {project.title}\n"
+                f"🎬 السيناريو والكاستينغ جاهزان تماماً.\n\n"
+                f"اضغط على زر **'🎬 بدء إنتاج الفيلم للمدة ({dur_label})'** بالأسفل في أي وقت لتشغيل محرك التوليد السينمائي المستمر!"
+            )
+            chips = [
+                f"🎬 بدء إنتاج الفيلم للمدة ({dur_label})",
+                "⏱️ مدة مفتوحة ولانهائية",
+                "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
+                "🎬 فتح استوديو DesignCombo"
+            ]
+        else:
+            reply = (
+                f"⏱️ **تم تحديث الهدف الزمني للعمل بنجاح: {dur_label}!**\n\n"
+                f"📖 **العمل:** {project.title}\n"
+                f"📝 السيناريو والشخصيات جاهزة تماماً للمراجعة.\n\n"
+                f"اضغط على زر **'🎙️ بدء توليد الصوت للمدة المطلوبة ({dur_label})'** بالأسفل في أي وقت لتشغيل محرك الصوت الفعلي!"
+            )
+            chips = [
                 f"🎙️ بدء توليد الصوت للمدة المطلوبة ({dur_label})",
                 "🎙️ نفذ الصوت لهذا المشهد فقط",
                 "🎭 تعديل كاستينغ الشخصيات",
                 "🎬 فتح استوديو DesignCombo"
             ]
+
+        state["project_id"] = str(project.id)
+        state["response_text"] = reply
+        state["msg_type"] = "TEXT"
+        state["metadata"] = {
+            "project_id": str(project.id),
+            "project_type": project.project_type,
+            "target_duration_minutes": target_duration,
+            "action_chips": chips
         }
         return state
 
@@ -364,6 +404,11 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
     )
 
     if is_explicit_video:
+        target_dur = parse_duration_from_prompt(prompt)
+        if target_dur is None:
+            target_dur = 5  # default to 5 minutes if not specified
+        dur_label = "مفتوح ولانهائي" if target_dur == 0 else f"{target_dur} دقيقة"
+
         p_lower = prompt.lower()
         if any(w in p_lower for w in ['وثائق', 'تاريخ', 'حرب', 'شاهد', 'معركة', 'حقيقة', 'documentary', 'history']):
             v_style = 'DOCUMENTARY'
@@ -380,10 +425,12 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
 
         system_instruction = (
             f"أنت 'المخرج السينمائي الذكي' (AI Film Director) داخل استوديو HexMedia.\n"
-            f"مهمتك إخراج وتأليف فيلم قصير سينمائي مصور يلبي رغبة المستخدم بدقة. النمط البصري المحدد: {style_label}.\n"
-            "1. قم بتأليف سيناريو مصور يحتوي على راوٍ وشخصيات مع حوارات مشكولة بدقة ومؤثرات صوتية.\n"
-            "2. صف الكادر البصري لكل لقطة (Visual Description) باللغة الإنجليزية في سياق المشهد.\n"
-            "3. في نهاية النص اذكر كاستينغ الشخصيات وأخبر المستخدم أنه يمكنه الضغط على '🎬 إنتاج المشاهد المصورة والصوت الآن' لتوليد الكادرات البصرية والأصوات فوراً."
+            f"مهمتك إخراج وتأليف فيلم سينمائي مصور يلبي رغبة المستخدم بدقة.\n"
+            f"الهدف الزمني المحدد للفيلم: {dur_label}.\n"
+            f"النمط البصري المحدد: {style_label}.\n"
+            "1. قم بتأليف سيناريو مصور غني يحتوي على راوٍ وشخصيات مع حوارات مشكولة بدقة ومؤثرات صوتية.\n"
+            "2. صف الكادر البصري لكل لقطة (Visual Description) باللغة الإنجليزية في سياق المشهد مع الإضاءة وزاوية الكاميرا.\n"
+            f"3. في نهاية النص اذكر كاستينغ الشخصيات والمدة المستهدفة ({dur_label})، وأخبر المستخدم أنه يمكنه الضغط على '🎬 بدء إنتاج الفيلم للمدة ({dur_label})' لتشغيل محرك التوليد المستمر وتوليد الكادرات البصرية والأصوات بالكامل!"
         )
 
         reply = call_gemini_chat(prompt, history=history, system_instruction=system_instruction)
@@ -403,6 +450,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             narration_mode=n_mode,
             project_type='VIDEO_STUDIO',
             visual_style=v_style,
+            target_duration_minutes=target_dur,
             status='CASTING_PENDING',
             genre='فيلم ومونتاج فيديو',
             progress_percentage=25
@@ -433,7 +481,9 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             saved_chars.append(narrator)
 
         chips = [
-            "🎬 إنتاج المشاهد المصورة والصوت الآن",
+            f"🎬 بدء إنتاج الفيلم للمدة ({dur_label})",
+            "⏱️ تعديل المدة إلى 10 دقائق",
+            "⏱️ مدة مفتوحة ولانهائية",
             "🎭 تعديل كاستينغ الشخصيات",
             "🎬 فتح استوديو DesignCombo"
         ]
@@ -445,6 +495,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             "project_id": str(new_project.id),
             "project_type": "VIDEO_STUDIO",
             "visual_style": v_style,
+            "target_duration_minutes": target_dur,
             "action_chips": chips
         }
         return state
@@ -746,30 +797,53 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
 
     # Check if this execution request is intended for continuous duration production
     prompt_lower = user_prompt.lower()
-    is_continuous_exec = (
-        getattr(project, 'project_type', 'AUDIO_DRAMA') != 'VIDEO_STUDIO' and
-        any(k in prompt_lower for k in ["للمدة", "مستمر", "كامل المدة", "بدء توليد الصوت للمدة", "الإنتاج المستمر", "توليد مستمر"])
-    )
+    is_continuous_exec = any(k in prompt_lower for k in [
+        "للمدة", "مستمر", "كامل المدة", "بدء توليد الصوت للمدة", "الإنتاج المستمر", "توليد مستمر",
+        "بدء إنتاج الفيلم للمدة", "بدء إنتاج الفيلم", "إنتاج المشاهد المصورة والصوت الآن", "بدء التوليد السينمائي"
+    ])
     if is_continuous_exec and project:
         from .continuous_engine import start_continuous_generation
         target_dur = project.target_duration_minutes or 0
         start_continuous_generation(str(project.id), target_duration_minutes=target_dur)
         dur_label = "مفتوح ولانهائي" if target_dur == 0 else f"{target_dur} دقيقة"
-        reply = (
-            f"🚀 **تم بدء محرك الإنتاج الدرامي الصوتي المستمر بنجاح!**\n\n"
-            f"📖 **العمل:** {project.title}\n"
-            f"⏱️ **الهدف:** {dur_label}\n\n"
-            f"⚡ يعمل المخرج الذكي الآن على تأليف وتوليد المشاهد الصوتية فصلاً تلو الآخر عبر **Gemini TTS**.\n"
-            f"🎧 ستظهر المقاطع الصوتية الحية تباعاً في الشات للاستماع فوراً!"
-        )
+        is_video = getattr(project, 'project_type', 'AUDIO_DRAMA') == 'VIDEO_STUDIO'
+        
+        if is_video:
+            reply = (
+                f"🎬 **تم بدء محرك الإنتاج السينمائي المستمر (Continuous Video Engine)!**\n\n"
+                f"📖 **الفيلم:** {project.title}\n"
+                f"⏱️ **الهدف الزمني:** {dur_label}\n\n"
+                f"⚡ بدأ المخرج الذكي في توليد الكادرات البصرية 16:9 والأصوات السينمائية مشهداً تلو الآخر في الخلفية عبر **Gemini 3.8 Flash** و **Gemini TTS**.\n"
+                f"🎥 ستظهر المشاهد المصورة تباعاً في الشات فور اكتمالها لتشاهدها وتستمع إليها فوراً دون انتظار!"
+            )
+            chips = [
+                "⏸️ إيقاف مؤقت للتوليد",
+                "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
+                "🎬 فتح استوديو DesignCombo"
+            ]
+        else:
+            reply = (
+                f"🚀 **تم بدء محرك الإنتاج الدرامي الصوتي المستمر بنجاح!**\n\n"
+                f"📖 **العمل:** {project.title}\n"
+                f"⏱️ **الهدف:** {dur_label}\n\n"
+                f"⚡ يعمل المخرج الذكي الآن على تأليف وتوليد المشاهد الصوتية فصلاً تلو الآخر عبر **Gemini TTS**.\n"
+                f"🎧 ستظهر المقاطع الصوتية الحية تباعاً في الشات للاستماع فوراً!"
+            )
+            chips = [
+                "⏸️ إيقاف مؤقت للتوليد",
+                "🎬 فتح استوديو DesignCombo",
+                "⬇️ تحميل الصوت الكامل"
+            ]
+
         state["project_id"] = str(project.id)
         state["response_text"] = reply
         state["msg_type"] = "TEXT"
         state["metadata"] = {
             "project_id": str(project.id),
             "is_continuous": True,
+            "project_type": getattr(project, 'project_type', 'AUDIO_DRAMA'),
             "target_duration_minutes": target_dur,
-            "action_chips": ["⏸️ إيقاف مؤقت للتوليد", "🎬 فتح استوديو DesignCombo", "⬇️ تحميل الصوت الكامل"]
+            "action_chips": chips
         }
         return state
 

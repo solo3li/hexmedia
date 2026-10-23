@@ -425,11 +425,17 @@ def live_progress_endpoint(request, project_id: str, after: int = 0):
             "raw_text": sc.raw_text,
             "vocalized_text": sc.vocalized_text or sc.raw_text,
             "audio_url": sc.audio_url,
+            "image_url": sc.image_url or "",
+            "visual_prompt": sc.visual_prompt or "",
+            "media_type": sc.media_type or "AI_IMAGE",
+            "motion_type": sc.motion_type or "zoom_in",
             "duration": round(sc.duration_seconds, 1),
             "sfx_name": sc.sfx_name or ""
         })
     return {
         "project_id": str(project.id),
+        "project_type": project.project_type,
+        "visual_style": getattr(project, 'visual_style', 'DOCUMENTARY'),
         "status": project.status,
         "total_duration_seconds": round(project.total_duration_seconds, 1),
         "target_duration_minutes": project.target_duration_minutes,
