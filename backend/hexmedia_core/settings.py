@@ -17,6 +17,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',
+    'core',
+    'book_drama',
+    'story_writer',
+    'image_video',
     'ai_studio',
 ]
 

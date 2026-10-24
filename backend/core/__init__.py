@@ -1,0 +1,1 @@
+"""HexMedia Core App."""
