@@ -41,6 +41,13 @@
   - Added backend endpoints: `PATCH /api/projects/{id}/rename`, `DELETE /api/projects/{id}`, and enhanced `GET /api/profile/media` with aggregate statistics.
   - Verified multi-user isolation (unauthorized users cannot rename/delete projects).
   - Created and passed 7 tests in `backend/ai_studio/tests_profile.py`.
+- [x] **Modular Django Apps Architecture & Tools Menu Cleanup (feat-010)**:
+  - Refactored monolith into 4 clean modular apps: `core`, `book_drama`, `story_writer`, `image_video`.
+  - Preserved existing database tables via explicit `db_table` and backward-compatible model facade in `ai_studio/models.py`.
+  - Removed redundant "تنفيذ وتوليد الصوت الآن" tool button from popup menu.
+  - Renamed video studio tool to "إنتاج فيلم وفيديو بالصور" with updated labels, pills, and placeholders.
+  - Added architecture test suite `backend/core/tests_modular_architecture.py` (4 tests passing).
+  - Verified total 158 tests passing via `./init.sh`.
 
 ### What's In Progress
 

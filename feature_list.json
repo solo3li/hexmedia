@@ -71,6 +71,14 @@
       "dependencies": ["feat-006", "feat-008"],
       "status": "completed",
       "evidence": "Implemented #profileModal and #projectRenameModal in index.html, added PATCH /api/projects/{id}/rename and DELETE /api/projects/{id} endpoints in api.py, enhanced GET /api/profile/media with stats, passing 7 dedicated tests in tests_profile.py."
+    },
+    {
+      "id": "feat-010",
+      "name": "Modular Django Apps Architecture & Tools Menu Cleanup",
+      "description": "Refactor backend into 4 decoupled Django apps (core, book_drama, story_writer, image_video) with db_table preservation and zero data loss; clean up tools menu by removing voice trigger and renaming video tool to 'إنتاج فيلم وفيديو بالصور'.",
+      "dependencies": ["feat-009"],
+      "status": "completed",
+      "evidence": "4 Django apps created and registered in INSTALLED_APPS, models facade preserved, tools popup menu refined to 3 tools in index.html, passing 158 tests via ./init.sh."
     }
   ]
 }
