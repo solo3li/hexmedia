@@ -31,10 +31,18 @@
 - API import clean, migration 0008 applied
 - Git commit: bbc9d8c
 
-### Next Steps
-- feat-004: Documentary web & visual search integration
-- feat-005: Multi-track DesignCombo Web Studio UI
-- Add M2/M3 dedicated test class (tests_m2_m3.py)
+### Session 5 — 2026-10-24: Fix Real Gemini 3.5 Transcribe & Subtitles
+
+### Completed ✅
+- **Root Cause Diagnosed**:
+  - `gemini-3.5-transcribe` is a dedicated STT model that outputs `audio_transcription` object parts (`speaker_label`, `words`, `start_offset`, `end_offset`, `text`), NOT a JSON string.
+  - Previous code attempted `json.loads(response.text)` on pure text, throwing `JSONDecodeError` and silently falling back to the static hardcoded Arabic sentence.
+- **Implemented Real Gemini Integration**:
+  - Configured `AudioTranscriptionConfig(language_codes=..., diarization=..., word_timestamp=True)`.
+  - Extracted exact spoken words, timestamps, and speaker labels (`متحدث 1`, `متحدث 2`) from `part.audio_transcription`.
+  - Added multi-language translation support via `gemini-3.8-flash` preserving segment timing and speakers.
+  - Tested live on user's recording: accurately transcribed `"السلام عليكم ورحمة الله وبركاته، ايه الاخبار؟"` and translated to Russian `"Мир вам, милость Аллаха и Его благословение, как дела?"`.
+  - All 11 STT unit tests pass in `backend/stt/tests_stt.py`.
 
 ---
 
