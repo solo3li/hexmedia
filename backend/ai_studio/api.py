@@ -126,6 +126,9 @@ class ThreadOut(Schema):
 class ThreadRenameRequest(Schema):
     title: Optional[str] = "محادثة جديدة"
 
+class ProjectRenameRequest(Schema):
+    title: str
+
 
 # ── Sliding Window Memory Helper ────────────────────────────────────────────
 
@@ -380,11 +383,47 @@ def get_profile_media(request):
                     "motion_type": sc.motion_type
                 })
 
+    total_audio_sec = sum(float(t.get("duration") or 0.0) for t in audio_tracks)
     return {
         "audio_tracks": audio_tracks,
         "scripts": scripts,
-        "video_scenes": video_scenes
+        "video_scenes": video_scenes,
+        "stats": {
+            "projects_count": projects.count(),
+            "audio_tracks_count": len(audio_tracks),
+            "video_scenes_count": len(video_scenes),
+            "scripts_count": len(scripts),
+            "total_duration_seconds": round(total_audio_sec, 1),
+            "total_duration_minutes": round(total_audio_sec / 60.0, 1),
+        }
     }
+
+
+@api.patch("/projects/{project_id}/rename")
+def rename_project_endpoint(request, project_id: str, data: ProjectRenameRequest):
+    """Rename a book project belonging to authenticated user."""
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
+    title = (data.title or "").strip()
+    if not title:
+        raise HttpError(400, "عنوان المشروع لا يمكن أن يكون فارغاً")
+    project.title = title
+    project.save(update_fields=['title', 'updated_at'])
+    return {
+        "success": True,
+        "id": str(project.id),
+        "title": project.title
+    }
+
+
+@api.delete("/projects/{project_id}")
+def delete_project_endpoint(request, project_id: str):
+    """Delete a book project belonging to authenticated user."""
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
+    project_id_str = str(project.id)
+    project.delete()
+    return {"success": True, "id": project_id_str}
 
 
 @api.get("/projects")
