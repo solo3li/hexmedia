@@ -260,13 +260,13 @@ class TTSAPITests(TestCase):
         self.assertGreater(len(wav_gacrux), 1000)
 
     def test_multilingual_and_dialect_catalog_completeness(self):
-        """Catalog supports 25+ world languages and 16 Arabic dialects without cartoon emojis."""
+        """Catalog supports 130+ world languages and 19 Arabic dialects without cartoon emojis."""
         from tts.services.tts_options import LANGUAGES
-        self.assertGreaterEqual(len(LANGUAGES), 25)
+        self.assertGreaterEqual(len(LANGUAGES), 125)
 
         # Check Arabic dialects
         ar_entry = next(l for l in LANGUAGES if l["code"] == "ar")
-        self.assertGreaterEqual(len(ar_entry["dialects"]), 15)
+        self.assertGreaterEqual(len(ar_entry["dialects"]), 18)
         ar_dialect_codes = {d["code"] for d in ar_entry["dialects"]}
         self.assertIn("msa", ar_dialect_codes)
         self.assertIn("egyptian", ar_dialect_codes)
@@ -275,6 +275,16 @@ class TTSAPITests(TestCase):
         self.assertIn("moroccan", ar_dialect_codes)
         self.assertIn("syrian", ar_dialect_codes)
         self.assertIn("iraqi", ar_dialect_codes)
+        self.assertIn("tunisian", ar_dialect_codes)
+        self.assertIn("algerian", ar_dialect_codes)
+        self.assertIn("sudanese", ar_dialect_codes)
+        self.assertIn("yemeni", ar_dialect_codes)
+        self.assertIn("omani", ar_dialect_codes)
+
+        # Check major world languages
+        lang_codes = {l["code"] for l in LANGUAGES}
+        for code in ["en", "fr", "es", "de", "it", "pt", "ru", "tr", "fa", "ur", "hi", "ja", "ko", "zh", "id", "ms", "nl", "sv", "pl", "el", "he", "vi", "th", "sw", "ku"]:
+            self.assertIn(code, lang_codes)
 
         # Check that no dialect or language name has cartoon emoji or flag
         for lang in LANGUAGES:
@@ -283,10 +293,10 @@ class TTSAPITests(TestCase):
                 self.assertFalse(any(ord(char) > 0x1F000 for char in dialect["name"]))
 
     def test_emotions_and_delivery_styles_richness_and_cleanliness(self):
-        """EMOTIONS and DELIVERY_STYLES have rich spectra with zero emojis."""
+        """EMOTIONS has 30+ states and DELIVERY_STYLES has 24+ styles with zero emojis."""
         from tts.services.tts_options import EMOTIONS, DELIVERY_STYLES
-        self.assertGreaterEqual(len(EMOTIONS), 16)
-        self.assertGreaterEqual(len(DELIVERY_STYLES), 16)
+        self.assertGreaterEqual(len(EMOTIONS), 30)
+        self.assertGreaterEqual(len(DELIVERY_STYLES), 24)
 
         emotion_codes = {e["code"] for e in EMOTIONS}
         self.assertIn("neutral", emotion_codes)
@@ -295,6 +305,10 @@ class TTSAPITests(TestCase):
         self.assertIn("mysterious", emotion_codes)
         self.assertIn("whispering", emotion_codes)
         self.assertIn("urgent", emotion_codes)
+        self.assertIn("terrified", emotion_codes)
+        self.assertIn("furious", emotion_codes)
+        self.assertIn("triumphant", emotion_codes)
+        self.assertIn("nostalgic", emotion_codes)
 
         style_codes = {s["code"] for s in DELIVERY_STYLES}
         self.assertIn("documentary", style_codes)
@@ -303,6 +317,10 @@ class TTSAPITests(TestCase):
         self.assertIn("trailer", style_codes)
         self.assertIn("podcast", style_codes)
         self.assertIn("motivational", style_codes)
+        self.assertIn("asmr", style_codes)
+        self.assertIn("radio_host", style_codes)
+        self.assertIn("historical", style_codes)
+        self.assertIn("children_tales", style_codes)
 
         # Ensure no emojis in metadata
         for e in EMOTIONS:
@@ -313,7 +331,7 @@ class TTSAPITests(TestCase):
             self.assertFalse(any(ord(char) > 0x1F000 for char in s["name"]))
 
     def test_generate_tts_with_various_voices_and_styles(self):
-        """POST /api/tts/generate succeeds with newly added Gemini voices and styles."""
+        """POST /api/tts/generate succeeds with newly added Gemini voices, custom directives, and styles."""
         import json
         payload = {
             "text": "The stars in the deep night reveal the history of our ancient cosmos.",
@@ -322,7 +340,9 @@ class TTSAPITests(TestCase):
             "language": "en",
             "dialect": "us",
             "emotion": "mysterious",
-            "delivery_style": "trailer"
+            "delivery_style": "trailer",
+            "custom_directives": "Deep resonance with ambient pacing",
+            "auto_diacritize": True
         }
         res = self.client.post(
             "/api/tts/generate",
@@ -337,7 +357,44 @@ class TTSAPITests(TestCase):
         self.assertEqual(data["dialect"], "us")
         self.assertEqual(data["emotion"], "mysterious")
         self.assertEqual(data["delivery_style"], "trailer")
+        self.assertIn("text", data)
+        self.assertGreater(data["char_count"], 0)
         self.assertIn("audio_url", data)
+
+    def test_auto_diacritize_flag_and_custom_voice_id(self):
+        """POST /api/tts/generate respects auto_diacritize=False and supports custom voice IDs."""
+        import json
+        text_raw = "نص عربي صريح بدون تشكيل إجباري"
+        payload = {
+            "text": text_raw,
+            "title": "اختبار التشكيل",
+            "voice_profile": "voice_custom_studio_actor_99",
+            "language": "ar",
+            "dialect": "egyptian",
+            "auto_diacritize": False,
+            "custom_directives": "نبرة إذاعية حرة"
+        }
+        res = self.client.post(
+            "/api/tts/generate",
+            data=json.dumps(payload),
+            content_type="application/json",
+            **self.auth_headers
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["voice_profile"], "voice_custom_studio_actor_99")
+        self.assertEqual(data["vocalized_text"], text_raw)
+        self.assertEqual(data["text"], text_raw)
+        self.assertEqual(data["char_count"], len(text_raw))
+
+    def test_acoustic_modulation_for_emotions(self):
+        """Fallback generator acoustic frequency and duration modulate based on emotion."""
+        wav_whisper = generate_voice_audio("هذا اختبار صوتي هامس وهادئ", voice_name="Charon", emotion="whispering")
+        wav_urgent = generate_voice_audio("هذا اختبار صوتي هامس وهادئ", voice_name="Charon", emotion="urgent")
+        self.assertGreater(len(wav_whisper), 500)
+        self.assertGreater(len(wav_urgent), 500)
+        # Slower whispering cadence creates a different duration/sample count than urgent cadence
+        self.assertNotEqual(len(wav_whisper), len(wav_urgent))
 
     def test_tts_modal_theme_and_no_garish_emojis(self):
         """Frontend ttsConfigModal matches obsidian/limeAccent and has no vulgar emojis."""

@@ -19,6 +19,8 @@ class TTSGenerateRequest(Schema):
     emotion: Optional[str] = "neutral"
     delivery_style: Optional[str] = "documentary"
     custom_instructions: Optional[str] = ""
+    custom_directives: Optional[str] = ""
+    auto_diacritize: Optional[bool] = True
 
 
 class TTSChunkOut(Schema):
@@ -36,6 +38,8 @@ class TTSGenerateResponse(Schema):
     chunks_count: int
     chunks: List[TTSChunkOut]
     vocalized_text: str
+    text: Optional[str] = ""
+    char_count: Optional[int] = 0
     language: str
     dialect: str
     voice_profile: str
@@ -62,6 +66,9 @@ def generate_tts_endpoint(request, data: TTSGenerateRequest):
     if not raw_text:
         raise HttpError(400, "النص المطلوب تحويله لصوت لا يمكن أن يكون فارغاً")
 
+    effective_directives = (data.custom_directives or data.custom_instructions or "").strip()
+    auto_diacritize_flag = data.auto_diacritize if data.auto_diacritize is not None else True
+
     result = process_tts_generation(
         text=raw_text,
         voice_profile=data.voice_profile or "Charon",
@@ -69,7 +76,8 @@ def generate_tts_endpoint(request, data: TTSGenerateRequest):
         dialect=data.dialect or "msa",
         emotion=data.emotion or "neutral",
         delivery_style=data.delivery_style or "documentary",
-        custom_instructions=data.custom_instructions or ""
+        custom_instructions=effective_directives,
+        auto_diacritize=auto_diacritize_flag
     )
 
     job = TTSJob.objects.create(
@@ -82,12 +90,14 @@ def generate_tts_endpoint(request, data: TTSGenerateRequest):
         voice_profile=result["voice_profile"],
         emotion=result["emotion"],
         delivery_style=result["delivery_style"],
-        custom_instructions=data.custom_instructions or "",
+        custom_instructions=effective_directives,
         audio_url=result["master_audio_url"],
         duration_seconds=result["duration_seconds"],
         chunks_count=result["chunks_count"],
         status='READY'
     )
+
+    displayed_text = result.get("vocalized_text") or raw_text
 
     return {
         "id": str(job.id),
@@ -97,6 +107,8 @@ def generate_tts_endpoint(request, data: TTSGenerateRequest):
         "chunks_count": job.chunks_count,
         "chunks": result["chunks"],
         "vocalized_text": job.vocalized_text,
+        "text": displayed_text,
+        "char_count": len(displayed_text),
         "language": job.language,
         "dialect": job.dialect,
         "voice_profile": job.voice_profile,

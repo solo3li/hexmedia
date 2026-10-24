@@ -52,14 +52,13 @@
   - Created standalone Django app `backend/tts/` with `TTSJob` model (migration 0001).
   - Created sentence-boundary chunker `split_text_into_chunks` splitting text at natural pauses without exceeding 2500 characters.
   - Created in-memory WAV stitcher `stitch_wav_buffers` concatenating chunk audio buffers with natural 0.35s silence gaps.
-  - Expanded options catalog in `tts_options.py` supporting all 30 official Gemini TTS voices, 25+ world languages with 16 Arabic dialects and international regional accents, an expanded 18-emotion spectrum, and 16 delivery styles.
-  - Stripped all cartoonish/garish emojis across options catalog, modal UI, tools menu, audio card renderer, and toast notifications.
-  - Overhauled `#ttsConfigModal` in `index.html` to perfectly match Obsidian and LimeAccent dark theme (`#08080a`, `#0e0e12`, `#e2ff44`) with instant voice search and gender filtering (`الكل`, `ذكور`, `إناث`).
-  - Added acoustic pitch mapping for all 30 Gemini voices in `gemini_service.py` freq_map, ensuring realistic synthetic fallback tone for every single voice profile.
-  - Extended `process_tts_generation` and `generate_voice_audio` to propagate `delivery_style`, `dialect`, `language`, and `custom_instructions`.
-  - Updated `renderTTSAudioCard` to use sleek SVG icons and obsidian/limeAccent styling with direct Profile Hub and WAV download links.
-  - Added 5 deep test cases to `backend/tts/tests_tts.py` (16/16 passing).
-  - Full verification suite passing 174/174 tests via `./init.sh`.
+  - Expanded options catalog in `tts_options.py` supporting all 30 official Gemini TTS voices, 135+ world languages with 19 Arabic regional dialects and international accents, 32 distinct emotions, and 25 delivery styles.
+  - Stripped all cartoonish/garish emojis across options catalog, modal UI, tools menu, audio card renderer, and toast notifications in favor of clean typography monogram badges.
+  - Overhauled `#ttsConfigModal` in `index.html` to grounded Obsidian/LimeAccent dark theme (`#08080a`, `#0c0c10`, `#e2ff44`) with instant voice search, gender filtering, and custom voice ID input.
+  - Added acoustic pitch mapping for all 30 Gemini voices in `gemini_service.py` freq_map with dynamic hashing for custom voices and cadence-based duration modulation for emotions.
+  - Extended `process_tts_generation` and `generate_voice_audio` to propagate `delivery_style`, `dialect`, `language`, `auto_diacritize`, and `custom_instructions`.
+  - Updated `renderTTSAudioCard` to display diacritized text transcript preview and accurate character counts.
+  - Verified 18 tests passing in `backend/tts/tests_tts.py` and 176 tests passing via `./init.sh`.
 
 ### What's In Progress
 
@@ -83,5 +82,5 @@
 - `ai_studio.tests_e2e`: 33 tests passing.
 - `ai_studio.tests_profile`: 7 tests passing.
 - `core.tests_modular_architecture`: 4 tests passing.
-- `tts.tests_tts`: 16 tests passing.
-- Total: 174 tests passing via `./init.sh`.
+- `tts.tests_tts`: 18 tests passing.
+- Total: 176 tests passing via `./init.sh`.

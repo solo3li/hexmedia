@@ -12,12 +12,12 @@ from ai_studio.services.minio_service import upload_bytes
 logger = logging.getLogger(__name__)
 
 
-def auto_diacritize_text(text: str, language: str = 'ar', dialect: str = 'msa') -> str:
+def auto_diacritize_text(text: str, language: str = 'ar', dialect: str = 'msa', auto_diacritize: bool = True) -> str:
     """
     Applies automatic diacritization (تشكيل) and phonetic enhancement for Arabic text
     to guarantee accurate pronunciation by Gemini TTS.
     """
-    if language != 'ar' or not text:
+    if not auto_diacritize or language != 'ar' or not text:
         return text
 
     # If text already has substantial Arabic diacritics, return it as is
@@ -50,12 +50,13 @@ def process_tts_generation(
     dialect: str = "msa",
     emotion: str = "neutral",
     delivery_style: str = "documentary",
-    custom_instructions: str = ""
+    custom_instructions: str = "",
+    auto_diacritize: bool = True
 ) -> Dict[str, Any]:
     """
     Core engine function:
     1. Splits long-form text into sentence-bounded chunks (< 2500 chars).
-    2. Auto-diacritizes text if Arabic.
+    2. Auto-diacritizes text if Arabic and auto_diacritize is True.
     3. Synthesizes WAV audio for each chunk using Gemini TTS.
     4. Stitches all chunks into a seamless master WAV audio.
     5. Uploads to MinIO and returns complete URLs and metadata.
@@ -69,7 +70,7 @@ def process_tts_generation(
     sample_rate = 24000
 
     for idx, c in enumerate(raw_chunks):
-        vocalized_c = auto_diacritize_text(c, language=language, dialect=dialect)
+        vocalized_c = auto_diacritize_text(c, language=language, dialect=dialect, auto_diacritize=auto_diacritize)
         vocalized_chunks.append(vocalized_c)
 
         wav_bytes = generate_voice_audio(
@@ -115,6 +116,7 @@ def process_tts_generation(
     master_audio_url = upload_bytes(master_wav, master_filename)
 
     full_vocalized = "\n\n".join(vocalized_chunks)
+    active_text = full_vocalized or text
 
     return {
         "job_id": job_id,
@@ -123,6 +125,8 @@ def process_tts_generation(
         "chunks_count": len(raw_chunks),
         "chunks": chunk_meta_list,
         "vocalized_text": full_vocalized,
+        "text": active_text,
+        "char_count": len(active_text),
         "voice_profile": voice_profile,
         "language": language,
         "dialect": dialect,

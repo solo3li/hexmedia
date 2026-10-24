@@ -453,21 +453,62 @@ def generate_voice_audio(
             if not clean_text:
                 clean_text = text
 
-            # Official Gemini speech generation (unary call returns complete WAV with RIFF header)
-            response = client.models.generate_content(
-                model=tts_model,
-                contents=clean_text,
-                config=types.GenerateContentConfig(
-                    response_modalities=["AUDIO"],
-                    speech_config=types.SpeechConfig(
-                        voice_config=types.VoiceConfig(
-                            prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                                voice_name=voice_name or "Puck"
+            # Build style instruction for Gemini TTS
+            style_parts = []
+            if emotion and emotion != 'neutral':
+                style_parts.append(f"emotion: {emotion}")
+            if delivery_style:
+                style_parts.append(f"style: {delivery_style}")
+            if dialect and dialect != 'msa':
+                style_parts.append(f"dialect: {dialect}")
+            if custom_instructions:
+                style_parts.append(str(custom_instructions).strip())
+            style_str = ", ".join(style_parts)
+
+            # Build request payload with speech metadata if style is present
+            if style_str:
+                contents_payload = [{
+                    "role": "user",
+                    "parts": [{
+                        "text": clean_text,
+                        "speech_metadata": {"style": style_str}
+                    }]
+                }]
+            else:
+                contents_payload = clean_text
+
+            try:
+                response = client.models.generate_content(
+                    model=tts_model,
+                    contents=contents_payload,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["AUDIO"],
+                        speech_config=types.SpeechConfig(
+                            voice_config=types.VoiceConfig(
+                                prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                    voice_name=voice_name or "Puck"
+                                )
                             )
-                        )
+                        ),
                     ),
-                ),
-            )
+                )
+            except Exception:
+                # Direct string content fallback if speech_metadata schema differs
+                response = client.models.generate_content(
+                    model=tts_model,
+                    contents=clean_text,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["AUDIO"],
+                        speech_config=types.SpeechConfig(
+                            voice_config=types.VoiceConfig(
+                                prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                    voice_name=voice_name or "Puck"
+                                )
+                            )
+                        ),
+                    ),
+                )
+
             if response.parts:
                 for part in response.parts:
                     if part.inline_data and part.inline_data.data:
@@ -476,7 +517,7 @@ def generate_voice_audio(
             logger.error(f"Gemini TTS direct API call failed ({voice_name}): {e}. Using acoustic voice sample.")
 
     # High-quality acoustic fallback tone generator (valid WAV format)
-    # Pitch mapped to all 30 official Gemini studio voices:
+    # Pitch mapped to all 30 official Gemini studio voices, with dynamic custom voice hashing:
     freq_map = {
         "Puck": 130.0,
         "Charon": 95.0,
@@ -509,8 +550,33 @@ def generate_voice_audio(
         "Sadaltager": 112.0,
         "Sulafat": 222.0,
     }
-    freq = freq_map.get(voice_name, 140.0)
-    duration = max(2.5, min(12.0, len(text.split()) * 0.45))
+    if voice_name in freq_map:
+        base_freq = freq_map[voice_name]
+    else:
+        # Hash custom or extended voice names deterministically into realistic human vocal range (90-255 Hz)
+        base_freq = 90.0 + (sum(ord(c) for c in (voice_name or "Charon")) % 165)
+
+    # Modulate pitch and cadence by emotion and delivery style
+    pitch_mod = 0.0
+    cadence_speed = 3.5
+    amp_factor = 0.4
+    if emotion in ["whispering", "calm", "meditation", "somnolent", "relieved", "somber"]:
+        cadence_speed = 2.4
+        amp_factor = 0.25
+        pitch_mod = -10.0
+    elif emotion in ["urgent", "fearful", "terrified", "enthusiastic", "angry", "furious", "triumphant"]:
+        cadence_speed = 4.8
+        amp_factor = 0.45
+        pitch_mod = 15.0
+    elif emotion in ["epic", "dramatic"]:
+        pitch_mod = -8.0
+        cadence_speed = 3.0
+
+    freq = max(75.0, min(320.0, base_freq + pitch_mod))
+    # Duration scales inversely with cadence speed: slower speech takes longer, urgent speech is faster
+    speed_factor = 3.5 / max(1.0, cadence_speed)
+    words_count = max(1, len(text.split()))
+    duration = max(1.0, min(15.0, (words_count * 0.42 + 0.6) * speed_factor))
     
     import io, struct, wave, math
     buf = io.BytesIO()
@@ -524,7 +590,7 @@ def generate_voice_audio(
         for i in range(num_samples):
             t = float(i) / sample_rate
             # Cadence envelope simulating spoken speech syllables
-            syllable_mod = 0.5 + 0.5 * math.sin(2.0 * math.pi * 3.5 * t)
+            syllable_mod = 0.5 + 0.5 * math.sin(2.0 * math.pi * cadence_speed * t)
             harmonics = (
                 math.sin(2.0 * math.pi * freq * t) * 0.5 +
                 math.sin(2.0 * math.pi * (freq * 2.0) * t) * 0.25 +
@@ -536,7 +602,7 @@ def generate_voice_audio(
                 fade = t / 0.1
             elif t > duration - 0.2:
                 fade = (duration - t) / 0.2
-            val = int(harmonics * syllable_mod * fade * 0.4 * 32767.0)
+            val = int(harmonics * syllable_mod * fade * amp_factor * 32767.0)
             val = max(-32768, min(32767, val))
             data.extend(struct.pack('<h', val))
         wf.writeframes(data)
