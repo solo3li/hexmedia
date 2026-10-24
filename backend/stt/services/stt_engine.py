@@ -130,6 +130,56 @@ def generate_fallback_transcript(
     }
 
 
+def translate_segments(segments: List[Dict[str, Any]], target_lang_code: str, client) -> List[Dict[str, Any]]:
+    """Translate transcription segments into target language using Gemini Flash."""
+    if not segments or not target_lang_code:
+        return segments
+
+    lang_map = {
+        'ar': 'Arabic',
+        'en': 'English',
+        'fr': 'French',
+        'es': 'Spanish',
+        'de': 'German',
+        'tr': 'Turkish',
+        'it': 'Italian',
+        'ru': 'Russian',
+        'zh': 'Chinese (Simplified)',
+        'ja': 'Japanese',
+        'ko': 'Korean',
+        'hi': 'Hindi',
+        'ur': 'Urdu',
+        'fa': 'Persian',
+    }
+    target_name = lang_map.get(target_lang_code.lower(), target_lang_code)
+
+    texts = [seg.get('text', '') for seg in segments]
+    prompt = (
+        f"Translate the following speech segments into {target_name}. "
+        "Return strictly a valid JSON array of translated strings corresponding to the input list, "
+        "in the exact same order and count. Pure JSON array only, without markdown fences or explanations.\n"
+        f"Input: {json.dumps(texts, ensure_ascii=False)}"
+    )
+
+    try:
+        resp = client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=prompt
+        )
+        raw = (resp.text or "").strip()
+        raw = re.sub(r'^```(?:json)?', '', raw).strip()
+        raw = re.sub(r'```$', '', raw).strip()
+        translated_list = json.loads(raw)
+        if isinstance(translated_list, list):
+            for idx, trans in enumerate(translated_list):
+                if idx < len(segments) and trans:
+                    segments[idx]['text'] = str(trans).strip()
+    except Exception as e:
+        logger.warning(f"Translation with Gemini Flash failed: {e}")
+
+    return segments
+
+
 def process_stt_transcription(
     audio_bytes: bytes,
     filename: str = "audio.wav",
@@ -155,76 +205,110 @@ def process_stt_transcription(
 
     duration_seconds = estimate_audio_duration(audio_bytes, filename)
 
-    # 2. Call Gemini
+    # 2. Call Gemini 3.5 Transcribe
     client, config = get_gemini_client()
     stt_model = "gemini-3.5-transcribe"
 
     if client:
         try:
-            # Build structured transcription prompt
-            prompt_instructions = [
-                "You are an expert audio transcription and subtitling engine (powered by Google Gemini 3.5 Transcribe).",
-                f"Source Audio Language: {language if language != 'auto' else 'Auto-detect spoken language'}.",
-            ]
-            if target_language and target_language != 'none':
-                prompt_instructions.append(f"Translate the transcript into: {target_language}.")
-            if diarization:
-                prompt_instructions.append("Enable speaker diarization: Label speakers as 'متحدث 1', 'متحدث 2' (or 'Speaker 1', 'Speaker 2').")
-            if timestamps:
-                prompt_instructions.append("Include precise start and end timestamps in seconds for each segment.")
-
-            prompt_instructions.append(
-                "Output strictly a valid JSON object with the following schema:\n"
-                "{\n"
-                "  \"detected_language\": \"string\",\n"
-                "  \"segments\": [\n"
-                "    {\"speaker\": \"string\", \"start\": float, \"end\": float, \"text\": \"string\"}\n"
-                "  ],\n"
-                "  \"full_transcript\": \"string\"\n"
-                "}\n"
-                "No markdown formatting, no code fencing, pure JSON."
-            )
-
-            prompt_text = "\n".join(prompt_instructions)
-
             audio_part = types.Part.from_bytes(
                 data=audio_bytes,
                 mime_type=content_type
             )
 
-            response = client.models.generate_content(
-                model=stt_model,
-                contents=[audio_part, prompt_text],
+            lang_codes = [language] if (language and language not in ['auto', 'none']) else None
+            cfg = types.GenerateContentConfig(
+                audio_transcription_config=types.AudioTranscriptionConfig(
+                    language_codes=lang_codes,
+                    diarization=diarization,
+                    word_timestamp=True
+                )
             )
 
-            raw_resp = (response.text or "").strip()
-            # Clean possible markdown fencing
-            raw_resp = re.sub(r'^```(?:json)?', '', raw_resp).strip()
-            raw_resp = re.sub(r'```$', '', raw_resp).strip()
+            response = client.models.generate_content(
+                model=stt_model,
+                contents=[audio_part],
+                config=cfg
+            )
 
-            parsed = json.loads(raw_resp)
-            segments = parsed.get("segments", [])
-            detected_lang = parsed.get("detected_language", language)
-            srt_content = build_srt_from_segments(segments)
+            segments = []
+            cand = response.candidates[0] if (response and response.candidates) else None
+            parts = getattr(cand.content, 'parts', None) or [] if cand else []
 
-            # Build readable transcript with labels and timestamps
-            formatted_lines = []
-            for seg in segments:
-                t_str = f"[{format_seconds_to_srt(seg.get('start', 0.0))[:8]} - {format_seconds_to_srt(seg.get('end', 0.0))[:8]}] " if timestamps else ""
-                s_str = f"{seg.get('speaker')}: " if seg.get('speaker') and diarization else ""
-                formatted_lines.append(f"{t_str}{s_str}{seg.get('text', '').strip()}")
+            for p in parts:
+                at = getattr(p, 'audio_transcription', None)
+                if not at:
+                    continue
+                raw_spk = getattr(at, 'speaker_label', '')
+                if raw_spk:
+                    digits = ''.join(filter(str.isdigit, raw_spk))
+                    spk_idx = int(digits) + 1 if digits else 1
+                    speaker = f'متحدث {spk_idx}' if diarization else ''
+                else:
+                    speaker = ''
 
-            full_transcript = "\n\n".join(formatted_lines) or parsed.get("full_transcript", "")
+                words = getattr(at, 'words', []) or []
+                seg_text = (getattr(at, 'text', '') or '').strip()
+                if not seg_text and words:
+                    seg_text = ' '.join(getattr(w, 'word', '') for w in words).strip()
 
-            return {
-                "transcript_text": full_transcript,
-                "srt_content": srt_content,
-                "diarization_data": segments,
-                "audio_url": audio_url,
-                "duration_seconds": duration_seconds,
-                "language": detected_lang,
-                "target_language": target_language
-            }
+                start = 0.0
+                end = 0.0
+                if words:
+                    s_val = getattr(words[0], 'start_offset', '0s') or '0s'
+                    e_val = getattr(words[-1], 'end_offset', '0s') or '0s'
+                    try:
+                        start = float(str(s_val).rstrip('s'))
+                    except Exception:
+                        pass
+                    try:
+                        end = float(str(e_val).rstrip('s'))
+                    except Exception:
+                        pass
+
+                if seg_text:
+                    segments.append({
+                        'speaker': speaker,
+                        'start': round(start, 2),
+                        'end': round(end, 2),
+                        'text': seg_text
+                    })
+
+            # If no audio_transcription parts parsed, but response.text has transcribed text
+            if not segments and response and response.text:
+                clean_text = response.text.strip()
+                if clean_text:
+                    segments.append({
+                        'speaker': 'متحدث 1' if diarization else '',
+                        'start': 0.0,
+                        'end': round(duration_seconds, 2),
+                        'text': clean_text
+                    })
+
+            # If real segments were extracted from Gemini:
+            if segments:
+                if target_language and target_language not in ['none', language]:
+                    segments = translate_segments(segments, target_language, client)
+
+                srt_content = build_srt_from_segments(segments)
+
+                formatted_lines = []
+                for seg in segments:
+                    t_str = f"[{format_seconds_to_srt(seg.get('start', 0.0))[:8]} - {format_seconds_to_srt(seg.get('end', 0.0))[:8]}] " if timestamps else ""
+                    s_str = f"{seg.get('speaker')}: " if seg.get('speaker') and diarization else ""
+                    formatted_lines.append(f"{t_str}{s_str}{seg.get('text', '').strip()}")
+
+                full_transcript = "\n\n".join(formatted_lines)
+
+                return {
+                    "transcript_text": full_transcript,
+                    "srt_content": srt_content,
+                    "diarization_data": segments,
+                    "audio_url": audio_url,
+                    "duration_seconds": duration_seconds,
+                    "language": language if language != "auto" else "ar",
+                    "target_language": target_language
+                }
         except Exception as e:
             logger.warning(f"Gemini STT direct call failed, falling back to local engine: {e}")
 
