@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'book_drama',
     'story_writer',
     'image_video',
+    'tts',
     'ai_studio',
 ]
 
