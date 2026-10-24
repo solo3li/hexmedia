@@ -144,3 +144,38 @@ class ProfileAndProjectsAPITests(TestCase):
 
         res_delete = self.client.delete(f"/api/projects/{self.project_a.id}")
         self.assertEqual(res_delete.status_code, 401)
+
+    def test_profile_modal_ui_components(self):
+        """Verify chat/index.html includes all Profile & Projects Hub DOM components and handlers."""
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        content = res.content.decode("utf-8")
+
+        # Modals
+        self.assertIn('id="profileModal"', content)
+        self.assertIn('id="projectRenameModal"', content)
+
+        # Dual Entry Points
+        self.assertIn('id="sidebarProfileBtn"', content)
+        self.assertIn('id="dropdownProfileBtn"', content)
+
+        # Tabs & Content Panes
+        self.assertIn('id="profileTabProjects"', content)
+        self.assertIn('id="profileTabAudio"', content)
+        self.assertIn('id="profileTabVideo"', content)
+        self.assertIn('id="profileTabScripts"', content)
+        self.assertIn('id="profileTabStats"', content)
+
+        # Metric Elements
+        self.assertIn('id="statProjectsCount"', content)
+        self.assertIn('id="statAudioCount"', content)
+        self.assertIn('id="statVideoCount"', content)
+        self.assertIn('id="statDurationMinutes"', content)
+
+        # JavaScript Core Handlers
+        self.assertIn("function openProfileModal(", content)
+        self.assertIn("function closeProfileModal(", content)
+        self.assertIn("function switchProfileTab(", content)
+        self.assertIn("function openProjectInChat(", content)
+        self.assertIn("function submitRenameProject(", content)
+        self.assertIn("function deleteProjectInProfile(", content)
