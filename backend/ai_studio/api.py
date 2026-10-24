@@ -2,23 +2,53 @@ import json
 import uuid
 from typing import Optional, List, Dict, Any
 from django.shortcuts import get_object_or_404
-from ninja import NinjaAPI, Schema, File, Form
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from ninja import NinjaAPI, Schema, File, Form, Body
+from ninja.errors import HttpError
 from ninja.files import UploadedFile
-from .models import BookProject, Character, Scene, TimelineState, ChatMessage, AIConfiguration, Chapter
+from ninja.parser import Parser
+from .models import BookProject, Character, Scene, TimelineState, ChatMessage, AIConfiguration, Chapter, ChatThread
 from .services.langgraph_controller import audio_drama_agent, parse_file_text
 from .services.timeline_builder import build_designcombo_timeline
 from .services.minio_service import upload_bytes
+from .auth import JWTAuth, django_auth, generate_tokens_for_user, decode_jwt_payload
+
+
+class SafeParser(Parser):
+    """Parser that safely treats empty or non-JSON request bodies as empty dict instead of JSON decode error."""
+    def parse_body(self, request):
+        if not request.body or not request.body.strip():
+            return {}
+        try:
+            return json.loads(request.body)
+        except Exception:
+            return {}
+
 
 api = NinjaAPI(
     title="HexMedia Audio Drama Studio API",
     version="1.0.0",
-    description="API for AI Audio Drama Studio powered by Gemini 3.8 Flash and LangGraph"
+    description="API for AI Audio Drama Studio powered by Gemini 3.8 Flash and LangGraph",
+    auth=[JWTAuth(), django_auth],
+    parser=SafeParser()
 )
+
+
+def get_current_user(request) -> User:
+    """Helper to retrieve authenticated user from request.auth or request.user."""
+    user = getattr(request, 'auth', None)
+    if user and isinstance(user, User):
+        return user
+    if getattr(request, 'user', None) and request.user.is_authenticated:
+        return request.user
+    raise HttpError(401, "يجب تسجيل الدخول أولاً")
 
 # Schemas
 class ChatRequest(Schema):
     prompt: str
     project_id: Optional[str] = None
+    thread_id: Optional[str] = None
     session_id: Optional[str] = "default"
     narration_mode: Optional[str] = None
     tool: Optional[str] = None
@@ -28,6 +58,7 @@ class ChatResponse(Schema):
     msg_type: str
     metadata: Dict[str, Any]
     project_id: Optional[str] = None
+    thread_id: Optional[str] = None
     narration_mode: Optional[str] = None
 
 class ExecuteChapterRequest(Schema):
@@ -52,9 +83,326 @@ class UpdateConfigRequest(Schema):
     tts_model: Optional[str] = None
 
 
-@api.get("/health")
+class UserOut(Schema):
+    id: int
+    username: str
+    email: str
+
+class AuthResponse(Schema):
+    access_token: str
+    refresh_token: str
+    user: UserOut
+
+class RegisterRequest(Schema):
+    email: str
+    password: str
+    username: Optional[str] = None
+
+class LoginRequest(Schema):
+    password: str
+    email: Optional[str] = None
+    username: Optional[str] = None
+
+class RefreshRequest(Schema):
+    refresh_token: str
+
+class UserProfileResponse(Schema):
+    id: int
+    username: str
+    email: str
+    is_staff: bool
+    projects_count: int
+
+
+# ── Thread Schemas ──────────────────────────────────────────────────────────
+
+class ThreadOut(Schema):
+    id: str
+    title: str
+    project_id: Optional[str] = None
+    created_at: str
+    updated_at: str
+
+class ThreadRenameRequest(Schema):
+    title: Optional[str] = "محادثة جديدة"
+
+
+# ── Sliding Window Memory Helper ────────────────────────────────────────────
+
+MEMORY_WINDOW = 20  # keep last N messages as context
+
+def _build_history(thread: 'ChatThread', limit: int = MEMORY_WINDOW) -> list:
+    """Return last `limit` messages of a thread as role/content dicts."""
+    qs = (
+        ChatMessage.objects.filter(thread=thread)
+        .order_by('-created_at')[:limit]
+    )
+    return [{"role": m.role, "content": m.content} for m in reversed(list(qs))]
+
+
+@api.get("/health", auth=None)
 def health_check(request):
     return {"status": "ok", "service": "HexMedia Audio Drama Studio"}
+
+
+@api.post("/auth/register", response=AuthResponse, auth=None)
+def register_endpoint(request, data: RegisterRequest):
+    email = (data.email or "").strip().lower()
+    if not email or '@' not in email:
+        raise HttpError(400, "يرجى إدخال بريد إلكتروني صالح")
+
+    parts = email.split('@')
+    if len(parts) != 2 or not parts[0] or not parts[1] or '.' not in parts[1]:
+        raise HttpError(400, "يرجى إدخال بريد إلكتروني صالح")
+
+    password = (data.password or "").strip()
+    if not password or len(password) < 6:
+        raise HttpError(400, "كلمة المرور يجب أن لا تقل عن 6 أحرف")
+
+    if User.objects.filter(email__iexact=email).exists():
+        raise HttpError(400, "البريد الإلكتروني مسجل بالفعل")
+
+    # Determine username
+    raw_user = (data.username or "").strip()
+    base_username = raw_user if raw_user else parts[0]
+    if not base_username:
+        base_username = f"user_{uuid.uuid4().hex[:8]}"
+
+    username = base_username
+    counter = 1
+    while User.objects.filter(username__iexact=username).exists():
+        username = f"{base_username}_{counter}"
+        counter += 1
+
+    from django.db import IntegrityError, transaction
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(username=username, email=email, password=password)
+    except IntegrityError:
+        raise HttpError(400, "البريد الإلكتروني أو اسم المستخدم مسجل بالفعل")
+
+    login(request, user)
+    return generate_tokens_for_user(user)
+
+
+@api.post("/auth/login", response=AuthResponse, auth=None)
+def login_endpoint(request, data: LoginRequest):
+    identifier = (data.email or data.username or "").strip()
+    if not identifier or not data.password:
+        raise HttpError(400, "يرجى إدخال البريد الإلكتروني/اسم المستخدم وكلمة المرور")
+
+    user_obj = User.objects.filter(email__iexact=identifier).first() or User.objects.filter(username__iexact=identifier).first()
+    if not user_obj:
+        raise HttpError(401, "بيانات الدخول غير صحيحة")
+
+    user = authenticate(request, username=user_obj.username, password=data.password)
+    if not user or not user.is_active:
+        raise HttpError(401, "بيانات الدخول غير صحيحة")
+
+    login(request, user)
+    return generate_tokens_for_user(user)
+
+
+@api.post("/auth/refresh", response=AuthResponse, auth=None)
+def refresh_endpoint(request, data: RefreshRequest):
+    payload = decode_jwt_payload(data.refresh_token)
+    if not payload or payload.get("token_type") != "refresh":
+        raise HttpError(401, "رمز التحديث غير صالح أو منتهي الصلاحية")
+
+    user_id = payload.get("user_id")
+    user = User.objects.filter(id=user_id, is_active=True).first()
+    if not user:
+        raise HttpError(401, "المستخدم غير موجود أو غير نشط")
+
+    return generate_tokens_for_user(user)
+
+
+@api.post("/auth/logout")
+def logout_endpoint(request):
+    logout(request)
+    return {"success": True, "message": "تم تسجيل الخروج بنجاح"}
+
+
+@api.get("/auth/me", response=UserProfileResponse)
+def me_endpoint(request):
+    user = get_current_user(request)
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "is_staff": user.is_staff,
+        "projects_count": user.projects.count() if hasattr(user, 'projects') else 0
+    }
+
+
+# ── Chat Thread CRUD ────────────────────────────────────────────────────────
+
+@api.get("/threads", response=List[ThreadOut])
+def list_threads(request):
+    """List all non-deleted threads for current user, newest first."""
+    user = get_current_user(request)
+    threads = ChatThread.objects.filter(user=user, is_deleted=False).order_by('-updated_at')
+    return [
+        {
+            "id": str(t.id),
+            "title": t.title,
+            "project_id": str(t.project_id) if t.project_id else None,
+            "created_at": t.created_at.isoformat(),
+            "updated_at": t.updated_at.isoformat(),
+        }
+        for t in threads
+    ]
+
+
+@api.post("/threads", response=ThreadOut)
+def create_thread(request, data: Optional[ThreadRenameRequest] = Body(default=None)):
+    """Create a new thread."""
+    user = get_current_user(request)
+    title = (data.title.strip() if (data and data.title and data.title.strip()) else "محادثة جديدة")
+    thread = ChatThread.objects.create(user=user, title=title)
+    return {
+        "id": str(thread.id),
+        "title": thread.title,
+        "project_id": None,
+        "created_at": thread.created_at.isoformat(),
+        "updated_at": thread.updated_at.isoformat(),
+    }
+
+
+@api.get("/threads/{thread_id}", response=ThreadOut)
+def get_thread_detail(request, thread_id: str):
+    """Get single thread metadata."""
+    user = get_current_user(request)
+    thread = get_object_or_404(ChatThread, id=thread_id, user=user, is_deleted=False)
+    return {
+        "id": str(thread.id),
+        "title": thread.title,
+        "project_id": str(thread.project_id) if thread.project_id else None,
+        "created_at": thread.created_at.isoformat(),
+        "updated_at": thread.updated_at.isoformat(),
+    }
+
+
+@api.get("/threads/{thread_id}/messages")
+def get_thread_messages(request, thread_id: str):
+    """Get all messages for a thread (owned by current user)."""
+    user = get_current_user(request)
+    thread = get_object_or_404(ChatThread, id=thread_id, user=user, is_deleted=False)
+    msgs = thread.messages.order_by('created_at')
+    return [
+        {
+            "id": str(m.id),
+            "role": m.role,
+            "content": m.content,
+            "msg_type": m.msg_type,
+            "metadata": m.metadata,
+            "created_at": m.created_at.isoformat(),
+        }
+        for m in msgs
+    ]
+
+
+@api.patch("/threads/{thread_id}/rename")
+def rename_thread(request, thread_id: str, data: ThreadRenameRequest):
+    """Rename a thread title."""
+    user = get_current_user(request)
+    thread = get_object_or_404(ChatThread, id=thread_id, user=user, is_deleted=False)
+    thread.title = data.title.strip() or "محادثة"
+    thread.save(update_fields=['title', 'updated_at'])
+    return {"success": True, "title": thread.title}
+
+
+@api.patch("/threads/{thread_id}")
+def update_thread(request, thread_id: str, data: ThreadRenameRequest):
+    """Update thread metadata (e.g. title)."""
+    return rename_thread(request, thread_id, data)
+
+
+@api.post("/threads/{thread_id}/generate-title")
+def generate_thread_title(request, thread_id: str):
+    """Generate a concise title for the thread based on first user message."""
+    user = get_current_user(request)
+    thread = get_object_or_404(ChatThread, id=thread_id, user=user, is_deleted=False)
+    first_msg = thread.messages.filter(role='USER').order_by('created_at').first()
+    if not first_msg:
+        return {"success": False, "title": thread.title}
+
+    words = first_msg.content.strip().split()
+    new_title = " ".join(words[:6])
+    if len(words) > 6:
+        new_title += "..."
+    thread.title = new_title
+    thread.save(update_fields=['title', 'updated_at'])
+    return {"success": True, "title": thread.title}
+
+
+@api.delete("/threads/{thread_id}")
+def delete_thread(request, thread_id: str):
+    """Soft-delete a thread."""
+    user = get_current_user(request)
+    thread = get_object_or_404(ChatThread, id=thread_id, user=user, is_deleted=False)
+    thread.is_deleted = True
+    thread.save(update_fields=['is_deleted', 'updated_at'])
+    return {"success": True}
+
+
+@api.get("/profile/media")
+def get_profile_media(request):
+    """User profile media library returning audio, scripts, and video scenes."""
+    user = get_current_user(request)
+    projects = BookProject.objects.filter(user=user)
+
+    audio_tracks = []
+    scripts = []
+    video_scenes = []
+
+    for p in projects:
+        if p.raw_text:
+            scripts.append({
+                "project_id": str(p.id),
+                "title": p.title,
+                "preview": p.raw_text[:200]
+            })
+        for sc in p.scenes.all():
+            if sc.audio_url:
+                audio_tracks.append({
+                    "scene_id": str(sc.id),
+                    "project_id": str(p.id),
+                    "speaker": sc.speaker_name,
+                    "audio_url": sc.audio_url,
+                    "duration": sc.duration_seconds
+                })
+            if sc.image_url:
+                video_scenes.append({
+                    "scene_id": str(sc.id),
+                    "project_id": str(p.id),
+                    "image_url": sc.image_url,
+                    "motion_type": sc.motion_type
+                })
+
+    return {
+        "audio_tracks": audio_tracks,
+        "scripts": scripts,
+        "video_scenes": video_scenes
+    }
+
+
+@api.get("/projects")
+def list_projects_endpoint(request):
+    user = get_current_user(request)
+    projects = BookProject.objects.filter(user=user).order_by('-created_at')
+    return [
+        {
+            "id": str(p.id),
+            "title": p.title,
+            "status": p.status,
+            "genre": p.genre or "",
+            "scenes_count": p.scenes.count(),
+            "total_duration_seconds": round(p.total_duration_seconds, 1),
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        }
+        for p in projects
+    ]
 
 
 @api.get("/config", response=ConfigResponse)
@@ -91,26 +439,40 @@ def update_config(request, data: UpdateConfigRequest):
 
 @api.post("/chat", response=ChatResponse)
 def chat_endpoint(request, data: ChatRequest):
+    user = get_current_user(request)
     project = None
     if data.project_id:
-        try:
-            project = BookProject.objects.get(id=data.project_id)
-        except BookProject.DoesNotExist:
-            pass
+        project = get_object_or_404(BookProject, id=data.project_id, user=user)
+
+    thread = None
+    if data.thread_id:
+        thread = get_object_or_404(ChatThread, id=data.thread_id, user=user, is_deleted=False)
+        if not project and thread.project:
+            project = thread.project
+    else:
+        p_text = data.prompt.strip()
+        words = p_text.split()
+        t_title = " ".join(words[:5]) if words else "محادثة جديدة"
+        if len(words) > 5:
+            t_title += "..."
+        thread = ChatThread.objects.create(
+            user=user,
+            project=project,
+            title=t_title
+        )
+
+    # Fetch context history using sliding window memory BEFORE saving current user message
+    history_msgs = _build_history(thread, limit=MEMORY_WINDOW)
 
     # Save user message
     user_msg = ChatMessage.objects.create(
+        user=user,
+        thread=thread,
         project=project,
         role='USER',
         content=data.prompt,
         msg_type='TEXT'
     )
-
-    # Fetch last 8 messages for context
-    history_msgs = []
-    qs = ChatMessage.objects.filter(project=project) if project else ChatMessage.objects.filter(project__isnull=True)
-    for m in qs.order_by('-created_at')[:8][::-1]:
-        history_msgs.append({"role": m.role, "content": m.content})
 
     # Run LangGraph Agent
     state_input = {
@@ -129,13 +491,19 @@ def chat_endpoint(request, data: ChatRequest):
 
     result = audio_drama_agent.invoke(state_input)
 
-    # If LangGraph created or switched to a project, update references
+    # If LangGraph created or switched to a project, update references and assign user
     res_pid = result.get("metadata", {}).get("project_id") or result.get("project_id")
     if res_pid and (not project or str(project.id) != str(res_pid)):
         try:
             project = BookProject.objects.get(id=res_pid)
+            if not project.user:
+                project.user = user
+                project.save(update_fields=['user'])
             user_msg.project = project
             user_msg.save(update_fields=['project'])
+            if thread and not thread.project:
+                thread.project = project
+                thread.save(update_fields=['project'])
         except BookProject.DoesNotExist:
             pass
 
@@ -148,6 +516,8 @@ def chat_endpoint(request, data: ChatRequest):
 
     # Save Assistant message
     ChatMessage.objects.create(
+        user=user,
+        thread=thread,
         project=project,
         role='ASSISTANT',
         content=result.get("response_text", ""),
@@ -155,20 +525,28 @@ def chat_endpoint(request, data: ChatRequest):
         metadata=result.get("metadata", {})
     )
 
+    thread.save(update_fields=['updated_at'])
+
     return {
         "response": result.get("response_text", ""),
         "msg_type": result.get("msg_type", "TEXT"),
         "metadata": result.get("metadata", {}),
         "project_id": str(project.id) if project else res_pid,
+        "thread_id": str(thread.id),
         "narration_mode": project.narration_mode if project else None
     }
 
 
 @api.post("/upload-book", response=ChatResponse)
-def upload_book_endpoint(request, file: UploadedFile = File(...), prompt: str = Form("يرجى تحليل هذه الرواية"), narration_mode: Optional[str] = Form(None)):
+def upload_book_endpoint(request, file: UploadedFile = File(...), prompt: str = Form("يرجى تحليل هذه الرواية"), narration_mode: Optional[str] = Form(None), thread_id: Optional[str] = Form(None)):
+    user = get_current_user(request)
     file_bytes = file.read()
     filename = file.name
     raw_text = parse_file_text(file_bytes, filename)
+
+    thread = None
+    if thread_id:
+        thread = get_object_or_404(ChatThread, id=thread_id, user=user, is_deleted=False)
 
     # Run LangGraph Book Ingestion Node
     state_input = {
@@ -188,6 +566,20 @@ def upload_book_endpoint(request, file: UploadedFile = File(...), prompt: str = 
     new_project_id = result.get("project_id")
     project = BookProject.objects.get(id=new_project_id) if new_project_id else None
 
+    if project and not project.user:
+        project.user = user
+        project.save(update_fields=['user'])
+
+    if not thread:
+        thread = ChatThread.objects.create(
+            user=user,
+            project=project,
+            title=f"رواية: {filename[:30]}"
+        )
+    elif project and not thread.project:
+        thread.project = project
+        thread.save(update_fields=['project'])
+
     if project and narration_mode:
         m = narration_mode.upper().strip()
         if m in ['SMART', 'FULL', 'NONE']:
@@ -196,6 +588,8 @@ def upload_book_endpoint(request, file: UploadedFile = File(...), prompt: str = 
 
     # Save user upload prompt
     ChatMessage.objects.create(
+        user=user,
+        thread=thread,
         project=project,
         role='USER',
         content=f"📁 تم رفع الرواية: **{filename}** ({len(raw_text.split())} كلمة)",
@@ -204,6 +598,8 @@ def upload_book_endpoint(request, file: UploadedFile = File(...), prompt: str = 
 
     # Save Assistant CASTING_CARD message
     ChatMessage.objects.create(
+        user=user,
+        thread=thread,
         project=project,
         role='ASSISTANT',
         content=result.get("response_text", ""),
@@ -211,18 +607,22 @@ def upload_book_endpoint(request, file: UploadedFile = File(...), prompt: str = 
         metadata=result.get("metadata", {})
     )
 
+    thread.save(update_fields=['updated_at'])
+
     return {
         "response": result.get("response_text", ""),
         "msg_type": result.get("msg_type", "CASTING_CARD"),
         "metadata": result.get("metadata", {}),
         "project_id": new_project_id,
+        "thread_id": str(thread.id),
         "narration_mode": project.narration_mode if project else None
     }
 
 
 @api.post("/projects/{project_id}/update-characters")
 def update_characters_endpoint(request, project_id: str, data: UpdateVoicesRequest):
-    project = get_object_or_404(BookProject, id=project_id)
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     for update in data.updates:
         try:
             char = Character.objects.get(id=update.character_id, project=project)
@@ -235,9 +635,11 @@ def update_characters_endpoint(request, project_id: str, data: UpdateVoicesReque
 
 @api.post("/projects/{project_id}/approve-casting", response=ChatResponse)
 def approve_casting_endpoint(request, project_id: str):
-    project = get_object_or_404(BookProject, id=project_id)
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
 
     ChatMessage.objects.create(
+        user=user,
         project=project,
         role='USER',
         content="✅ تم اعتماد الشخصيات والأصوات، ابدأ الإنتاج الكامل للدراما الصوتية الآن!",
@@ -261,6 +663,7 @@ def approve_casting_endpoint(request, project_id: str):
     msg_type = result.get("msg_type", "SCENE_AUDIO_CARDS")
 
     ChatMessage.objects.create(
+        user=user,
         project=project,
         role='ASSISTANT',
         content=result.get("response_text", ""),
@@ -278,11 +681,13 @@ def approve_casting_endpoint(request, project_id: str):
 
 @api.post("/projects/{project_id}/execute-chapter", response=ChatResponse)
 def execute_chapter_endpoint(request, project_id: str, data: ExecuteChapterRequest):
-    project = get_object_or_404(BookProject, id=project_id)
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     chapter = project.chapters.filter(number=data.chapter_number).first()
     ch_title = chapter.title if chapter else f"الفصل {data.chapter_number}"
 
     ChatMessage.objects.create(
+        user=user,
         project=project,
         role='USER',
         content=f"🎙️ طلب تنفيذ المشاهد الصوتية لـ: **{ch_title}**",
@@ -306,6 +711,7 @@ def execute_chapter_endpoint(request, project_id: str, data: ExecuteChapterReque
     result = audio_drama_agent.invoke(state_input)
 
     ChatMessage.objects.create(
+        user=user,
         project=project,
         role='ASSISTANT',
         content=result.get("response_text", ""),
@@ -324,7 +730,8 @@ def execute_chapter_endpoint(request, project_id: str, data: ExecuteChapterReque
 
 @api.get("/projects/{project_id}/chapters")
 def list_chapters_endpoint(request, project_id: str):
-    project = get_object_or_404(BookProject, id=project_id)
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     chapters = project.chapters.all().order_by('number')
     data = []
     for ch in chapters:
@@ -346,7 +753,8 @@ def list_chapters_endpoint(request, project_id: str):
 
 @api.get("/projects/{project_id}/timeline")
 def get_timeline_endpoint(request, project_id: str):
-    project = get_object_or_404(BookProject, id=project_id)
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     timeline_state = TimelineState.objects.filter(project=project).first()
     if not timeline_state or not timeline_state.designcombo_json:
         timeline_json = build_designcombo_timeline(project)
@@ -366,7 +774,8 @@ def get_timeline_endpoint(request, project_id: str):
 
 @api.post("/projects/{project_id}/export")
 def export_timeline_endpoint(request, project_id: str):
-    project = get_object_or_404(BookProject, id=project_id)
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     state, _ = TimelineState.objects.get_or_create(project=project)
     
     # Concatenate or render all scene audio files into a complete master audio drama
@@ -412,7 +821,8 @@ class StartContinuousRequest(Schema):
 
 @api.get("/projects/{project_id}/live-progress")
 def live_progress_endpoint(request, project_id: str, after: int = 0):
-    project = get_object_or_404(BookProject, id=project_id)
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
 
     # Auto-Healing: Ensure background worker is alive if status is CONTINUOUS_GENERATING
     from .services.continuous_engine import ensure_worker_running
@@ -454,8 +864,10 @@ def live_progress_endpoint(request, project_id: str, after: int = 0):
 
 @api.post("/projects/{project_id}/start-continuous")
 def start_continuous_endpoint(request, project_id: str, data: StartContinuousRequest):
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     from .services.continuous_engine import start_continuous_generation
-    project = start_continuous_generation(project_id, target_duration_minutes=data.target_duration_minutes)
+    project = start_continuous_generation(str(project.id), target_duration_minutes=data.target_duration_minutes)
     return {
         "success": True,
         "message": "بدأ الإنتاج الصوتي المستمر في الخلفية بنجاح!",
@@ -466,8 +878,10 @@ def start_continuous_endpoint(request, project_id: str, data: StartContinuousReq
 
 @api.post("/projects/{project_id}/pause-continuous")
 def pause_continuous_endpoint(request, project_id: str):
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     from .services.continuous_engine import pause_continuous_generation
-    project = pause_continuous_generation(project_id)
+    project = pause_continuous_generation(str(project.id))
     return {
         "success": True,
         "message": "تم إيقاف الإنتاج مؤقتاً.",
@@ -477,8 +891,10 @@ def pause_continuous_endpoint(request, project_id: str):
 
 @api.post("/projects/{project_id}/resume-continuous")
 def resume_continuous_endpoint(request, project_id: str):
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     from .services.continuous_engine import resume_continuous_generation
-    project = resume_continuous_generation(project_id)
+    project = resume_continuous_generation(str(project.id))
     return {
         "success": True,
         "message": "تم استئناف الإنتاج الصوتي المستمر.",
@@ -492,7 +908,8 @@ class SetNarrationModeRequest(Schema):
 
 @api.post("/projects/{project_id}/set-narration-mode")
 def set_narration_mode_endpoint(request, project_id: str, data: SetNarrationModeRequest):
-    project = get_object_or_404(BookProject, id=project_id)
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     mode = data.narration_mode.upper().strip()
     if mode not in ['SMART', 'FULL', 'NONE']:
         mode = 'SMART'
@@ -511,7 +928,8 @@ class RegenerateSceneRequest(Schema):
 
 @api.post("/scenes/{scene_id}/regenerate")
 def regenerate_scene_endpoint(request, scene_id: str, data: Optional[RegenerateSceneRequest] = None):
-    scene = get_object_or_404(Scene, id=scene_id)
+    user = get_current_user(request)
+    scene = get_object_or_404(Scene, id=scene_id, project__user=user)
     if data and data.text:
         scene.raw_text = data.text.strip()
         scene.vocalized_text = data.text.strip()
@@ -547,7 +965,8 @@ def regenerate_scene_endpoint(request, scene_id: str, data: Optional[RegenerateS
 
 @api.delete("/scenes/{scene_id}")
 def delete_scene_endpoint(request, scene_id: str):
-    scene = get_object_or_404(Scene, id=scene_id)
+    user = get_current_user(request)
+    scene = get_object_or_404(Scene, id=scene_id, project__user=user)
     scene.delete()
     return {"success": True, "message": "تم حذف المشهد بنجاح"}
 
@@ -559,7 +978,8 @@ class RegenerateVisualRequest(Schema):
 
 @api.post("/scenes/{scene_id}/regenerate-visual")
 def regenerate_scene_visual_endpoint(request, scene_id: str, data: Optional[RegenerateVisualRequest] = None):
-    scene = get_object_or_404(Scene, id=scene_id)
+    user = get_current_user(request)
+    scene = get_object_or_404(Scene, id=scene_id, project__user=user)
     from .services.visual_service import produce_scene_visual
     
     prompt = data.prompt.strip() if (data and data.prompt) else (scene.visual_prompt or scene.raw_text)
@@ -595,9 +1015,10 @@ def regenerate_scene_visual_endpoint(request, scene_id: str, data: Optional[Rege
 
 @api.post("/projects/{project_id}/render-film")
 def render_film_endpoint(request, project_id: str):
-    project = get_object_or_404(BookProject, id=project_id)
+    user = get_current_user(request)
+    project = get_object_or_404(BookProject, id=project_id, user=user)
     from .services.remotion_bridge import render_or_queue_project
-    res = render_or_queue_project(project_id)
+    res = render_or_queue_project(str(project.id))
     return res
 
 

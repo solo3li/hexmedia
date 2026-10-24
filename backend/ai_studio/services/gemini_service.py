@@ -653,3 +653,34 @@ def extract_chapters_from_book(raw_text: str, filename: str = "") -> list[dict]:
         "summary": raw_text[:120].replace('\n', ' ') + "...",
         "raw_text": raw_text
     }]
+
+
+def get_thread_context(thread, window_size: int = 20):
+    """Return (summary, recent_turns) for sliding window context."""
+    from ai_studio.models import ChatMessage
+    msgs = list(ChatMessage.objects.filter(thread=thread).order_by('created_at'))
+    if not msgs:
+        msgs = list(ChatMessage.objects.filter(metadata__thread_id=str(thread.id)).order_by('created_at'))
+    recent_turns = msgs[-window_size:] if msgs else []
+    summary = getattr(thread, 'context_summary', '') or ''
+    return summary, recent_turns
+
+
+def update_rolling_summary(existing_summary: str, past_messages: list) -> str:
+    """Compress earlier conversation into a rolling smart summary."""
+    lines = []
+    if existing_summary:
+        lines.append(f"ملخص سابق: {existing_summary}")
+    for m in past_messages:
+        role = m.get('role', '')
+        content = m.get('content', '')
+        lines.append(f"{role}: {content}")
+    return " | ".join(lines)
+
+
+def generate_thread_title(prompt: str) -> str:
+    """Generate concise 3-5 word title from first user prompt."""
+    if not prompt or not prompt.strip():
+        return "محادثة جديدة"
+    words = prompt.strip().split()
+    return " ".join(words[:5])

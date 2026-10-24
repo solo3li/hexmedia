@@ -1,0 +1,17 @@
+/root/hexmedia/.agents/skills/slides/references/create.md
+/root/hexmedia/.agents/skills/slides/references/html-template.md
+/root/hexmedia/.agents/skills/slides/references/layout-patterns.md
+/root/hexmedia/.agents/skills/slides/references/slide-strategies.md
+/root/hexmedia/.agents/skills/ui-styling/LICENSE.txt
+/root/hexmedia/.agents/skills/ui-styling/SKILL.md
+/root/hexmedia/.agents/skills/ui-styling/references/canvas-design-system.md
+/root/hexmedia/.agents/skills/ui-styling/references/shadcn-accessibility.md
+/root/hexmedia/.agents/skills/ui-styling/references/shadcn-components.md
+/root/hexmedia/.agents/skills/ui-styling/references/shadcn-theming.md
+/root/hexmedia/.agents/skills/ui-styling/references/tailwind-customization.md
+/root/hexmedia/.agents/skills/ui-styling/references/tailwind-responsive.md
+/root/hexmedia/.agents/skills/ui-styling/references/tailwind-utilities.md
+/root/hexmedia/.agents/skills/ui-styling/scripts/requirements.txt
+/root/hexmedia/.agents/skills/ui-styling/scripts/tests/requirements.txt
+/root/hexmedia/.agents/skills/ui-ux-pro-max/SKILL.md
+/root/hexmedia/README.md

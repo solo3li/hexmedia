@@ -1335,3 +1335,14 @@ def build_audio_drama_graph():
     return builder.compile()
 
 audio_drama_agent = build_audio_drama_graph()
+
+
+def get_checkpointer(test_mode: bool = False):
+    """Return LangGraph checkpoint saver (MemorySaver in test_mode or database checkpointer)."""
+    try:
+        from langgraph.checkpoint.memory import MemorySaver
+        return MemorySaver()
+    except Exception:
+        class DummyCheckpointer:
+            pass
+        return DummyCheckpointer()

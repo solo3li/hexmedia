@@ -1,0 +1,4 @@
+/root/hexmedia/backend/templates/chat/index.html
+/root/hexmedia/docker-compose.yml
+/root/hexmedia/frontend/index.html
+/root/hexmedia/sample_novel.txt

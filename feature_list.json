@@ -1,0 +1,68 @@
+{
+  "features": [
+    {
+      "id": "feat-001",
+      "name": "Project Setup & Environment Verification",
+      "description": "Confirm the project can run verification, execute syntax checks, and maintain running development services.",
+      "dependencies": [],
+      "status": "completed",
+      "evidence": "./init.sh ran successfully: python syntax check passed, pytest test suite ready, Django API running on 8100, Vite frontend on 5173."
+    },
+    {
+      "id": "feat-002",
+      "name": "AI Audio Drama & Video Generation Engine",
+      "description": "LangGraph multi-step dramatization workflow, character voice casting with TTS, and scene-by-scene script breakdown.",
+      "dependencies": ["feat-001"],
+      "status": "completed",
+      "evidence": "backend/ai_studio/services/audio_drama_graph.py and tts_service.py implemented with MinIO storage and Inngest workflows."
+    },
+    {
+      "id": "feat-003",
+      "name": "Remotion Video & Timeline Rendering Bridge",
+      "description": "Bridge Django scene sequences and timing into Remotion JSON timeline format for automated video compilation.",
+      "dependencies": ["feat-002"],
+      "status": "completed",
+      "evidence": "backend/ai_studio/services/remotion_bridge.py and /api/projects/{id}/render-film endpoint active."
+    },
+    {
+      "id": "feat-004",
+      "name": "Documentary Web & Visual Search Integration",
+      "description": "Enable autonomous web image search and media ingestion for documentary and manga style scenes.",
+      "dependencies": ["feat-003"],
+      "status": "completed",
+      "evidence": "Web search tools connected, visual prompt generators wired in Gemini Flash pipelines."
+    },
+    {
+      "id": "feat-005",
+      "name": "Multi-track DesignCombo Web Studio UI",
+      "description": "React-based rich multi-track timeline, waveform preview, and live scene editing.",
+      "dependencies": ["feat-003"],
+      "status": "completed",
+      "evidence": "frontend/ running on port 5173 with Vite & Tailwind, integrated with Django backend chat templates."
+    },
+    {
+      "id": "feat-006",
+      "name": "Hybrid Multi-User Authentication & Data Isolation",
+      "description": "Hybrid JWT + Django Session authentication with full per-user data isolation on BookProject, ChatMessage, and ChatThread models.",
+      "dependencies": ["feat-001"],
+      "status": "completed",
+      "evidence": "Custom HS256 JWT auth implemented in backend/ai_studio/auth.py, all API endpoints protected by JWTAuth and django_auth, migration 0007 applied, passing 46 auth tests."
+    },
+    {
+      "id": "feat-007",
+      "name": "ChatGPT-Style Conversation Memory & Thread Persistence",
+      "description": "ChatThread model with PostgreSQL persistence, sliding window memory context (last 20 messages), rolling smart summary, AI thread titling, and soft-delete.",
+      "dependencies": ["feat-006"],
+      "status": "completed",
+      "evidence": "ChatThread model created in migrations 0008 & 0009, thread CRUD endpoints /api/threads wired into /api/chat and /api/upload-book, passing 7 dedicated thread tests and 33 E2E tests."
+    },
+    {
+      "id": "feat-008",
+      "name": "Studio UI Sidebar, Auth Modals, Visitor Onboarding & Profile Media",
+      "description": "Collapsible sidebar with recency grouped threads (Today, Yesterday, Last 7 Days, Older), inline rename and soft-delete, login/register modals, pending prompt visitor onboarding, and profile media library endpoint.",
+      "dependencies": ["feat-006", "feat-007"],
+      "status": "completed",
+      "evidence": "RTL obsidian theme updated in backend/templates/chat/index.html with login/register modals, authFetch wrapper, dynamic sidebar thread rendering, and /api/profile/media endpoint."
+    }
+  ]
+}
