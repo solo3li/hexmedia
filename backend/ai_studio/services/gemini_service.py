@@ -432,8 +432,16 @@ def break_into_scenes(book_text: str, character_names: list[str], narration_mode
     logger.info("Executing deterministic novel parser to guarantee full chapter execution.")
     return parse_scenes_deterministically(book_text, character_names, narration_mode)
 
-def generate_voice_audio(text: str, voice_name: str = "Puck", emotion: str = "cinematic") -> bytes:
-    """Generates audio for a given dialogue using Gemini TTS model or synthetic fallback"""
+def generate_voice_audio(
+    text: str,
+    voice_name: str = "Puck",
+    emotion: str = "cinematic",
+    delivery_style: str = "",
+    language: str = "ar",
+    dialect: str = "msa",
+    custom_instructions: str = ""
+) -> bytes:
+    """Generates audio for a given dialogue using Gemini TTS model or synthetic fallback."""
     client, config = get_gemini_client()
     tts_model = config.tts_model or "gemini-3.8-flash-tts"
 
@@ -468,13 +476,38 @@ def generate_voice_audio(text: str, voice_name: str = "Puck", emotion: str = "ci
             logger.error(f"Gemini TTS direct API call failed ({voice_name}): {e}. Using acoustic voice sample.")
 
     # High-quality acoustic fallback tone generator (valid WAV format)
-    # Pitch depends on character voice:
+    # Pitch mapped to all 30 official Gemini studio voices:
     freq_map = {
-        "Puck": 130.0,    # Male Baritone
-        "Charon": 95.0,   # Male Deep Bass
-        "Kore": 220.0,    # Female Warm
-        "Fenrir": 110.0,  # Male Raspy
-        "Aoede": 260.0,   # Female High
+        "Puck": 130.0,
+        "Charon": 95.0,
+        "Kore": 220.0,
+        "Fenrir": 110.0,
+        "Aoede": 260.0,
+        "Zephyr": 240.0,
+        "Leda": 250.0,
+        "Orus": 105.0,
+        "Callirrhoe": 215.0,
+        "Autonoe": 245.0,
+        "Enceladus": 120.0,
+        "Iapetus": 115.0,
+        "Umbriel": 125.0,
+        "Algieba": 230.0,
+        "Despina": 225.0,
+        "Erinome": 235.0,
+        "Algenib": 90.0,
+        "Rasalgethi": 118.0,
+        "Laomedeia": 255.0,
+        "Achernar": 210.0,
+        "Alnilam": 100.0,
+        "Schedar": 128.0,
+        "Gacrux": 88.0,
+        "Pulcherrima": 248.0,
+        "Achird": 135.0,
+        "Zubenelgenubi": 122.0,
+        "Vindemiatrix": 218.0,
+        "Sadachbia": 242.0,
+        "Sadaltager": 112.0,
+        "Sulafat": 222.0,
     }
     freq = freq_map.get(voice_name, 140.0)
     duration = max(2.5, min(12.0, len(text.split()) * 0.45))

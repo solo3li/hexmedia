@@ -72,7 +72,15 @@ def process_tts_generation(
         vocalized_c = auto_diacritize_text(c, language=language, dialect=dialect)
         vocalized_chunks.append(vocalized_c)
 
-        wav_bytes = generate_voice_audio(vocalized_c, voice_name=voice_profile, emotion=emotion)
+        wav_bytes = generate_voice_audio(
+            vocalized_c,
+            voice_name=voice_profile,
+            emotion=emotion,
+            delivery_style=delivery_style,
+            language=language,
+            dialect=dialect,
+            custom_instructions=custom_instructions
+        )
         chunk_wav_list.append(wav_bytes)
 
         # Calculate chunk duration

@@ -385,7 +385,7 @@
 
           <!-- Tool 4: Text-to-Speech (TTS Studio) -->
           <button onclick="openTTSConfigModal()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
-            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-cyan-400 group-hover:border-cyan-400/40 shrink-0">
+            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-limeAccent group-hover:border-limeAccent/40 shrink-0">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -394,8 +394,8 @@
               </svg>
             </div>
             <div>
-              <div class="font-medium text-white group-hover:text-cyan-300 transition">تحويل النص إلى صوت (TTS Studio)</div>
-              <div class="text-[10px] text-muted">أصوات احترافية، لهجات، مشاعر، نصوص طويلة وتشكيل ذكي</div>
+              <div class="font-medium text-white group-hover:text-limeAccent transition">تحويل النص إلى صوت (TTS Studio)</div>
+              <div class="text-[10px] text-muted">مكتبة الأصوات الرسمية (30 صوتاً)، لهجات، مشاعر، وتشكيل ذكي</div>
             </div>
           </button>
         </div>
@@ -800,17 +800,22 @@
 
   <!-- TTS CONFIGURATION MODAL -->
   <div id="ttsConfigModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeTTSConfigModal()">
-    <div class="bg-surface border border-borderSubtle rounded-3xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+    <div class="bg-surface border border-borderSubtle rounded-3xl w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
       
       <!-- Modal Header -->
-      <div class="p-4 sm:p-5 border-b border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/40">
+      <div class="p-4 sm:p-5 border-b border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/70">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-lg shrink-0">
-            🎙️
+          <div class="w-10 h-10 rounded-2xl bg-obsidian border border-borderSubtle text-limeAccent flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="22"></line>
+              <line x1="8" y1="22" x2="16" y2="22"></line>
+            </svg>
           </div>
           <div>
-            <h3 class="text-sm sm:text-base font-medium text-white">إعدادات تحويل النص إلى صوت (TTS Studio)</h3>
-            <p class="text-xs text-muted">تخصيص نبرة الصوت، اللهجة، المشاعر والتشكيل الذكي</p>
+            <h3 class="text-sm sm:text-base font-semibold text-white">إعدادات تحويل النص إلى صوت (TTS Studio)</h3>
+            <p class="text-xs text-muted">مكتبة الأصوات الرسمية الكاملة (30 صوتاً)، اللغات واللهجات الإقليمية، والمشاعر السينمائية</p>
           </div>
         </div>
         <button onclick="closeTTSConfigModal()" class="p-2 rounded-xl text-muted hover:text-white hover:bg-obsidian transition">
@@ -822,155 +827,177 @@
       </div>
 
       <!-- Modal Body (Scrollable) -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs">
         
         <!-- Row 1: Language and Dialect -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
             <label class="block font-medium text-light mb-1.5">اللغة الأساسية</label>
-            <select id="ttsLanguageSelect" onchange="handleTTSLanguageChange()" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+            <select id="ttsLanguageSelect" onchange="handleTTSLanguageChange()" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
               <option value="ar" selected>العربية (Arabic)</option>
               <option value="en">English (الإنجليزية)</option>
               <option value="fr">Français (الفرنسية)</option>
               <option value="es">Español (الإسبانية)</option>
+              <option value="de">Deutsch (الألمانية)</option>
+              <option value="it">Italiano (الإيطالية)</option>
+              <option value="pt">Português (البرتغالية)</option>
+              <option value="ru">Русский (الروسية)</option>
+              <option value="tr">Türkçe (التركية)</option>
+              <option value="fa">فارسی (الفارسية)</option>
+              <option value="ur">اردو (الأردية)</option>
+              <option value="hi">हिन्दी (الهندية)</option>
+              <option value="ja">日本語 (اليابانية)</option>
+              <option value="ko">한국어 (الكورية)</option>
+              <option value="zh">中文 (الصينية)</option>
+              <option value="id">Bahasa Indonesia / Melayu (الملايو والإندونيسية)</option>
+              <option value="nl">Nederlands (الهولندية)</option>
+              <option value="sv">Svenska (السويدية)</option>
+              <option value="pl">Polski (البولندية)</option>
+              <option value="el">Ελληνικά (اليونانية)</option>
+              <option value="he">עברית (العبرية)</option>
+              <option value="vi">Tiếng Việt (الفيتنامية)</option>
+              <option value="th">ไทย (التايلاندية)</option>
+              <option value="sw">Kiswahili (السواحلية)</option>
+              <option value="ku">کوردی (الكردية)</option>
             </select>
           </div>
           <div>
-            <label class="block font-medium text-light mb-1.5">اللهجة / الطابع اللغوي</label>
-            <select id="ttsDialectSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
-              <option value="msa" selected>🇸🇦 فصحى معيارية سينمائية</option>
-              <option value="egyptian">🇪🇬 لهجة مصرية عفوية</option>
-              <option value="gulf">🇦🇪 لهجة خليجية / سعودية</option>
-              <option value="levantine">🇱🇧 لهجة شامية</option>
-              <option value="maghrebi">🇲🇦 لهجة مغاربية</option>
+            <label class="block font-medium text-light mb-1.5">اللهجة / الطابع اللغوي الإقليمي</label>
+            <select id="ttsDialectSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+              <option value="msa" selected>فصحى معيارية سينمائية (Modern Standard Arabic)</option>
+              <option value="egyptian">لهجة مصرية عفوية (Egyptian Arabic)</option>
+              <option value="saudi">لهجة سعودية نجدية وحجازية (Saudi Arabic)</option>
+              <option value="gulf">لهجة خليجية وإماراتية (Gulf / UAE Arabic)</option>
+              <option value="kuwaiti">لهجة كويتية (Kuwaiti Arabic)</option>
+              <option value="syrian">لهجة شامية سورية (Syrian Levantine)</option>
+              <option value="lebanese">لهجة شامية لبنانية (Lebanese Levantine)</option>
+              <option value="levantine_south">لهجة فلسطينية وأردنية (Palestinian / Jordanian)</option>
+              <option value="iraqi">لهجة عراقية (Iraqi Arabic)</option>
+              <option value="moroccan">دارجة مغربية (Moroccan Darija)</option>
+              <option value="algerian">دارجة جزائرية (Algerian Arabic)</option>
+              <option value="tunisian">لهجة تونسية (Tunisian Arabic)</option>
+              <option value="sudanese">لهجة سودانية (Sudanese Arabic)</option>
+              <option value="yemeni">لهجة يمنية (Yemeni Arabic)</option>
+              <option value="omani">لهجة عمانية (Omani Arabic)</option>
+              <option value="libyan">لهجة ليبية (Libyan Arabic)</option>
             </select>
           </div>
         </div>
 
-        <!-- Row 2: Voice Profile Selector Grid -->
+        <!-- Row 2: Voice Profile Selector Grid with Filter and Search -->
         <div>
-          <label class="block font-medium text-light mb-2">الممثل الصوتي (Voice Profile)</label>
-          <div id="ttsVoiceProfilesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <!-- Voice Cards -->
-            <div onclick="selectTTSVoiceProfile('Charon')" id="voiceCard_Charon" class="tts-voice-card p-3 rounded-2xl bg-obsidian/70 border-2 border-cyan-400/80 cursor-pointer hover:border-cyan-400 transition flex items-start gap-3">
-              <span class="text-xl">👨‍💼</span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-medium text-white">Charon (شارون)</span>
-                  <span class="text-[10px] font-mono text-cyan-400 bg-cyan-400/10 px-1.5 py-0.5 rounded">جهوري وقور</span>
-                </div>
-                <p class="text-[11px] text-muted mt-0.5">عميق ورزين للوثائقيات والراوي الفخم</p>
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2">
+              <label class="font-medium text-light">الممثل الصوتي (Voice Profile)</label>
+              <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">30 صوتاً رسمياً</span>
+            </div>
+            <!-- Search & Gender Filter Controls -->
+            <div class="flex items-center gap-2">
+              <input 
+                type="text" 
+                id="ttsVoiceSearchInput" 
+                oninput="filterTTSVoiceCards()" 
+                placeholder="بحث في الأصوات والنبرات..." 
+                class="bg-obsidian border border-borderSubtle rounded-lg px-2.5 py-1 text-[11px] text-white placeholder-muted focus:outline-none focus:border-limeAccent w-36 sm:w-48"
+              >
+              <div class="flex items-center bg-obsidian border border-borderSubtle rounded-lg p-0.5 text-[10px]">
+                <button type="button" onclick="setTTSVoiceGenderFilter('all')" id="voiceFilter_all" class="px-2 py-0.5 rounded text-white bg-surface font-medium">الكل</button>
+                <button type="button" onclick="setTTSVoiceGenderFilter('male')" id="voiceFilter_male" class="px-2 py-0.5 rounded text-muted hover:text-white">ذكور</button>
+                <button type="button" onclick="setTTSVoiceGenderFilter('female')" id="voiceFilter_female" class="px-2 py-0.5 rounded text-muted hover:text-white">إناث</button>
               </div>
             </div>
+          </div>
 
-            <div onclick="selectTTSVoiceProfile('Puck')" id="voiceCard_Puck" class="tts-voice-card p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle cursor-pointer hover:border-cyan-400/60 transition flex items-start gap-3">
-              <span class="text-xl">🎙️</span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-medium text-white">Puck (باك)</span>
-                  <span class="text-[10px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">شبابي حيوي</span>
-                </div>
-                <p class="text-[11px] text-muted mt-0.5">طاقة عالية ومشرق للإعلانات والبودكاست</p>
-              </div>
-            </div>
-
-            <div onclick="selectTTSVoiceProfile('Kore')" id="voiceCard_Kore" class="tts-voice-card p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle cursor-pointer hover:border-cyan-400/60 transition flex items-start gap-3">
-              <span class="text-xl">👩‍💼</span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-medium text-white">Kore (كوري)</span>
-                  <span class="text-[10px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">نسائي دافئ</span>
-                </div>
-                <p class="text-[11px] text-muted mt-0.5">ناعم ومهدئ مناسب للقصص وشرح المحتوى</p>
-              </div>
-            </div>
-
-            <div onclick="selectTTSVoiceProfile('Fenrir')" id="voiceCard_Fenrir" class="tts-voice-card p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle cursor-pointer hover:border-cyan-400/60 transition flex items-start gap-3">
-              <span class="text-xl">⚔️</span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-medium text-white">Fenrir (فنرير)</span>
-                  <span class="text-[10px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">ملحمي قوي</span>
-                </div>
-                <p class="text-[11px] text-muted mt-0.5">خشن وحازم للمشاهد القتالية والتريلرات</p>
-              </div>
-            </div>
-
-            <div onclick="selectTTSVoiceProfile('Aoede')" id="voiceCard_Aoede" class="tts-voice-card p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle cursor-pointer hover:border-cyan-400/60 transition flex items-start gap-3 sm:col-span-2">
-              <span class="text-xl">✨</span>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center justify-between">
-                  <span class="font-medium text-white">Aoede (أويدي)</span>
-                  <span class="text-[10px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">تعبيري درامي</span>
-                </div>
-                <p class="text-[11px] text-muted mt-0.5">صوت نسائي سينمائي مفعم بالعاطفة والتأثير المسرحي</p>
-              </div>
-            </div>
+          <!-- Prebuilt Voice Cards Grid -->
+          <div id="ttsVoiceProfilesGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-1.5 border border-borderSubtle/60 rounded-2xl bg-obsidian/30">
+            <!-- Rendered by JS or statically below -->
           </div>
         </div>
 
         <!-- Row 3: Emotion and Delivery Style -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <div>
-            <label class="block font-medium text-light mb-1.5">الحالة الشعورية (Emotion)</label>
-            <select id="ttsEmotionSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
-              <option value="neutral" selected>🎙️ طبيعي / متزن (Neutral)</option>
-              <option value="enthusiastic">🔥 حماسي ومحفز (Enthusiastic)</option>
-              <option value="dramatic">🎭 درامي وجاد (Dramatic)</option>
-              <option value="happy">✨ فرح ومتفائل (Happy)</option>
-              <option value="sad">🌧️ حزين ومؤثر (Melancholic)</option>
-              <option value="whisper">🤫 هادئ وهمس (Whispering)</option>
+            <label class="block font-medium text-light mb-1.5">الحالة الشعورية (Emotion Spectrum)</label>
+            <select id="ttsEmotionSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+              <option value="neutral" selected>طبيعي ورصين (Neutral & Balanced)</option>
+              <option value="calm">هادئ ومريح (Calm & Serene)</option>
+              <option value="warm">دافئ وحميمي (Warm & Intimate)</option>
+              <option value="enthusiastic">حماسي ومحفز ملهم (Enthusiastic & Inspiring)</option>
+              <option value="cheerful">مبتهج وسعيد (Cheerful & Joyful)</option>
+              <option value="dramatic">درامي وتراجيدي جاد (Dramatic & Serious)</option>
+              <option value="epic">ملحمي ومهيب (Epic & Majestic)</option>
+              <option value="mysterious">غامض ومثير للفضول (Mysterious & Suspenseful)</option>
+              <option value="melancholic">حزين ومؤثر شجي (Melancholic & Reflective)</option>
+              <option value="somber">وقور وحزين (Somber & Solemn)</option>
+              <option value="whispering">هامس وسري (Whispering & Secretive)</option>
+              <option value="urgent">متوتر وملح (Urgent & Tense)</option>
+              <option value="fearful">خائف ومرتعد (Fearful & Anxious)</option>
+              <option value="angry">غاضب وصارم (Angry & Stern)</option>
+              <option value="confident">واثق وحاسم (Confident & Authoritative)</option>
+              <option value="affectionate">عطوف وحنون (Affectionate & Tender)</option>
+              <option value="sarcastic">ساخر ومتهكم (Sarcastic & Ironic)</option>
+              <option value="poetic_emotional">شاعري ووجداني (Poetic & Soulful)</option>
             </select>
           </div>
           <div>
-            <label class="block font-medium text-light mb-1.5">أسلوب الإلقاء (Delivery Style)</label>
-            <select id="ttsDeliveryStyleSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
-              <option value="documentary" selected>تعليق وثائقي فخم (Documentary)</option>
-              <option value="commercial">إعلان ترويجي وتسويقي (Commercial)</option>
-              <option value="storyteller">راوي قصص وروايات (Storyteller)</option>
-              <option value="news">نشرة أخبار رسمية (News Broadcast)</option>
-              <option value="poetic">إلقاء أدبي وشعري (Poetic)</option>
-              <option value="conversational">محادثة عفوية (Conversational)</option>
+            <label class="block font-medium text-light mb-1.5">أسلوب الإلقاء والأداء (Delivery Style)</label>
+            <select id="ttsDeliveryStyleSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+              <option value="documentary" selected>تعليق وثائقي فخم واستقصائي (Documentary)</option>
+              <option value="commercial">إعلان تجاري وترويجي تسويقي (Commercial & Promo)</option>
+              <option value="storyteller">راوي قصص وروايات سردية (Cinematic Storyteller)</option>
+              <option value="audiobook">قراءة كتاب صوتي هادئ ومتصل (Audiobook Narration)</option>
+              <option value="news">نشرة أخبار رسمية وإيجاز صحفي (News Broadcast)</option>
+              <option value="poetic">إلقاء أدبي ونصوص شعرية (Poetic Recitation)</option>
+              <option value="conversational">حوار عفوي ومحادثة واقعية (Natural Conversation)</option>
+              <option value="podcast">بودكاست إذاعي تفاعلي (Interactive Podcast)</option>
+              <option value="educational">شرح تعليمي وأكاديمي مبسط (Educational & Explainer)</option>
+              <option value="corporate">عرض تقديمي ومؤسسي احترافي (Corporate Presentation)</option>
+              <option value="meditation">تأمل وتنويم واسترخاء ذهني (Guided Meditation)</option>
+              <option value="trailer">إعلان تشويقي وتريلر سينمائي (Movie Trailer)</option>
+              <option value="motivational">خطابي تحفيزي وإلهامي (Motivational Speech)</option>
+              <option value="dramatic_dialogue">تمثيل مسرحي وحواري درامي (Dramatic Roleplay)</option>
+              <option value="investigative">استقصائي غموض وتحقيق (Investigative Crime)</option>
+              <option value="sports">تعليق رياضي تفاعلي وحماسي (Sports Commentary)</option>
             </select>
           </div>
         </div>
 
         <!-- Row 4: Auto-Diacritize Toggle -->
-        <div class="p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle flex items-center justify-between gap-3">
+        <div class="p-3.5 rounded-2xl bg-obsidian/50 border border-borderSubtle flex items-center justify-between gap-3">
           <div class="space-y-0.5">
-            <span class="font-medium text-white flex items-center gap-1.5">
+            <span class="font-medium text-white flex items-center gap-2">
               <span>التشكيل التلقائي الذكي للنصوص العربية</span>
-              <span class="text-[10px] font-mono text-cyan-400 bg-cyan-400/10 px-1.5 py-0.2 rounded">موصى به</span>
+              <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">موصى به</span>
             </span>
-            <p class="text-[11px] text-muted">ضبط الحركات الإعرابية ومخارج الحروف آلياً لضمان سلامة النطق الدرامي</p>
+            <p class="text-[11px] text-muted">ضبط الحركات الإعرابية ومخارج الحروف آلياً لضمان سلامة النطق الدرامي بحسب اللهجة المختارة</p>
           </div>
           <label class="relative inline-flex items-center cursor-pointer shrink-0">
             <input type="checkbox" id="ttsAutoDiacritizeToggle" class="sr-only peer" checked>
-            <div class="w-11 h-6 bg-surface border border-borderSubtle peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+            <div class="w-11 h-6 bg-surface border border-borderSubtle peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-obsidian after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-limeAccent"></div>
           </label>
         </div>
 
         <!-- Row 5: Custom Directives -->
         <div>
-          <label class="block font-medium text-light mb-1.5">توجيهات إضافية للممثل الصوتي (اختياري)</label>
+          <label class="block font-medium text-light mb-1.5">توجيهات إضافية للأداء (اختياري)</label>
           <input 
             type="text" 
             id="ttsCustomDirectivesInput" 
-            placeholder="مثال: نبرة غامضة وبطيئة، توقف ثانية عند الفواصل..." 
-            class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white placeholder-muted focus:outline-none focus:border-cyan-400 text-xs"
+            placeholder="مثال: نبرة غامضة وبطيئة، توقف ثانية عند الفواصل، تركيز على مخارج الحروف..." 
+            class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white placeholder-muted focus:outline-none focus:border-limeAccent text-xs transition"
           >
         </div>
 
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-3 sm:p-4 border-t border-borderSubtle bg-obsidian/40 flex items-center justify-between text-xs shrink-0">
+      <div class="p-3.5 sm:p-4 border-t border-borderSubtle bg-obsidian/70 flex items-center justify-between text-xs shrink-0">
         <button onclick="closeTTSConfigModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition">
           إلغاء
         </button>
-        <button onclick="confirmTTSConfig()" class="px-5 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-obsidian font-semibold transition active:scale-95 shadow-md flex items-center gap-1.5">
+        <button onclick="confirmTTSConfig()" class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow-md flex items-center gap-1.5">
           <span>تفعيل أداة الصوت وكتابة النص</span>
-          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </button>
@@ -1021,6 +1048,9 @@
     window.addEventListener('DOMContentLoaded', () => {
       renderSidebarProjects();
       checkAuth();
+      if (typeof renderTTSVoiceCards === 'function') {
+        renderTTSVoiceCards();
+      }
 
       // Sync Header and Controls depending on whether project is a Chat or an Audio Drama
       if (activeProject) {
@@ -1207,30 +1237,245 @@
       custom_directives: ''
     };
 
+    let currentTTSGenderFilter = 'all';
+
+    const TTS_ALL_VOICES = [
+      { name: 'Zephyr', gender: 'female', tag: 'مشرق ومنعش', desc: 'صوت شبابي مشرق وخفيف، نبرة متفائلة وإيقاع رشيق يناسب الإعلانات الحديثة' },
+      { name: 'Puck', gender: 'male', tag: 'حيوي ومتفائل', desc: 'صوت شبابي حيوي واضح ومشرق للإعلانات والبودكاست والمحادثات' },
+      { name: 'Charon', gender: 'male', tag: 'جهوري وقور', desc: 'صوت جهوري عميق ورزين للوثائقيات والراوي الفخم والسرد التاريخي' },
+      { name: 'Kore', gender: 'female', tag: 'دافئ وحازم', desc: 'صوت نسائي دافئ وناعم مهدئ للروايات الأدبية والقصص الهادفة' },
+      { name: 'Fenrir', gender: 'male', tag: 'ملحمي وقوي', desc: 'صوت خشن وقوي حازم للمشاهد القتالية والتريلرات والشخصيات الصارمة' },
+      { name: 'Leda', gender: 'female', tag: 'شبابي نضر', desc: 'صوت نسائي نضر وناعم للشروحات التفاعلية والتطبيقات التعليمية' },
+      { name: 'Orus', gender: 'male', tag: 'قيادي حاسم', desc: 'صوت رجالي قوي ورسمي للخطابات المؤسسية والتقارير الإدارية والتاريخية' },
+      { name: 'Aoede', gender: 'female', tag: 'تعبيري درامي', desc: 'صوت نسائي سينمائي مفعم بالعاطفة والتأثير للمشاهد الشعرية والدرامية' },
+      { name: 'Callirrhoe', gender: 'female', tag: 'سلس ومريح', desc: 'صوت نسائي انسيابي ومقنع للكتب الصوتية والمقالات العلمية' },
+      { name: 'Autonoe', gender: 'female', tag: 'ناصع ومتألق', desc: 'صوت نسائي واضح ولامع لحملات التوعية والإعلانات الحيوية' },
+      { name: 'Enceladus', gender: 'male', tag: 'هامس وشاعري', desc: 'صوت رجالي ناعم وحميمي للتأمل والنصوص الوجدانية والشعر' },
+      { name: 'Iapetus', gender: 'male', tag: 'صافٍ ودقيق', desc: 'صوت نقي ومخارج حروف واضحة للأعمال الأكاديمية والوثائقية' },
+      { name: 'Umbriel', gender: 'male', tag: 'عفوي ومسترخٍ', desc: 'نبرة عفوية طبيعية للحوارات اليومية والبودكاست والمحادثات الحرة' },
+      { name: 'Algieba', gender: 'female', tag: 'مخملي راقٍ', desc: 'صوت مخملي دافئ وأنيق للروايات والبرامج الثقافية الراقية' },
+      { name: 'Despina', gender: 'female', tag: 'رقيق وسردي', desc: 'صوت سردي ناعم ومتدفق لقصص الأطفال والروايات الرومانسية' },
+      { name: 'Erinome', gender: 'female', tag: 'بلوري تعليمي', desc: 'نبرة بلورية صافية ودقيقة للدورات التدريبية والشروحات التقنية' },
+      { name: 'Algenib', gender: 'male', tag: 'خشن أجش', desc: 'صوت سينمائي أجش ومميز للمشاهد الغامضة وأفلام الإثارة' },
+      { name: 'Rasalgethi', gender: 'male', tag: 'إخباري موثوق', desc: 'نبرة إخبارية رصينة وتقريرية لنشرات الأخبار والبيانات الرسمية' },
+      { name: 'Laomedeia', gender: 'female', tag: 'مبتهج ونشط', desc: 'صوت نشط ومبهج يشع بالحيوية للألعاب والمحتوى الترفيهي' },
+      { name: 'Achernar', gender: 'female', tag: 'ناعم وهادئ', desc: 'صوت رقيق وهادئ يدعو للاسترخاء للمحتوى التأملي والإرشادي' },
+      { name: 'Alnilam', gender: 'male', tag: 'قوي وحازم', desc: 'صوت عسكري وتوجيهي حازم للإعلانات المؤثرة والمشاهد الحاسمة' },
+      { name: 'Schedar', gender: 'male', tag: 'متزن ومحايد', desc: 'نبرة متزنة ومحايدة للتقارير الإحصائية والمحتوى العلمي الدقيق' },
+      { name: 'Gacrux', gender: 'male', tag: 'ناضج وحكيم', desc: 'صوت رجالي مسن وحكيم للشخصيات التراثية والحكماء' },
+      { name: 'Pulcherrima', gender: 'female', tag: 'جريء ومندفع', desc: 'نبرة جريئة ومندفعة مفعمة بالحماس للعروض التسويقية والمهرجانات' },
+      { name: 'Achird', gender: 'male', tag: 'ودود وقريب', desc: 'نبرة صديق ناصح وودود لخدمة العملاء والإرشاد الصوتي' },
+      { name: 'Zubenelgenubi', gender: 'male', tag: 'عفوي وبسيط', desc: 'صوت مألوف وبسيط دون تكلف للمواقف والروايات الاجتماعية المعاصرة' },
+      { name: 'Vindemiatrix', gender: 'female', tag: 'لطيف وحنون', desc: 'نبرة أمومية حنونة وإنسانية مؤثرة للحملات الخيرية والتوعية' },
+      { name: 'Sadachbia', gender: 'female', tag: 'مفعم بالحياة', desc: 'صوت متدفق وحيوي يشد الانتباه ويثير التفاعل' },
+      { name: 'Sadaltager', gender: 'male', tag: 'خبير ومعرفي', desc: 'صوت أكاديمي عميق للمحاضرات والبودكاست الفكري والمقالات التخصصية' },
+      { name: 'Sulafat', gender: 'female', tag: 'دافئ ومحتضن', desc: 'صوت دافئ ومحتضن يفيض بالمشاعر النبيلة للسير الذاتية والمقالات الأدبية' }
+    ];
+
     const TTS_DIALECT_MAP = {
       ar: [
-        { code: 'msa', label: '🇸🇦 فصحى معيارية سينمائية' },
-        { code: 'egyptian', label: '🇪🇬 لهجة مصرية عفوية' },
-        { code: 'gulf', label: '🇦🇪 لهجة خليجية / سعودية' },
-        { code: 'levantine', label: '🇱🇧 لهجة شامية' },
-        { code: 'maghrebi', label: '🇲🇦 لهجة مغاربية' }
+        { code: 'msa', label: 'فصحى معيارية سينمائية (Modern Standard Arabic)' },
+        { code: 'egyptian', label: 'لهجة مصرية عفوية (Egyptian Arabic)' },
+        { code: 'saudi', label: 'لهجة سعودية نجدية وحجازية (Saudi Arabic)' },
+        { code: 'gulf', label: 'لهجة خليجية وإماراتية (Gulf / UAE Arabic)' },
+        { code: 'kuwaiti', label: 'لهجة كويتية (Kuwaiti Arabic)' },
+        { code: 'syrian', label: 'لهجة شامية سورية (Syrian Levantine)' },
+        { code: 'lebanese', label: 'لهجة شامية لبنانية (Lebanese Levantine)' },
+        { code: 'levantine_south', label: 'لهجة فلسطينية وأردنية (Palestinian / Jordanian)' },
+        { code: 'iraqi', label: 'لهجة عراقية (Iraqi Arabic)' },
+        { code: 'moroccan', label: 'دارجة مغربية (Moroccan Darija)' },
+        { code: 'algerian', label: 'دارجة جزائرية (Algerian Arabic)' },
+        { code: 'tunisian', label: 'لهجة تونسية (Tunisian Arabic)' },
+        { code: 'sudanese', label: 'لهجة سودانية (Sudanese Arabic)' },
+        { code: 'yemeni', label: 'لهجة يمنية (Yemeni Arabic)' },
+        { code: 'omani', label: 'لهجة عمانية (Omani Arabic)' },
+        { code: 'libyan', label: 'لهجة ليبية (Libyan Arabic)' }
       ],
       en: [
-        { code: 'us', label: '🇺🇸 American English (US)' },
-        { code: 'uk', label: '🇬🇧 British English (UK)' }
+        { code: 'us', label: 'American English (US)' },
+        { code: 'uk', label: 'British English (UK)' },
+        { code: 'au', label: 'Australian English (AU)' },
+        { code: 'ca', label: 'Canadian English (CA)' },
+        { code: 'in', label: 'Indian English (IN)' },
+        { code: 'ie', label: 'Irish English (IE)' },
+        { code: 'sct', label: 'Scottish English (SCT)' },
+        { code: 'za', label: 'South African English (ZA)' },
+        { code: 'nz', label: 'New Zealand English (NZ)' }
       ],
       fr: [
-        { code: 'fr_standard', label: '🇫🇷 Français Standard' }
+        { code: 'fr_standard', label: 'Français Métropolitain (France)' },
+        { code: 'fr_ca', label: 'Français Canadien (Québécois)' },
+        { code: 'fr_be', label: 'Français de Belgique' },
+        { code: 'fr_ch', label: 'Français de Suisse' },
+        { code: 'fr_af', label: 'Français d\'Afrique' }
       ],
       es: [
-        { code: 'es_standard', label: '🇪🇸 Español Castellano' }
+        { code: 'es_standard', label: 'Español de España (Castellano)' },
+        { code: 'es_mx', label: 'Español Mexicano' },
+        { code: 'es_ar', label: 'Español Rioplatense (Argentina)' },
+        { code: 'es_co', label: 'Español Colombiano' },
+        { code: 'es_cl', label: 'Español Chileno' },
+        { code: 'es_latam', label: 'Español Latinoamericano Neutro' },
+        { code: 'es_us', label: 'Español de Estados Unidos' }
+      ],
+      de: [
+        { code: 'de_standard', label: 'Standarddeutsch (Deutschland)' },
+        { code: 'de_at', label: 'Österreichisches Deutsch' },
+        { code: 'de_ch', label: 'Schweizer Hochdeutsch' }
+      ],
+      it: [
+        { code: 'it_standard', label: 'Italiano Standard' }
+      ],
+      pt: [
+        { code: 'pt_br', label: 'Português do Brasil' },
+        { code: 'pt_pt', label: 'Português Europeu (Portugal)' }
+      ],
+      ru: [
+        { code: 'ru_standard', label: 'Русский литературный' }
+      ],
+      tr: [
+        { code: 'tr_standard', label: 'Standart Türkçe (İstanbul)' }
+      ],
+      fa: [
+        { code: 'fa_ir', label: 'فارسی ایرانی (تهرانی)' },
+        { code: 'fa_af', label: 'فارسی دری / أفغاني' }
+      ],
+      ur: [
+        { code: 'ur_pk', label: 'اردو معیاری (پاکستان)' },
+        { code: 'ur_in', label: 'اردو ہندوستانی (بھارت)' }
+      ],
+      hi: [
+        { code: 'hi_standard', label: 'मानक हिन्दी (Standard Hindi)' }
+      ],
+      ja: [
+        { code: 'ja_standard', label: '標準日本語 (Tokyo Standard)' },
+        { code: 'ja_kansai', label: '関西弁 (Kansai Dialect)' }
+      ],
+      ko: [
+        { code: 'ko_standard', label: '표준 한국어 (Seoul Standard)' }
+      ],
+      zh: [
+        { code: 'zh_cmn', label: '中文 普通话 (Mandarin Simplified)' },
+        { code: 'zh_tw', label: '國語 繁體 (Mandarin Traditional)' },
+        { code: 'zh_yue', label: '粵語 (Cantonese / 广州话)' }
+      ],
+      id: [
+        { code: 'id_standard', label: 'Bahasa Indonesia Baku' },
+        { code: 'ms_standard', label: 'Bahasa Melayu Standard' }
+      ],
+      nl: [
+        { code: 'nl_standard', label: 'Nederlands Standaard' },
+        { code: 'nl_be', label: 'Vlaams (Belgisch)' }
+      ],
+      sv: [
+        { code: 'sv_standard', label: 'Rikssvenska (Standard Swedish)' }
+      ],
+      pl: [
+        { code: 'pl_standard', label: 'Język polski standardowy' }
+      ],
+      el: [
+        { code: 'el_standard', label: 'Νέα Ελληνικά (Modern Greek)' }
+      ],
+      he: [
+        { code: 'he_standard', label: 'עברית מודרנית (Modern Hebrew)' }
+      ],
+      vi: [
+        { code: 'vi_standard', label: 'Tiếng Việt chuẩn' }
+      ],
+      th: [
+        { code: 'th_standard', label: 'ภาษาไทยมาตรฐาน (Standard Thai)' }
+      ],
+      sw: [
+        { code: 'sw_standard', label: 'Kiswahili Sanifu' }
+      ],
+      ku: [
+        { code: 'ku_sorani', label: 'کوردی سۆرانی (Central Kurdish)' },
+        { code: 'ku_kurmanji', label: 'Kurmancî (Northern Kurdish)' }
       ]
     };
+
+    function renderTTSVoiceCards(filterGender = 'all', searchQuery = '') {
+      const grid = document.getElementById('ttsVoiceProfilesGrid');
+      if (!grid) return;
+
+      const q = (searchQuery || '').trim().toLowerCase();
+      const filtered = TTS_ALL_VOICES.filter(v => {
+        const matchesGender = (filterGender === 'all') || (v.gender === filterGender);
+        const matchesQuery = !q || 
+          v.name.toLowerCase().includes(q) || 
+          v.tag.toLowerCase().includes(q) || 
+          v.desc.toLowerCase().includes(q);
+        return matchesGender && matchesQuery;
+      });
+
+      if (!filtered.length) {
+        grid.innerHTML = `
+          <div class="col-span-full py-8 text-center text-muted">
+            <p class="text-xs">لا توجد أصوات مطابقة لمعايير البحث الحالية.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(v => {
+        const isSelected = v.name === currentTTSConfig.voice_profile;
+        const selectedClasses = isSelected
+          ? 'border-2 border-limeAccent bg-surfaceHover shadow-sm'
+          : 'border border-borderSubtle bg-obsidian/40 hover:border-limeAccent/50 hover:bg-obsidian/80';
+        const genderLabel = v.gender === 'female' ? 'أنثى' : (v.gender === 'male' ? 'ذكر' : 'محايد');
+
+        return `
+          <div 
+            onclick="selectTTSVoiceProfile('${v.name}')" 
+            id="voiceCard_${v.name}" 
+            class="tts-voice-card p-3 rounded-2xl ${selectedClasses} cursor-pointer transition flex items-start gap-2.5 text-right select-none group"
+          >
+            <div class="w-7 h-7 rounded-lg bg-surface border border-borderSubtle flex items-center justify-center shrink-0 mt-0.5 text-limeAccent group-hover:scale-105 transition-transform">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+                <line x1="8" y1="22" x2="16" y2="22"></line>
+              </svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-1">
+                <span class="font-semibold text-white text-xs">${v.name}</span>
+                <span class="text-[9px] font-mono text-muted bg-surface px-1.5 py-0.2 rounded border border-borderSubtle/60">${genderLabel}</span>
+              </div>
+              <div class="text-[10px] font-mono text-limeAccent mt-0.5 line-clamp-1">${v.tag}</div>
+              <p class="text-[10px] text-muted mt-1 leading-relaxed line-clamp-2">${v.desc}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setTTSVoiceGenderFilter(gender) {
+      currentTTSGenderFilter = gender;
+      ['all', 'male', 'female'].forEach(g => {
+        const btn = document.getElementById(`voiceFilter_${g}`);
+        if (!btn) return;
+        if (g === gender) {
+          btn.className = 'px-2 py-0.5 rounded text-white bg-surface font-medium';
+        } else {
+          btn.className = 'px-2 py-0.5 rounded text-muted hover:text-white';
+        }
+      });
+      const q = document.getElementById('ttsVoiceSearchInput')?.value || '';
+      renderTTSVoiceCards(currentTTSGenderFilter, q);
+    }
+
+    function filterTTSVoiceCards() {
+      const q = document.getElementById('ttsVoiceSearchInput')?.value || '';
+      renderTTSVoiceCards(currentTTSGenderFilter, q);
+    }
 
     function openTTSConfigModal() {
       toggleToolsMenu();
       const modal = document.getElementById('ttsConfigModal');
       if (modal) modal.classList.remove('hidden');
+      renderTTSVoiceCards(currentTTSGenderFilter, document.getElementById('ttsVoiceSearchInput')?.value || '');
     }
 
     function closeTTSConfigModal() {
@@ -1248,13 +1493,13 @@
     function selectTTSVoiceProfile(voiceName) {
       currentTTSConfig.voice_profile = voiceName;
       document.querySelectorAll('.tts-voice-card').forEach(card => {
-        card.classList.remove('border-2', 'border-cyan-400/80', 'bg-obsidian/70');
+        card.classList.remove('border-2', 'border-limeAccent', 'bg-surfaceHover', 'shadow-sm');
         card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/40');
       });
       const selectedCard = document.getElementById(`voiceCard_${voiceName}`);
       if (selectedCard) {
         selectedCard.classList.remove('border-borderSubtle', 'bg-obsidian/40');
-        selectedCard.classList.add('border-2', 'border-cyan-400/80', 'bg-obsidian/70');
+        selectedCard.classList.add('border-2', 'border-limeAccent', 'bg-surfaceHover', 'shadow-sm');
       }
     }
 
@@ -1273,12 +1518,19 @@
       const pill = document.getElementById('activeToolPill');
       pill.classList.remove('hidden');
       pill.classList.add('flex');
-      document.getElementById('activeToolIcon').textContent = '🎙️';
-      document.getElementById('activeToolLabel').textContent = `تحويل النص لصوت (${currentTTSConfig.voice_profile} - ${currentTTSConfig.dialect})`;
+      document.getElementById('activeToolIcon').innerHTML = `
+        <svg class="w-3.5 h-3.5 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="22"></line>
+          <line x1="8" y1="22" x2="16" y2="22"></line>
+        </svg>
+      `;
+      document.getElementById('activeToolLabel').textContent = `تحويل النص لصوت (${currentTTSConfig.voice_profile})`;
       const input = document.getElementById('chatInput');
       input.placeholder = 'اكتب أو الصق النص هنا لتسجيله صوتياً (يدعم النصوص الطويلة وتجميعها آلياً)...';
       input.focus();
-      showToast('🎙️ تم تفعيل استوديو الصوت! اكتب النص ثم اضغط إرسال');
+      showToast('تم تفعيل استوديو تحويل النص إلى صوت. اكتب النص ثم اضغط إرسال');
     }
 
     function triggerAudioExecution() {
@@ -2232,7 +2484,7 @@
       const styleStr = jobData.delivery_style ? `أسلوب: ${jobData.delivery_style}` : '';
 
       div.innerHTML = `
-        <div class="w-7 h-7 rounded-lg bg-obsidian border border-cyan-400/40 flex items-center justify-center shrink-0 mt-0.5 text-cyan-400">
+        <div class="w-7 h-7 rounded-lg bg-obsidian border border-limeAccent/30 flex items-center justify-center shrink-0 mt-0.5 text-limeAccent">
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
             <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
             <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -2241,17 +2493,17 @@
           </svg>
         </div>
         <div class="flex-1 space-y-2 min-w-0">
-          <div class="text-[11px] font-mono text-cyan-400 flex items-center gap-2">
+          <div class="text-[11px] font-mono text-limeAccent flex items-center gap-2">
             <span>استوديو الصوت الذكي (TTS Studio)</span>
-            <span class="text-[10px] text-muted">• Gemini Flash Voice</span>
+            <span class="text-[10px] text-muted">• Gemini Voice Model</span>
           </div>
-          <div class="p-4 rounded-2xl bg-surface border border-cyan-500/30 shadow-xl space-y-3">
+          <div class="p-4 rounded-2xl bg-surface border border-borderSubtle shadow-xl space-y-3">
             
             <!-- Metadata Header Badges -->
             <div class="flex flex-wrap items-center justify-between gap-2 border-b border-borderSubtle pb-2.5">
               <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span class="px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-medium">
-                  🎙️ ${jobData.voice_profile || 'Charon'}
+                <span class="px-2.5 py-0.5 rounded-full bg-limeAccent/10 border border-limeAccent/30 text-limeAccent font-medium">
+                  ${jobData.voice_profile || 'Charon'}
                 </span>
                 <span class="px-2 py-0.5 rounded-full bg-obsidian border border-borderSubtle text-light">
                   ${dialectStr}
@@ -2264,9 +2516,15 @@
                 </span>
               </div>
               <div class="flex items-center gap-2 text-[11px] font-mono">
-                <span class="text-limeAccent font-bold">⏱️ ${durationStr}</span>
-                <span class="text-zinc-500">•</span>
-                <span class="text-cyan-400">${chunksStr}</span>
+                <span class="text-limeAccent font-medium flex items-center gap-1">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span>${durationStr}</span>
+                </span>
+                <span class="text-zinc-600">•</span>
+                <span class="text-muted">${chunksStr}</span>
               </div>
             </div>
 
@@ -2291,11 +2549,19 @@
                 <span>تم الحفظ تلقائياً في مكتبة ملفك الشخصي</span>
               </div>
               <div class="flex items-center gap-2">
-                <button onclick="openProfileModal('audio')" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-white transition flex items-center gap-1">
-                  <span>📁 مكتبة وسائطي</span>
+                <button onclick="openProfileModal('audio')" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-white transition flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <span>مكتبة الوسائط</span>
                 </button>
-                <a href="${jobData.audio_url}" download="tts_${jobData.id || Date.now()}.wav" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-obsidian font-semibold transition active:scale-95 shadow flex items-center gap-1">
-                  <span>⬇️ تحميل WAV</span>
+                <a href="${jobData.audio_url}" download="tts_${jobData.id || Date.now()}.wav" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>تحميل WAV</span>
                 </a>
               </div>
             </div>
@@ -3148,7 +3414,7 @@
             return;
           }
           renderTTSAudioCard(data);
-          showToast('🎙️ تم توليد الصوت الموحد بنجاح وحفظه في ملفك الشخصي!');
+          showToast('تم توليد الصوت الموحد بنجاح وحفظه في ملفك الشخصي!');
         } else {
           const toolToSend = currentActiveTool;
           const res = await authFetch('/api/chat', {

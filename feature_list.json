@@ -83,10 +83,10 @@
     {
       "id": "feat-011",
       "name": "Standalone TTS Studio App with Large-Text Chunking & Concatenation",
-      "description": "Standalone Django app 'tts' with sentence-boundary chunking (<2500 chars), Gemini Flash TTS synthesis, wave PCM stitching, Arabic auto-diacritization, rich configuration modal (voice profiles, dialects, emotions, styles), and direct audio card playback + Profile Hub integration.",
+      "description": "Standalone Django app 'tts' with sentence-boundary chunking (<2500 chars), Gemini Flash TTS synthesis, wave PCM stitching, Arabic auto-diacritization, full official 30 Gemini voices catalog, 25+ languages, 16 Arabic dialects, 18 emotions, 16 delivery styles, and Obsidian/limeAccent modal without cartoon emojis.",
       "dependencies": ["feat-006", "feat-009", "feat-010"],
       "status": "completed",
-      "evidence": "backend/tts/ app created with TTSJob model (migration 0001), chunker, audio_stitcher, and tts_engine; GET /api/tts/options, POST /api/tts/generate, GET /api/tts/history; #ttsConfigModal & renderTTSAudioCard in index.html; passing 11/11 tests in tests_tts.py and 169/169 in ./init.sh."
+      "evidence": "backend/tts/ options catalog expanded with 30 official Gemini voices, 25+ world languages, 16 Arabic dialects, 18 emotions, and 16 delivery styles; freq_map acoustic generator supports all 30 voices; #ttsConfigModal overhauled to Obsidian/limeAccent dark theme with voice search/gender filtering and zero emojis; renderTTSAudioCard updated with clean SVG icons; 16/16 tests passing in tests_tts.py and 174/174 in ./init.sh."
     }
   ]
 }

@@ -226,3 +226,138 @@ class TTSAPITests(TestCase):
         audio_urls = [a["audio_url"] for a in media_data["audio"]]
         self.assertIn(job_data["audio_url"], audio_urls)
 
+    def test_full_30_gemini_voice_profiles_catalog(self):
+        """All 30 official Gemini TTS voices exist in catalog and acoustic fallback."""
+        from tts.services.tts_options import VOICES
+        self.assertEqual(len(VOICES), 30)
+        
+        expected_30_voices = {
+            "Zephyr", "Puck", "Charon", "Kore", "Fenrir",
+            "Leda", "Orus", "Aoede", "Callirrhoe", "Autonoe",
+            "Enceladus", "Iapetus", "Umbriel", "Algieba", "Despina",
+            "Erinome", "Algenib", "Rasalgethi", "Laomedeia", "Achernar",
+            "Alnilam", "Schedar", "Gacrux", "Pulcherrima", "Achird",
+            "Zubenelgenubi", "Vindemiatrix", "Sadachbia", "Sadaltager", "Sulafat"
+        }
+        catalog_names = {v["name"] for v in VOICES}
+        self.assertEqual(catalog_names, expected_30_voices)
+
+        for v in VOICES:
+            self.assertIn("name", v)
+            self.assertIn("gender", v)
+            self.assertIn(v["gender"], ["male", "female", "neutral"])
+            self.assertIn("tag", v)
+            self.assertIn("description", v)
+            self.assertGreater(v["pitch"], 50)
+            # Verify no emoji in name or tag
+            self.assertFalse(any(ord(char) > 0x1F000 for char in v["name"]))
+            self.assertFalse(any(ord(char) > 0x1F000 for char in v["tag"]))
+
+        # Verify acoustic fallback generator handles non-default voices cleanly
+        wav_zephyr = generate_voice_audio("Sample audio test for Zephyr", voice_name="Zephyr")
+        self.assertGreater(len(wav_zephyr), 1000)
+        wav_gacrux = generate_voice_audio("Sample audio test for Gacrux", voice_name="Gacrux")
+        self.assertGreater(len(wav_gacrux), 1000)
+
+    def test_multilingual_and_dialect_catalog_completeness(self):
+        """Catalog supports 25+ world languages and 16 Arabic dialects without cartoon emojis."""
+        from tts.services.tts_options import LANGUAGES
+        self.assertGreaterEqual(len(LANGUAGES), 25)
+
+        # Check Arabic dialects
+        ar_entry = next(l for l in LANGUAGES if l["code"] == "ar")
+        self.assertGreaterEqual(len(ar_entry["dialects"]), 15)
+        ar_dialect_codes = {d["code"] for d in ar_entry["dialects"]}
+        self.assertIn("msa", ar_dialect_codes)
+        self.assertIn("egyptian", ar_dialect_codes)
+        self.assertIn("saudi", ar_dialect_codes)
+        self.assertIn("gulf", ar_dialect_codes)
+        self.assertIn("moroccan", ar_dialect_codes)
+        self.assertIn("syrian", ar_dialect_codes)
+        self.assertIn("iraqi", ar_dialect_codes)
+
+        # Check that no dialect or language name has cartoon emoji or flag
+        for lang in LANGUAGES:
+            self.assertFalse(any(ord(char) > 0x1F000 for char in lang["name"]))
+            for dialect in lang.get("dialects", []):
+                self.assertFalse(any(ord(char) > 0x1F000 for char in dialect["name"]))
+
+    def test_emotions_and_delivery_styles_richness_and_cleanliness(self):
+        """EMOTIONS and DELIVERY_STYLES have rich spectra with zero emojis."""
+        from tts.services.tts_options import EMOTIONS, DELIVERY_STYLES
+        self.assertGreaterEqual(len(EMOTIONS), 16)
+        self.assertGreaterEqual(len(DELIVERY_STYLES), 16)
+
+        emotion_codes = {e["code"] for e in EMOTIONS}
+        self.assertIn("neutral", emotion_codes)
+        self.assertIn("calm", emotion_codes)
+        self.assertIn("epic", emotion_codes)
+        self.assertIn("mysterious", emotion_codes)
+        self.assertIn("whispering", emotion_codes)
+        self.assertIn("urgent", emotion_codes)
+
+        style_codes = {s["code"] for s in DELIVERY_STYLES}
+        self.assertIn("documentary", style_codes)
+        self.assertIn("storyteller", style_codes)
+        self.assertIn("audiobook", style_codes)
+        self.assertIn("trailer", style_codes)
+        self.assertIn("podcast", style_codes)
+        self.assertIn("motivational", style_codes)
+
+        # Ensure no emojis in metadata
+        for e in EMOTIONS:
+            self.assertNotIn("icon", e)
+            self.assertFalse(any(ord(char) > 0x1F000 for char in e["name"]))
+
+        for s in DELIVERY_STYLES:
+            self.assertFalse(any(ord(char) > 0x1F000 for char in s["name"]))
+
+    def test_generate_tts_with_various_voices_and_styles(self):
+        """POST /api/tts/generate succeeds with newly added Gemini voices and styles."""
+        import json
+        payload = {
+            "text": "The stars in the deep night reveal the history of our ancient cosmos.",
+            "title": "Cosmic Narration",
+            "voice_profile": "Zephyr",
+            "language": "en",
+            "dialect": "us",
+            "emotion": "mysterious",
+            "delivery_style": "trailer"
+        }
+        res = self.client.post(
+            "/api/tts/generate",
+            data=json.dumps(payload),
+            content_type="application/json",
+            **self.auth_headers
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["voice_profile"], "Zephyr")
+        self.assertEqual(data["language"], "en")
+        self.assertEqual(data["dialect"], "us")
+        self.assertEqual(data["emotion"], "mysterious")
+        self.assertEqual(data["delivery_style"], "trailer")
+        self.assertIn("audio_url", data)
+
+    def test_tts_modal_theme_and_no_garish_emojis(self):
+        """Frontend ttsConfigModal matches obsidian/limeAccent and has no vulgar emojis."""
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        content = res.content.decode("utf-8")
+        
+        # Modal markup exists and uses limeAccent theme
+        self.assertIn('id="ttsConfigModal"', content)
+        self.assertIn('peer-checked:bg-limeAccent', content)
+        self.assertIn('text-limeAccent', content)
+        self.assertNotIn('peer-checked:bg-cyan-500', content)
+        
+        # Check that ttsConfigModal does not contain emojis
+        modal_start = content.find('id="ttsConfigModal"')
+        modal_end = content.find('<!-- MINIMAL STATUS NOTIFICATION', modal_start)
+        modal_html = content[modal_start:modal_end]
+        
+        # Ensure no cartoon emojis inside modal
+        for emoji_char in ["🎙️", "👨‍💼", "⚔️", "🔥", "🌧️", "🤫"]:
+            self.assertNotIn(emoji_char, modal_html)
+
+
