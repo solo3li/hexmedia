@@ -504,6 +504,13 @@ def chat_endpoint(request, data: ChatRequest):
         thread = get_object_or_404(ChatThread, id=data.thread_id, user=user, is_deleted=False)
         if not project and thread.project:
             project = thread.project
+        if thread.title == "محادثة جديدة" and data.prompt.strip():
+            words = data.prompt.strip().split()
+            t_title = " ".join(words[:5])
+            if len(words) > 5:
+                t_title += "..."
+            thread.title = t_title
+            thread.save(update_fields=['title', 'updated_at'])
     else:
         p_text = data.prompt.strip()
         words = p_text.split()

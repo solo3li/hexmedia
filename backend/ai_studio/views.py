@@ -11,15 +11,20 @@ def chat_home_view(request):
             is_active=True
         )
 
-    recent_projects_qs = BookProject.objects.all().order_by('-created_at')[:15]
-    
-    project_id = request.GET.get('project_id')
+    # Multi-user data protection:
+    # Authenticated session users only see their own projects.
+    # Unauthenticated visitors receive an empty project list (no history leaks).
+    recent_projects_qs = BookProject.objects.none()
     current_project = None
-    if project_id:
-        try:
-            current_project = BookProject.objects.get(id=project_id)
-        except BookProject.DoesNotExist:
-            pass
+
+    if request.user.is_authenticated:
+        recent_projects_qs = BookProject.objects.filter(user=request.user).order_by('-created_at')[:15]
+        project_id = request.GET.get('project_id')
+        if project_id:
+            try:
+                current_project = BookProject.objects.get(id=project_id, user=request.user)
+            except BookProject.DoesNotExist:
+                pass
 
     available_voices = [
         {"name": "Charon", "description": "صوت جهوري عميق ورزين (مثالي للراوي)", "gender": "MALE", "pitch": 95},

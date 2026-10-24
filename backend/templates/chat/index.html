@@ -1661,18 +1661,79 @@
       }
     }
 
-    function startNewChat() {
+    async function startNewChat() {
       toggleSidebar(false);
+
+      if (currentUser) {
+        try {
+          const res = await authFetch('/api/threads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: 'محادثة جديدة' })
+          });
+          if (res.ok) {
+            const newThread = await res.json();
+            currentThreadId = newThread.id;
+            activeProjectId = null;
+            activeProject = null;
+
+            // Navigate to newly generated UUID
+            window.history.pushState(null, '', `?thread_id=${newThread.id}`);
+
+            // Clear dynamic messages feed completely
+            const feed = document.getElementById('dynamicChatFeed');
+            if (feed) feed.innerHTML = '';
+
+            // Show Welcome Hero
+            const hero = document.getElementById('welcomeHero');
+            if (hero) hero.classList.remove('hidden');
+
+            document.getElementById('headerTitle').textContent = 'محادثة جديدة';
+            const narratorCtrls = document.getElementById('narratorModeControls');
+            if (narratorCtrls) narratorCtrls.classList.add('hidden');
+            const exportBtn = document.getElementById('exportHeaderBtn');
+            if (exportBtn) exportBtn.classList.add('hidden');
+
+            clearActiveTool();
+            clearSelectedFile();
+            const input = document.getElementById('chatInput');
+            if (input) {
+              input.value = '';
+              input.focus();
+            }
+
+            await loadUserThreads();
+            showToast('تم إنشاء محادثة جديدة');
+            return;
+          }
+        } catch (e) {
+          console.error('Failed to create thread', e);
+        }
+      }
+
+      // Guest / Fallback mode
       currentThreadId = null;
       activeProjectId = null;
-      window.history.replaceState(null, '', '/');
+      activeProject = null;
+      window.history.replaceState(null, '', window.location.pathname);
       document.getElementById('headerTitle').textContent = 'محادثة جديدة';
-      const container = document.getElementById('messagesContainer').querySelector('div');
-      const cards = container.querySelectorAll('.chat-bubble-user, .chat-card-assistant');
-      cards.forEach(c => c.remove());
+      const narratorCtrls = document.getElementById('narratorModeControls');
+      if (narratorCtrls) narratorCtrls.classList.add('hidden');
+      const exportBtn = document.getElementById('exportHeaderBtn');
+      if (exportBtn) exportBtn.classList.add('hidden');
+      const feed = document.getElementById('dynamicChatFeed');
+      if (feed) feed.innerHTML = '';
       const hero = document.getElementById('welcomeHero');
       if (hero) hero.classList.remove('hidden');
-      loadUserThreads();
+      clearActiveTool();
+      clearSelectedFile();
+      const input = document.getElementById('chatInput');
+      if (input) {
+        input.value = '';
+        input.focus();
+      }
+      renderSidebarProjects();
+      showToast('محادثة جديدة جاهزة');
     }
 
     // =========================================================================
@@ -1698,11 +1759,26 @@
         if (res.ok) {
           currentUser = await res.json();
           updateAuthUI(currentUser);
-          loadUserThreads();
+          await loadUserThreads();
+          // Check if URL has thread_id parameter
+          const urlParams = new URLSearchParams(window.location.search);
+          const tid = urlParams.get('thread_id');
+          if (tid) {
+            await switchThread(tid);
+          }
         } else {
           currentUser = null;
           updateAuthUI(null);
           renderSidebarProjects();
+          // If visitor mode, ensure no leftover chats/projects in URL or feed
+          const urlParams = new URLSearchParams(window.location.search);
+          if (urlParams.get('project_id') || urlParams.get('thread_id')) {
+            window.history.replaceState(null, '', window.location.pathname);
+            const feed = document.getElementById('dynamicChatFeed');
+            if (feed) feed.innerHTML = '';
+            const hero = document.getElementById('welcomeHero');
+            if (hero) hero.classList.remove('hidden');
+          }
         }
       } catch (e) {
         currentUser = null;
@@ -1968,28 +2044,33 @@
     async function switchThread(threadId) {
       toggleSidebar(false);
       currentThreadId = threadId;
+      activeProjectId = null;
+      activeProject = null;
+      window.history.pushState(null, '', `?thread_id=${threadId}`);
+
       try {
         const res = await authFetch(`/api/threads/${threadId}/messages`);
         if (!res.ok) return;
         const messages = await res.json();
 
-        // Clear chat area
-        const container = document.getElementById('messagesContainer').querySelector('div');
+        // Clear dynamic feed completely
+        const feed = document.getElementById('dynamicChatFeed');
+        if (feed) feed.innerHTML = '';
+
         const hero = document.getElementById('welcomeHero');
-        if (hero) hero.classList.add('hidden');
-
-        // Remove previous message cards
-        const cards = container.querySelectorAll('.chat-bubble-user, .chat-card-assistant');
-        cards.forEach(c => c.remove());
-
-        // Render thread messages
-        messages.forEach(m => {
-          if (m.role === 'USER') {
-            renderUserMessage(m.content);
-          } else {
-            renderAssistantMessage(m.content, m.msg_type, m.metadata);
-          }
-        });
+        if (!messages || messages.length === 0) {
+          if (hero) hero.classList.remove('hidden');
+        } else {
+          if (hero) hero.classList.add('hidden');
+          // Render thread messages
+          messages.forEach(m => {
+            if (m.role === 'USER') {
+              renderUserMessage(m.content);
+            } else {
+              renderAssistantMessage(m.content, m.msg_type, m.metadata);
+            }
+          });
+        }
 
         // Update header title
         const resThreads = await authFetch('/api/threads');
@@ -2423,6 +2504,28 @@
     // =========================================================================
     function renderSidebarProjects() {
       const list = document.getElementById('projectsList');
+      if (!list) return;
+
+      // In logged-out / visitor mode, protect privacy: zero history shown, clean login CTA rendered
+      if (!currentUser) {
+        list.innerHTML = `
+          <div class="px-3 py-6 text-center space-y-2.5 select-none">
+            <div class="w-8 h-8 mx-auto rounded-xl bg-obsidian border border-borderSubtle flex items-center justify-center text-muted">
+              <svg class="w-4 h-4 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+            <p class="text-[11px] text-zinc-300 font-medium">سجل المحادثات محفوظ ومحمي</p>
+            <p class="text-[10px] text-zinc-500 leading-relaxed">قم بتسجيل الدخول لحفظ واستعراض محادثاتك وأعمالك السابقة.</p>
+            <button onclick="openLoginModal()" class="w-full py-1.5 px-3 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-[11px] text-limeAccent font-medium transition active:scale-95 shadow-sm">
+              تسجيل الدخول
+            </button>
+          </div>
+        `;
+        return;
+      }
+
       if (!projectsList.length) {
         list.innerHTML = `<div class="text-[11px] text-zinc-600 px-3 py-4 text-center">لا توجد محادثات سابقة.<br>ابدأ أول محادثة الآن!</div>`;
         return;
@@ -2508,7 +2611,7 @@
     function renderUserMessage(text) {
       const area = document.getElementById('dynamicChatFeed');
       const div = document.createElement('div');
-      div.className = 'flex gap-2.5 sm:gap-3 justify-end items-start';
+      div.className = 'flex gap-2.5 sm:gap-3 justify-end items-start chat-bubble-user';
       div.innerHTML = `
         <div class="max-w-[85%] sm:max-w-[80%] rounded-2xl px-3.5 sm:px-4 py-2.5 sm:py-3 bg-surface border border-borderSubtle text-light text-xs sm:text-sm leading-relaxed rounded-tl-sm whitespace-pre-wrap">${escapeHtml(text)}</div>
         <div class="w-7 h-7 rounded-full bg-obsidian border border-borderSubtle flex items-center justify-center text-[10px] text-muted font-mono shrink-0">أنت</div>
@@ -2520,7 +2623,7 @@
     function renderAssistantMessage(text, msgType, metadata) {
       const area = document.getElementById('dynamicChatFeed');
       const div = document.createElement('div');
-      div.className = 'flex gap-2.5 sm:gap-3.5 items-start';
+      div.className = 'flex gap-2.5 sm:gap-3.5 items-start chat-card-assistant';
 
       let cardHtml = '';
 
@@ -3549,8 +3652,9 @@
           if (toolToSend === 'story_generator') {
             clearActiveTool();
           }
-          if (data.thread_id && !currentThreadId) {
+          if (data.thread_id) {
             currentThreadId = data.thread_id;
+            window.history.replaceState(null, '', `?thread_id=${data.thread_id}`);
             loadUserThreads();
           }
           if (data.project_id) {

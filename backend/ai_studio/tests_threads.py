@@ -148,3 +148,26 @@ class ChatThreadAPITests(TestCase):
         self.assertTrue(data["success"])
         thread.refresh_from_db()
         self.assertIn("البحار", thread.title)
+
+    def test_visitor_does_not_leak_history_in_home_view(self):
+        """Unauthenticated visitors should never receive other users' project lists or private messages."""
+        from book_drama.models import BookProject
+        BookProject.objects.create(user=self.user_a, title="رواية سرية خاصة")
+        
+        # Unauthenticated GET /
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        content = res.content.decode("utf-8")
+        self.assertNotIn("رواية سرية خاصة", content)
+
+    def test_post_threads_generates_new_uuid(self):
+        """POST /api/threads generates a new thread with a valid UUID."""
+        import uuid
+        res = self.client.post("/api/threads", content_type="application/json", **self.auth_headers_a)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("id", data)
+        # Verify valid UUID format
+        parsed_uuid = uuid.UUID(data["id"])
+        self.assertEqual(str(parsed_uuid), data["id"])
+        self.assertTrue(ChatThread.objects.filter(id=data["id"], user=self.user_a).exists())

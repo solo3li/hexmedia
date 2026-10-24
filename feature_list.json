@@ -87,6 +87,14 @@
       "dependencies": ["feat-006", "feat-009", "feat-010"],
       "status": "completed",
       "evidence": "backend/tts/ options catalog expanded with 30 official Gemini voices, 135+ world languages, 19 Arabic dialects, 32 emotions, and 25 delivery styles; freq_map acoustic generator supports all 30 voices and dynamic custom voices with emotion cadence/pitch modulation; #ttsConfigModal overhauled to Obsidian/limeAccent dark theme with voice search/gender filtering and zero emojis; renderTTSAudioCard updated with clean typography monogram and text transcript preview; auto_diacritize toggle wired; 18/18 tests passing in tests_tts.py and 176/176 in ./init.sh."
+    },
+    {
+      "id": "feat-012",
+      "name": "Guest Privacy Shield & Dedicated UUID Thread Navigation",
+      "description": "Protect guest privacy by suppressing all prior projects and chat records in logged-out mode with a sleek login CTA; ensure '+ محادثة جديدة' generates a persistent ChatThread UUID via POST /api/threads, dynamically updates the browser URL (?thread_id=<UUID>), cleanly clears the chat feed, and isolates all subsequent messages.",
+      "dependencies": ["feat-007", "feat-008"],
+      "status": "completed",
+      "evidence": "backend/ai_studio/views.py filters projects to request.user only (empty for guests); index.html renders login CTA without history leaks; startNewChat generates new UUID thread via POST /api/threads, updates URL to ?thread_id=<uuid>, wipes #dynamicChatFeed; chat_endpoint automatically titles threads upon first message; passing 9/9 in tests_threads.py and 178/178 in ./init.sh."
     }
   ]
 }

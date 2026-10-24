@@ -59,6 +59,14 @@
   - Extended `process_tts_generation` and `generate_voice_audio` to propagate `delivery_style`, `dialect`, `language`, `auto_diacritize`, and `custom_instructions`.
   - Updated `renderTTSAudioCard` to display diacritized text transcript preview and accurate character counts.
   - Verified 18 tests passing in `backend/tts/tests_tts.py` and 176 tests passing via `./init.sh`.
+- [x] **Guest Privacy Shield & Dedicated UUID Thread Navigation (feat-012)**:
+  - Scoped `chat_home_view` in `views.py` so unauthenticated visitors receive an empty project list, completely eliminating leakage of other users' projects and chat histories.
+  - Updated `renderSidebarProjects` in `index.html` to render a sleek, locked privacy notice with a direct "تسجيل الدخول" button for logged-out visitors.
+  - Refactored `startNewChat` to asynchronously create a new `ChatThread` via `POST /api/threads`, obtaining a unique UUID and navigating to `?thread_id=<UUID>` using `window.history.pushState`.
+  - Fixed DOM feed clearance bug by targeting `#dynamicChatFeed.innerHTML = ''`, properly wiping out previous messages and revealing `welcomeHero`.
+  - Added auto-titling in `chat_endpoint` in `api.py` so a newly generated UUID thread inherits an intelligent title from the user's first prompt.
+  - Added 2 new tests in `tests_threads.py` verifying visitor history suppression and UUID generation.
+  - Verified total 178 tests passing via `./init.sh`.
 
 ### What's In Progress
 
@@ -78,6 +86,12 @@
 - Database migrations 0001 through 0009 and tts 0001 applied cleanly.
 - `ai_studio.tests`: 46 tests passing.
 - `ai_studio.test_challenger_m1_2`: 26 tests passing.
+- `ai_studio.tests_threads`: 9 tests passing.
+- `ai_studio.tests_e2e`: 33 tests passing.
+- `ai_studio.tests_profile`: 7 tests passing.
+- `core.tests_modular_architecture`: 4 tests passing.
+- `tts.tests_tts`: 18 tests passing.
+- Total: 178 tests passing via `./init.sh`.
 - `ai_studio.tests_threads`: 7 tests passing.
 - `ai_studio.tests_e2e`: 33 tests passing.
 - `ai_studio.tests_profile`: 7 tests passing.
