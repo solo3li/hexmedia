@@ -12,7 +12,7 @@ from ai_studio.services.minio_service import upload_bytes
 logger = logging.getLogger(__name__)
 
 
-def auto_diacritize_text(text: str, language: str = 'ar', dialect: str = 'msa', auto_diacritize: bool = True) -> str:
+def auto_diacritize_text(text: str, language: str = 'ar', dialect: str = 'msa', auto_diacritize: bool = False) -> str:
     """
     Applies automatic diacritization (تشكيل) and phonetic enhancement for Arabic text
     to guarantee accurate pronunciation by Gemini TTS.
@@ -51,7 +51,7 @@ def process_tts_generation(
     emotion: str = "neutral",
     delivery_style: str = "documentary",
     custom_instructions: str = "",
-    auto_diacritize: bool = True
+    auto_diacritize: bool = False
 ) -> Dict[str, Any]:
     """
     Core engine function:

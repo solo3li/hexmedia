@@ -196,7 +196,8 @@ class TTSAPITests(TestCase):
         self.assertIn('id="ttsLanguageSelect"', content)
         self.assertIn('id="ttsDialectSelect"', content)
         self.assertIn('id="ttsVoiceProfilesGrid"', content)
-        self.assertIn('id="ttsAutoDiacritizeToggle"', content)
+        self.assertNotIn('id="ttsAutoDiacritizeToggle"', content)
+        self.assertNotIn("التشكيل التلقائي الذكي", content)
         self.assertIn("renderTTSAudioCard", content)
 
     def test_tts_job_appears_in_profile_media(self):
@@ -404,7 +405,7 @@ class TTSAPITests(TestCase):
         
         # Modal markup exists and uses limeAccent theme
         self.assertIn('id="ttsConfigModal"', content)
-        self.assertIn('peer-checked:bg-limeAccent', content)
+        self.assertIn('bg-limeAccent', content)
         self.assertIn('text-limeAccent', content)
         self.assertNotIn('peer-checked:bg-cyan-500', content)
         

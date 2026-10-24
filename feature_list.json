@@ -103,6 +103,14 @@
       "dependencies": ["feat-008", "feat-012"],
       "status": "completed",
       "evidence": "backend/templates/chat/index.html updated with desktop sidebar-collapsed CSS transition, unified #sidebarToggleBtn (Ctrl+B), #headerNewChatBtn (Ctrl+K), visitor mode complete DOM purge and hide, and isolated startNewChat thread generation; 11/11 tests passing in backend/ai_studio/tests_threads.py."
+    },
+    {
+      "id": "feat-014",
+      "name": "TTS Smart Auto-Diacritization Deprecation & Direct Audio Flow",
+      "description": "Completely remove the smart auto-diacritization toggle from TTS Studio modal (#ttsConfigModal) and UI, defaulting auto_diacritize to False across engine and APIs so user prompts pass cleanly directly to speech synthesis without unwanted forced diacritics.",
+      "dependencies": ["feat-011"],
+      "status": "completed",
+      "evidence": "Purged auto-diacritize toggle and text from backend/templates/chat/index.html, defaulted auto_diacritize to False in backend/tts/api.py and tts_engine.py, updated tests_tts.py with 18/18 passing tests."
     }
   ]
 }

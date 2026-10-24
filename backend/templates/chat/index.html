@@ -1048,22 +1048,7 @@
           </div>
         </div>
 
-        <!-- Row 4: Auto-Diacritize Toggle -->
-        <div class="p-3.5 rounded-2xl bg-surface/60 border border-borderSubtle/60 flex items-center justify-between gap-3">
-          <div class="space-y-0.5">
-            <span class="font-medium text-white flex items-center gap-2">
-              <span>التشكيل التلقائي الذكي للنصوص العربية</span>
-              <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">دقة نحوية وصرفية</span>
-            </span>
-            <p class="text-[11px] text-muted">ضبط الحركات الإعرابية ومخارج الحروف آلياً لضمان سلامة النطق الدرامي بحسب اللهجة المختارة</p>
-          </div>
-          <label class="relative inline-flex items-center cursor-pointer shrink-0">
-            <input type="checkbox" id="ttsAutoDiacritizeToggle" class="sr-only peer" checked>
-            <div class="w-11 h-6 bg-obsidian border border-borderSubtle peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-obsidian after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-limeAccent"></div>
-          </label>
-        </div>
-
-        <!-- Row 5: Custom Directives -->
+        <!-- Custom Directives -->
         <div class="bg-surface/60 p-3.5 rounded-2xl border border-borderSubtle/60">
           <label class="block font-medium text-light mb-1.5">توجيهات أداء إضافية مخصصة (اختياري)</label>
           <input 
@@ -1345,7 +1330,7 @@
       voice_profile: 'Charon',
       emotion: 'neutral',
       delivery_style: 'documentary',
-      auto_diacritize: true,
+      auto_diacritize: false,
       custom_directives: ''
     };
 
@@ -1691,7 +1676,7 @@
       currentTTSConfig.dialect = document.getElementById('ttsDialectSelect').value;
       currentTTSConfig.emotion = document.getElementById('ttsEmotionSelect').value;
       currentTTSConfig.delivery_style = document.getElementById('ttsDeliveryStyleSelect').value;
-      currentTTSConfig.auto_diacritize = document.getElementById('ttsAutoDiacritizeToggle').checked;
+      currentTTSConfig.auto_diacritize = false;
       currentTTSConfig.custom_directives = document.getElementById('ttsCustomDirectivesInput').value.trim();
 
       closeTTSConfigModal();
@@ -2823,10 +2808,10 @@
               </div>
             </div>
 
-            <!-- Diacritized Text Preview -->
+            <!-- Text Preview -->
             <div class="bg-obsidian/60 p-3 rounded-xl border border-borderSubtle/60 text-xs sm:text-sm text-light leading-relaxed max-h-48 overflow-y-auto font-sans">
               <div class="text-[10px] font-mono text-muted mb-1 flex items-center justify-between">
-                <span>النص بعد المعالجة والتشكيل:</span>
+                <span>نص التسجيل الصوتي:</span>
                 <span>${charCount} حرف</span>
               </div>
               <p class="whitespace-pre-wrap">${escapeHtml(displayedText)}</p>

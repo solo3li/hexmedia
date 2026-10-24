@@ -20,7 +20,7 @@ class TTSGenerateRequest(Schema):
     delivery_style: Optional[str] = "documentary"
     custom_instructions: Optional[str] = ""
     custom_directives: Optional[str] = ""
-    auto_diacritize: Optional[bool] = True
+    auto_diacritize: Optional[bool] = False
 
 
 class TTSChunkOut(Schema):
@@ -67,7 +67,7 @@ def generate_tts_endpoint(request, data: TTSGenerateRequest):
         raise HttpError(400, "النص المطلوب تحويله لصوت لا يمكن أن يكون فارغاً")
 
     effective_directives = (data.custom_directives or data.custom_instructions or "").strip()
-    auto_diacritize_flag = data.auto_diacritize if data.auto_diacritize is not None else True
+    auto_diacritize_flag = data.auto_diacritize if data.auto_diacritize is not None else False
 
     result = process_tts_generation(
         text=raw_text,

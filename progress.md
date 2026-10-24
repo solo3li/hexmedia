@@ -75,6 +75,11 @@
   - Added instant `#headerNewChatBtn` (Ctrl+K) directly in the top header.
   - Refactored `startNewChat()` to ensure clean reset: closes mobile drawer, provisions fresh UUID via `POST /api/threads`, clears `#dynamicChatFeed`, resets URL parameter, reveals `welcomeHero`, and refreshes sidebar thread selection.
   - Added 2 new tests in `tests_threads.py` verifying visitor controls and distinct sequential thread generation (11/11 passing).
+- [x] **TTS Smart Auto-Diacritization Deprecation & Direct Audio Flow (feat-014)**:
+  - Removed smart auto-diacritization toggle row from `#ttsConfigModal` in `backend/templates/chat/index.html`.
+  - Defaulted `auto_diacritize` to `False` in `backend/tts/api.py`, `backend/tts/services/tts_engine.py`, and frontend configuration so texts are sent cleanly directly without unwanted LLM alteration.
+  - Updated audio card header label from "النص بعد المعالجة والتشكيل" to "نص التسجيل الصوتي".
+  - Verified 18/18 tests passing in `backend/tts/tests_tts.py` and 11/11 in `backend/ai_studio/tests_threads.py`.
 
 ### What's In Progress
 
