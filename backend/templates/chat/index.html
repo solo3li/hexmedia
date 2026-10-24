@@ -428,13 +428,30 @@
             </div>
             <div>
               <div class="font-medium text-white group-hover:text-limeAccent transition">تحويل النص إلى صوت (TTS Studio)</div>
-              <div class="text-[10px] text-muted">مكتبة الأصوات الرسمية (30 صوتاً)، لهجات، مشاعر، وتشكيل ذكي</div>
+              <div class="text-[10px] text-muted">مكتبة الأصوات الرسمية (30 صوتاً)، لهجات عالمية، مشاعر، وأساليب إلقاء</div>
+            </div>
+          </button>
+
+          <!-- Tool 5: Speech-to-Text (STT Studio) -->
+          <button onclick="openSTTConfigModal()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
+            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-limeAccent group-hover:border-limeAccent/40 shrink-0">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                <line x1="12" y1="18" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+                <circle cx="18" cy="4" r="1.5" fill="currentColor"></circle>
+              </svg>
+            </div>
+            <div>
+              <div class="font-medium text-white group-hover:text-limeAccent transition">تفريغ الصوت والترجمة (STT Studio)</div>
+              <div class="text-[10px] text-muted">تحويل الصوت لنص، تمييز المتحدثين، وتصدير SRT / TXT بواسطة Gemini 3.5 Transcribe</div>
             </div>
           </button>
         </div>
 
         <!-- The Floating Dock Body -->
-        <div class="floating-dock border border-borderSubtle rounded-full p-1.5 sm:p-2 pl-2 sm:pl-3 pr-2 sm:pr-2.5 shadow-2xl flex items-center gap-1.5 sm:gap-2.5 bg-surface/90 backdrop-blur-xl">
+        <div class="floating-dock border border-borderSubtle rounded-full p-1.5 sm:p-2 pl-2 sm:pl-3 pr-2 sm:pr-2.5 shadow-2xl flex items-center gap-1.5 sm:gap-2 bg-surface/90 backdrop-blur-xl">
           
           <!-- Plus (+) Button for Tools Menu (ChatGPT style) -->
           <button id="toolsBtn" onclick="toggleToolsMenu()" title="الأدوات وإرفاق الملفات" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface hover:bg-white text-muted hover:text-obsidian border border-borderSubtle flex items-center justify-center shrink-0 transition-all active:scale-95">
@@ -451,6 +468,12 @@
             </svg>
           </button>
 
+          <!-- Live Voice Recording Duration Pill -->
+          <div id="voiceRecordStatusPill" class="hidden items-center gap-1.5 px-2.5 py-1 bg-red-500/10 border border-red-500/30 rounded-full shrink-0 animate-pulse">
+            <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+            <span id="voiceRecordTimer" class="font-mono text-[11px] font-semibold text-red-400">00:00</span>
+          </div>
+
           <!-- Clean Input Field -->
           <input 
             id="chatInput" 
@@ -459,6 +482,17 @@
             onkeydown="if(event.key === 'Enter') handleSendMessage()"
             class="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder-muted focus:outline-none px-2 min-w-0"
           >
+
+          <!-- Quick Voice Chat Microphone Button (Gemini 3.8 Flash) -->
+          <button id="voiceRecordBtn" onclick="toggleQuickVoiceRecord()" title="تحدث مع الوكيل بالصوت (Gemini 3.8 Flash)" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface hover:bg-surfaceHover text-muted hover:text-white border border-borderSubtle flex items-center justify-center shrink-0 transition-all active:scale-95 relative group">
+            <svg id="voiceRecordMicIcon" class="w-3.5 h-3.5 transition group-hover:text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+              <line x1="12" y1="18" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+            <span id="voiceRecordPulse" class="absolute inset-0 rounded-full bg-red-500/20 animate-ping hidden"></span>
+          </button>
 
           <!-- Send / Generate Button -->
           <button id="sendBtn" onclick="handleSendMessage()" title="إرسال" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-sm">
@@ -1069,6 +1103,205 @@
         <button onclick="confirmTTSConfig()" class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2">
           <span>تفعيل أداة الصوت وكتابة النص</span>
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- SPEECH-TO-TEXT STUDIO (STT CONFIG MODAL) (Gemini 3.5 Transcribe) -->
+  <!-- ========================================================================= -->
+  <div id="sttConfigModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeSTTConfigModal()">
+    <div class="bg-[#0c0c10] border border-[#232330] ring-1 ring-white/5 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.95)] overflow-hidden" onclick="event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-[#1f1f2a] flex items-center justify-between shrink-0 bg-[#08080a]">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-2xl bg-surface border border-borderSubtle text-limeAccent font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
+            STT
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm sm:text-base font-semibold text-white tracking-tight">استوديو تفريغ الصوت والترجمة (STT Studio)</h3>
+              <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">Gemini 3.5 Transcribe</span>
+            </div>
+            <p class="text-[11px] text-muted mt-0.5">تحويل التسجيلات الصوتية إلى نصوص دقيقة، تمييز المتحدثين، وتصدير SRT / TXT</p>
+          </div>
+        </div>
+        <button onclick="closeSTTConfigModal()" class="p-2 rounded-xl text-muted hover:text-white hover:bg-surface border border-transparent hover:border-borderSubtle transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs bg-[#0c0c10]">
+
+        <!-- Input Source Tabs (Upload File vs Live Mic Record) -->
+        <div class="flex items-center gap-2 p-1 bg-surface/70 rounded-xl border border-borderSubtle/60">
+          <button id="sttTabUploadBtn" onclick="switchSTTInputTab('upload')" class="flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <span>رفع ملف صوتي</span>
+          </button>
+          <button id="sttTabRecordBtn" onclick="switchSTTInputTab('record')" class="flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+              <line x1="12" y1="18" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+            <span>تسجيل مباشر بالميكروفون</span>
+          </button>
+        </div>
+
+        <!-- Tab 1: Upload Audio Dropzone -->
+        <div id="sttUploadContainer" class="space-y-2">
+          <div 
+            id="sttDropzone" 
+            onclick="document.getElementById('sttFileInput').click()"
+            ondragover="handleSTTDragOver(event)"
+            ondragleave="handleSTTDragLeave(event)"
+            ondrop="handleSTTDrop(event)"
+            class="border-2 border-dashed border-[#2b2b3b] hover:border-limeAccent/60 bg-surface/40 hover:bg-surface/80 rounded-2xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2 group"
+          >
+            <div class="w-12 h-12 rounded-2xl bg-obsidian border border-borderSubtle flex items-center justify-center text-muted group-hover:text-limeAccent group-hover:border-limeAccent/30 transition">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M9 18V5l12-2v13"></path>
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="16" r="3"></circle>
+              </svg>
+            </div>
+            <div>
+              <p class="font-medium text-white group-hover:text-limeAccent transition text-xs sm:text-sm">اسحب وأفلت الملف الصوتي هنا أو اضغط للتصفح</p>
+              <p class="text-[11px] text-muted mt-1">يدعم MP3, WAV, M4A, AAC, OGG, WEBM</p>
+            </div>
+            <input type="file" id="sttFileInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.webm" class="hidden" onchange="handleSTTFileSelected(event)">
+          </div>
+          <!-- Selected File Pill -->
+          <div id="sttSelectedFilePill" class="hidden flex items-center justify-between p-3 bg-surface border border-limeAccent/30 rounded-xl">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <span class="w-2 h-2 rounded-full bg-limeAccent shrink-0"></span>
+              <span id="sttSelectedFileName" class="font-mono text-xs text-white truncate">audio.mp3</span>
+              <span id="sttSelectedFileSize" class="text-[10px] text-muted shrink-0">2.4 MB</span>
+            </div>
+            <button onclick="clearSTTFile(event)" class="text-muted hover:text-red-400 p-1 transition" title="إزالة الملف">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Live Mic Recording -->
+        <div id="sttRecordContainer" class="hidden space-y-3 bg-surface/40 p-5 rounded-2xl border border-borderSubtle/60 text-center">
+          <div class="flex flex-col items-center justify-center gap-3">
+            <button id="sttLiveRecordBtn" onclick="toggleSTTLiveRecord()" class="w-16 h-16 rounded-full bg-obsidian border-2 border-borderSubtle hover:border-limeAccent text-muted hover:text-limeAccent flex items-center justify-center transition-all shadow-lg active:scale-95 group relative">
+              <svg id="sttLiveRecordMicIcon" class="w-6 h-6 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                <line x1="12" y1="18" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <span id="sttLiveRecordPulse" class="absolute inset-0 rounded-full bg-red-500/20 animate-ping hidden"></span>
+            </button>
+            <div id="sttLiveRecordStatusText" class="text-xs text-light">اضغط لبدء التسجيل الصوتي المباشر</div>
+            <div id="sttLiveRecordTimer" class="font-mono text-sm font-semibold text-limeAccent hidden">00:00</div>
+            <audio id="sttLiveAudioPreview" controls class="w-full mt-2 hidden max-w-sm"></audio>
+          </div>
+        </div>
+
+        <!-- Language & Translation Settings -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 bg-surface/60 p-3.5 rounded-2xl border border-borderSubtle/60">
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="font-medium text-light">لغة الصوت الأصلية</label>
+              <span class="text-[10px] font-mono text-limeAccent">اكتشاف تلقائي ذكي</span>
+            </div>
+            <select id="sttSourceLanguageSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+              <option value="auto" selected>تلقائي (اكتشاف ذكي للغة الصوت)</option>
+              <option value="ar">العربية (Arabic)</option>
+              <option value="en">الإنجليزية (English)</option>
+              <option value="fr">الفرنسية (Français)</option>
+              <option value="es">الإسبانية (Español)</option>
+              <option value="de">الألمانية (Deutsch)</option>
+              <option value="tr">التركية (Türkçe)</option>
+              <option value="it">الإيطالية (Italiano)</option>
+              <option value="ru">الروسية (Русский)</option>
+              <option value="zh">الصينية (Chinese)</option>
+              <option value="ja">اليابانية (Japanese)</option>
+              <option value="ko">الكورية (Korean)</option>
+              <option value="hi">الهندية (Hindi)</option>
+              <option value="ur">الأردية (Urdu)</option>
+              <option value="fa">الفارسية (Persian)</option>
+            </select>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="font-medium text-light">ترجمة النص إلى لغة أخرى</label>
+              <span class="text-[10px] font-mono text-muted">اختياري</span>
+            </div>
+            <select id="sttTargetLanguageSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+              <option value="" selected>نفس لغة الصوت الأصلية (بدون ترجمة)</option>
+              <option value="ar">ترجمة إلى: العربية (Arabic)</option>
+              <option value="en">ترجمة إلى: الإنجليزية (English)</option>
+              <option value="fr">ترجمة إلى: الفرنسية (Français)</option>
+              <option value="es">ترجمة إلى: الإسبانية (Español)</option>
+              <option value="de">ترجمة إلى: الألمانية (Deutsch)</option>
+              <option value="tr">ترجمة إلى: التركية (Türkçe)</option>
+              <option value="it">ترجمة إلى: الإيطالية (Italiano)</option>
+              <option value="ru">ترجمة إلى: الروسية (Русский)</option>
+              <option value="zh">ترجمة إلى: الصينية (Chinese)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Diarization & Timestamp Toggles -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-surface/60 p-3.5 rounded-2xl border border-borderSubtle/60">
+          <!-- Toggle 1: Speaker Diarization -->
+          <label class="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-surface transition">
+            <div>
+              <div class="font-medium text-white">تمييز المتحدثين (Diarization)</div>
+              <div class="text-[10px] text-muted">فصل أقوال كل شخص (متحدث 1، متحدث 2)</div>
+            </div>
+            <div class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" id="sttDiarizationToggle" class="sr-only peer" checked>
+              <div class="w-9 h-5 bg-borderSubtle peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-limeAccent"></div>
+            </div>
+          </label>
+
+          <!-- Toggle 2: Timestamps -->
+          <label class="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-surface transition">
+            <div>
+              <div class="font-medium text-white">التوقيت الزمني (Timestamps)</div>
+              <div class="text-[10px] text-muted">تضمين توقيت بداية ونهاية كل فقرة لتوليد SRT</div>
+            </div>
+            <div class="relative inline-flex items-center cursor-pointer shrink-0">
+              <input type="checkbox" id="sttTimestampsToggle" class="sr-only peer" checked>
+              <div class="w-9 h-5 bg-borderSubtle peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-limeAccent"></div>
+            </div>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 sm:p-4 border-t border-[#1f1f2a] bg-[#08080a] flex items-center justify-between text-xs shrink-0">
+        <button onclick="closeSTTConfigModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition">
+          إلغاء
+        </button>
+        <button id="sttSubmitBtn" onclick="confirmSTTTranscription()" class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2">
+          <span id="sttSubmitBtnText">بدء تفريغ الصوت</span>
+          <svg id="sttSubmitBtnIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </button>
@@ -2852,6 +3085,537 @@
 
       area.appendChild(div);
       scrollToBottom();
+    }
+
+    // =========================================================================
+    // SPEECH-TO-TEXT (STT STUDIO) & VOICE CHAT LOGIC (Gemini 3.5 & 3.8 Flash)
+    // =========================================================================
+    function formatSecondsToClock(sec) {
+      if (isNaN(sec) || sec < 0) sec = 0;
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
+    function downloadTextFile(content, filename) {
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function copyTextToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('تم نسخ النص إلى الحافظة بنجاح!');
+        }).catch(() => {
+          fallbackCopyText(text);
+        });
+      } else {
+        fallbackCopyText(text);
+      }
+    }
+
+    function fallbackCopyText(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('تم نسخ النص إلى الحافظة بنجاح!');
+    }
+
+    function copySTTTranscript(jobId) {
+      const job = window.sttCache && window.sttCache[jobId];
+      const text = job ? (job.transcript_text || '') : '';
+      if (!text) {
+        showToast('لا يوجد نص مفرغ لنسخه', true);
+        return;
+      }
+      copyTextToClipboard(text);
+    }
+
+    function downloadSTTFile(jobId, format) {
+      const job = window.sttCache && window.sttCache[jobId];
+      if (!job) {
+        showToast('البيانات غير متوفرة للتحميل', true);
+        return;
+      }
+      if (format === 'srt') {
+        const content = job.srt_content || '';
+        downloadTextFile(content, `${(job.title || 'subtitles').replace(/\s+/g, '_')}.srt`);
+      } else {
+        const content = job.transcript_text || '';
+        downloadTextFile(content, `${(job.title || 'transcript').replace(/\s+/g, '_')}.txt`);
+      }
+      showToast(`تم بدء تحميل ملف ${format.toUpperCase()}`);
+    }
+
+    function renderUserAudioBubble(audioUrl, duration, transcript) {
+      const area = document.getElementById('dynamicChatFeed');
+      const div = document.createElement('div');
+      div.className = 'flex gap-2.5 sm:gap-3 justify-end items-start chat-bubble-user';
+      const durStr = duration ? `${duration.toFixed(1)} ثانية` : 'تسجيل صوتي';
+      div.innerHTML = `
+        <div class="max-w-[85%] sm:max-w-[80%] rounded-2xl p-3 sm:p-3.5 bg-surface border border-borderSubtle text-light text-xs sm:text-sm leading-relaxed rounded-tl-sm space-y-2 shadow-lg">
+          <div class="flex items-center justify-between gap-3 text-[11px] font-mono text-limeAccent border-b border-borderSubtle pb-1.5">
+            <span class="flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-limeAccent animate-pulse"></span>
+              <span>تسجيل صوتي مباشر</span>
+            </span>
+            <span class="text-muted">${durStr}</span>
+          </div>
+          <audio controls src="${audioUrl}" class="w-full h-8 outline-none rounded"></audio>
+          ${transcript ? `<p class="text-[11px] text-zinc-300 italic pt-1 border-t border-borderSubtle/60 leading-normal">"${escapeHtml(transcript)}"</p>` : ''}
+        </div>
+        <div class="w-7 h-7 rounded-full bg-obsidian border border-borderSubtle flex items-center justify-center text-[10px] text-muted font-mono shrink-0">أنت</div>
+      `;
+      area.appendChild(div);
+      scrollToBottom();
+    }
+
+    function renderSTTAudioCard(jobData) {
+      const area = document.getElementById('dynamicChatFeed');
+      const div = document.createElement('div');
+      div.className = 'flex gap-2.5 sm:gap-3.5 items-start chat-card-assistant';
+
+      const durationStr = jobData.duration_seconds ? `${jobData.duration_seconds.toFixed(1)} ثانية` : 'جاهز';
+      const langStr = jobData.language || 'auto';
+      const targetLangStr = jobData.target_language ? `مترجم: ${jobData.target_language}` : 'بدون ترجمة';
+      const diarizeStr = jobData.has_diarization ? 'تمييز المتحدثين' : '';
+      const timestampsStr = jobData.has_timestamps ? 'توقيت SRT' : '';
+      const fullText = jobData.transcript_text || '';
+      const segments = jobData.diarization_data || [];
+
+      let segmentsHtml = '';
+      if (segments && segments.length > 0) {
+        segmentsHtml = segments.map((seg, idx) => {
+          const spk = seg.speaker ? `<span class="px-2 py-0.5 rounded-md ${idx % 2 === 0 ? 'bg-limeAccent/15 text-limeAccent border border-limeAccent/30' : 'bg-amber-400/15 text-amber-300 border border-amber-400/30'} font-medium text-[10px] shrink-0">${escapeHtml(seg.speaker)}</span>` : '';
+          const time = (seg.start !== undefined && seg.end !== undefined) ? `<span class="font-mono text-[10px] text-muted shrink-0 dir-ltr">[${formatSecondsToClock(seg.start)} - ${formatSecondsToClock(seg.end)}]</span>` : '';
+          return `
+            <div class="p-2.5 rounded-xl bg-obsidian/70 border border-borderSubtle/60 flex flex-col gap-1.5">
+              <div class="flex items-center justify-between gap-2">
+                ${spk}
+                ${time}
+              </div>
+              <p class="text-xs text-light leading-relaxed whitespace-pre-wrap">${escapeHtml(seg.text || '')}</p>
+            </div>
+          `;
+        }).join('');
+      } else {
+        segmentsHtml = `<div class="p-3 rounded-xl bg-obsidian/70 border border-borderSubtle/60 text-xs sm:text-sm text-light leading-relaxed whitespace-pre-wrap">${escapeHtml(fullText)}</div>`;
+      }
+
+      div.innerHTML = `
+        <div class="w-7 h-7 rounded-lg bg-surface border border-borderSubtle text-limeAccent flex items-center justify-center shrink-0 mt-0.5 font-mono font-bold text-[11px] shadow-sm select-none">
+          STT
+        </div>
+        <div class="flex-1 space-y-2 min-w-0">
+          <div class="text-[11px] font-mono text-limeAccent flex items-center gap-2">
+            <span>استوديو تفريغ الصوت والترجمة (STT Studio)</span>
+            <span class="text-[10px] text-muted">• Gemini 3.5 Transcribe</span>
+          </div>
+          <div class="p-4 rounded-2xl bg-surface border border-borderSubtle shadow-xl space-y-3">
+            
+            <!-- Metadata Header Badges -->
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-borderSubtle pb-2.5">
+              <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <span class="px-2.5 py-0.5 rounded-full bg-limeAccent/10 border border-limeAccent/30 text-limeAccent font-medium">
+                  ${escapeHtml(jobData.title || 'تفريغ صوتي')}
+                </span>
+                <span class="px-2 py-0.5 rounded-full bg-obsidian border border-borderSubtle text-light">
+                  اللغة: ${langStr}
+                </span>
+                ${jobData.target_language ? `<span class="px-2 py-0.5 rounded-full bg-obsidian border border-borderSubtle text-amber-300">${targetLangStr}</span>` : ''}
+                ${diarizeStr ? `<span class="px-2 py-0.5 rounded-full bg-obsidian border border-borderSubtle text-light">${diarizeStr}</span>` : ''}
+                ${timestampsStr ? `<span class="px-2 py-0.5 rounded-full bg-obsidian border border-borderSubtle text-light">${timestampsStr}</span>` : ''}
+              </div>
+              <div class="flex items-center gap-2 text-[11px] font-mono text-limeAccent">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>${durationStr}</span>
+              </div>
+            </div>
+
+            <!-- Master Audio Player -->
+            <div class="space-y-1.5">
+              <audio controls src="${jobData.audio_url}" class="w-full h-10 rounded-lg outline-none"></audio>
+            </div>
+
+            <!-- Segments and Transcribed Content -->
+            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+              ${segmentsHtml}
+            </div>
+
+            <!-- Action Controls & Export Buttons -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-borderSubtle/60 text-xs">
+              <div class="flex items-center gap-1.5 text-[11px] text-limeAccent font-medium">
+                <span class="w-1.5 h-1.5 rounded-full bg-limeAccent"></span>
+                <span>تم الحفظ تلقائياً في مكتبة ملفك الشخصي</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <button onclick="copySTTTranscript('${jobData.id}')" id="copyBtn_${jobData.id}" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-white transition flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span>نسخ النص</span>
+                </button>
+                <button onclick="downloadSTTFile('${jobData.id}', 'txt')" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-white transition flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>تحميل TXT</span>
+                </button>
+                <button onclick="downloadSTTFile('${jobData.id}', 'srt')" class="px-3.5 py-1.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>تحميل ملف ترجمة SRT</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+
+      window.sttCache = window.sttCache || {};
+      window.sttCache[jobData.id] = jobData;
+
+      area.appendChild(div);
+      scrollToBottom();
+    }
+
+    // --- STT Modal & Live Recording Controllers ---
+    let currentSTTInputTab = 'upload';
+    let sttSelectedAudioFile = null;
+    let sttRecordedBlob = null;
+    let sttLiveRecording = false;
+    let sttLiveSeconds = 0;
+    let sttLiveTimerInterval = null;
+    let sttLiveMediaRecorder = null;
+    let sttLiveChunks = [];
+
+    function openSTTConfigModal() {
+      toggleToolsMenu();
+      const modal = document.getElementById('sttConfigModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeSTTConfigModal() {
+      const modal = document.getElementById('sttConfigModal');
+      if (modal) modal.classList.add('hidden');
+      if (sttLiveMediaRecorder && sttLiveMediaRecorder.state === 'recording') {
+        sttLiveMediaRecorder.stop();
+      }
+      clearInterval(sttLiveTimerInterval);
+      sttLiveRecording = false;
+      const recBtn = document.getElementById('sttLiveRecordBtn');
+      if (recBtn) recBtn.classList.remove('border-red-500', 'bg-red-500/20', 'text-red-400');
+      const pulse = document.getElementById('sttLiveRecordPulse');
+      if (pulse) pulse.classList.add('hidden');
+    }
+
+    function switchSTTInputTab(tab) {
+      currentSTTInputTab = tab;
+      const upContainer = document.getElementById('sttUploadContainer');
+      const recContainer = document.getElementById('sttRecordContainer');
+      const tabUpBtn = document.getElementById('sttTabUploadBtn');
+      const tabRecBtn = document.getElementById('sttTabRecordBtn');
+
+      if (tab === 'upload') {
+        if (upContainer) upContainer.classList.remove('hidden');
+        if (recContainer) recContainer.classList.add('hidden');
+        if (tabUpBtn) {
+          tabUpBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle';
+        }
+        if (tabRecBtn) {
+          tabRecBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white';
+        }
+      } else {
+        if (upContainer) upContainer.classList.add('hidden');
+        if (recContainer) recContainer.classList.remove('hidden');
+        if (tabRecBtn) {
+          tabRecBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle';
+        }
+        if (tabUpBtn) {
+          tabUpBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white';
+        }
+      }
+    }
+
+    function handleSTTFileSelected(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      setSTTFile(file);
+    }
+
+    function setSTTFile(file) {
+      sttSelectedAudioFile = file;
+      const pill = document.getElementById('sttSelectedFilePill');
+      const nameSpan = document.getElementById('sttSelectedFileName');
+      const sizeSpan = document.getElementById('sttSelectedFileSize');
+      if (nameSpan) nameSpan.textContent = file.name;
+      if (sizeSpan) sizeSpan.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+      if (pill) {
+        pill.classList.remove('hidden');
+        pill.classList.add('flex');
+      }
+    }
+
+    function clearSTTFile(event) {
+      if (event) event.stopPropagation();
+      sttSelectedAudioFile = null;
+      const fileInput = document.getElementById('sttFileInput');
+      if (fileInput) fileInput.value = '';
+      const pill = document.getElementById('sttSelectedFilePill');
+      if (pill) {
+        pill.classList.remove('flex');
+        pill.classList.add('hidden');
+      }
+    }
+
+    function handleSTTDragOver(e) {
+      e.preventDefault();
+      const dz = document.getElementById('sttDropzone');
+      if (dz) dz.classList.add('border-limeAccent', 'bg-surface/90');
+    }
+
+    function handleSTTDragLeave(e) {
+      e.preventDefault();
+      const dz = document.getElementById('sttDropzone');
+      if (dz) dz.classList.remove('border-limeAccent', 'bg-surface/90');
+    }
+
+    function handleSTTDrop(e) {
+      e.preventDefault();
+      const dz = document.getElementById('sttDropzone');
+      if (dz) dz.classList.remove('border-limeAccent', 'bg-surface/90');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        setSTTFile(e.dataTransfer.files[0]);
+      }
+    }
+
+    async function toggleSTTLiveRecord() {
+      const btn = document.getElementById('sttLiveRecordBtn');
+      const pulse = document.getElementById('sttLiveRecordPulse');
+      const timer = document.getElementById('sttLiveRecordTimer');
+      const statusText = document.getElementById('sttLiveRecordStatusText');
+      const audioPreview = document.getElementById('sttLiveAudioPreview');
+
+      if (!sttLiveRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          sttLiveChunks = [];
+          sttLiveMediaRecorder = new MediaRecorder(stream);
+          sttLiveMediaRecorder.ondataavailable = e => {
+            if (e.data && e.data.size > 0) sttLiveChunks.push(e.data);
+          };
+          sttLiveMediaRecorder.onstop = () => {
+            sttRecordedBlob = new Blob(sttLiveChunks, { type: 'audio/webm' });
+            if (audioPreview) {
+              audioPreview.src = URL.createObjectURL(sttRecordedBlob);
+              audioPreview.classList.remove('hidden');
+            }
+            stream.getTracks().forEach(t => t.stop());
+          };
+          sttLiveMediaRecorder.start();
+          sttLiveRecording = true;
+          sttLiveSeconds = 0;
+          if (timer) {
+            timer.textContent = '00:00';
+            timer.classList.remove('hidden');
+          }
+          if (statusText) statusText.textContent = 'جاري التسجيل الآن... اضغط مجدداً للإيقاف';
+          if (btn) btn.classList.add('border-red-500', 'bg-red-500/20', 'text-red-400');
+          if (pulse) pulse.classList.remove('hidden');
+
+          sttLiveTimerInterval = setInterval(() => {
+            sttLiveSeconds++;
+            const m = String(Math.floor(sttLiveSeconds / 60)).padStart(2, '0');
+            const s = String(sttLiveSeconds % 60).padStart(2, '0');
+            if (timer) timer.textContent = `${m}:${s}`;
+          }, 1000);
+        } catch (err) {
+          showToast('يرجى السماح بالوصول إلى الميكروفون', true);
+        }
+      } else {
+        if (sttLiveMediaRecorder && sttLiveMediaRecorder.state === 'recording') {
+          sttLiveMediaRecorder.stop();
+        }
+        clearInterval(sttLiveTimerInterval);
+        sttLiveRecording = false;
+        if (btn) btn.classList.remove('border-red-500', 'bg-red-500/20', 'text-red-400');
+        if (pulse) pulse.classList.add('hidden');
+        if (statusText) statusText.textContent = 'تم التسجيل! يمكنك الاستماع للمعاينة أو بدء التفريغ';
+      }
+    }
+
+    async function confirmSTTTranscription() {
+      let fileToSend = null;
+      if (currentSTTInputTab === 'upload') {
+        fileToSend = sttSelectedAudioFile;
+      } else {
+        if (sttRecordedBlob) {
+          fileToSend = new File([sttRecordedBlob], 'live_recording.webm', { type: 'audio/webm' });
+        }
+      }
+
+      if (!fileToSend) {
+        showToast('يرجى اختيار ملف صوتي أو إتمام تسجيل صوتك أولاً', true);
+        return;
+      }
+
+      const lang = document.getElementById('sttSourceLanguageSelect').value;
+      const targetLang = document.getElementById('sttTargetLanguageSelect').value;
+      const diarization = document.getElementById('sttDiarizationToggle').checked;
+      const timestamps = document.getElementById('sttTimestampsToggle').checked;
+
+      const submitBtn = document.getElementById('sttSubmitBtn');
+      const submitText = document.getElementById('sttSubmitBtnText');
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitText) submitText.textContent = 'جاري التفريغ والتحليل...';
+
+      const formData = new FormData();
+      formData.append('audio_file', fileToSend);
+      formData.append('title', fileToSend.name ? fileToSend.name.replace(/\.[^/.]+$/, '') : 'تسجيل صوتي');
+      formData.append('language', lang);
+      formData.append('target_language', targetLang);
+      formData.append('diarization', diarization);
+      formData.append('timestamps', timestamps);
+
+      closeSTTConfigModal();
+      renderUserMessage(`🎙️ طلب تفريغ صوتي: ${fileToSend.name || 'تسجيل صوتي'}`);
+      showTyping();
+
+      try {
+        const res = await authFetch('/api/stt/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        hideTyping();
+        if (!res.ok) {
+          showToast(data.message || 'فشل تفريغ الصوت', true);
+          renderAssistantMessage(`⚠️ عذراً، تعذر تفريغ الصوت: ${data.message || 'خطأ غير معروف'}`, 'TEXT');
+          return;
+        }
+        renderSTTAudioCard(data);
+        showToast('تم تفريغ الصوت بنجاح بواسطة Gemini 3.5 Transcribe!');
+      } catch (err) {
+        hideTyping();
+        showToast('حدث خطأ أثناء إرسال ملف الصوت', true);
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (submitText) submitText.textContent = 'بدء تفريغ الصوت';
+      }
+    }
+
+    // --- Quick Voice Chat Controller (Gemini 3.8 Flash) ---
+    let quickVoiceRecording = false;
+    let quickVoiceSeconds = 0;
+    let quickVoiceTimerInterval = null;
+    let quickVoiceMediaRecorder = null;
+    let quickVoiceChunks = [];
+
+    async function toggleQuickVoiceRecord() {
+      const btn = document.getElementById('voiceRecordBtn');
+      const pulse = document.getElementById('voiceRecordPulse');
+      const pill = document.getElementById('voiceRecordStatusPill');
+      const timer = document.getElementById('voiceRecordTimer');
+
+      if (!quickVoiceRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          quickVoiceChunks = [];
+          quickVoiceMediaRecorder = new MediaRecorder(stream);
+          quickVoiceMediaRecorder.ondataavailable = e => {
+            if (e.data && e.data.size > 0) quickVoiceChunks.push(e.data);
+          };
+
+          quickVoiceMediaRecorder.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+            const blob = new Blob(quickVoiceChunks, { type: 'audio/webm' });
+            if (!blob || blob.size === 0) return;
+
+            const formData = new FormData();
+            formData.append('audio_file', blob, 'quick_voice.webm');
+            if (currentThreadId) formData.append('thread_id', currentThreadId);
+            if (activeProjectId) formData.append('project_id', activeProjectId);
+
+            showTyping();
+            try {
+              const res = await authFetch('/api/voice-chat', {
+                method: 'POST',
+                body: formData
+              });
+              const data = await res.json();
+              hideTyping();
+              if (!res.ok) {
+                showToast(data.message || 'فشلت معالجة الرسالة الصوتية', true);
+                renderAssistantMessage(`⚠️ عذراً، تعذر الاستماع للرسالة الصوتية: ${data.message || 'خطأ غير معروف'}`, 'TEXT');
+                return;
+              }
+              if (data.thread_id) {
+                currentThreadId = data.thread_id;
+                window.history.replaceState(null, '', `?thread_id=${data.thread_id}`);
+                loadUserThreads();
+              }
+              renderUserAudioBubble(data.audio_url, data.duration, data.user_transcript);
+              renderAssistantMessage(data.response, 'TEXT');
+              showToast('تم الاستماع والرد بنجاح بواسطة Gemini 3.8 Flash!');
+            } catch (err) {
+              hideTyping();
+              showToast('حدث خطأ في الاتصال أثناء إرسال الصوت', true);
+            }
+          };
+
+          quickVoiceMediaRecorder.start();
+          quickVoiceRecording = true;
+          quickVoiceSeconds = 0;
+          if (timer) timer.textContent = '00:00';
+          if (pill) {
+            pill.classList.remove('hidden');
+            pill.classList.add('flex');
+          }
+          if (btn) btn.classList.add('bg-red-500/20', 'text-red-400', 'border-red-500/50');
+          if (pulse) pulse.classList.remove('hidden');
+
+          quickVoiceTimerInterval = setInterval(() => {
+            quickVoiceSeconds++;
+            const m = String(Math.floor(quickVoiceSeconds / 60)).padStart(2, '0');
+            const s = String(quickVoiceSeconds % 60).padStart(2, '0');
+            if (timer) timer.textContent = `${m}:${s}`;
+          }, 1000);
+        } catch (err) {
+          showToast('يرجى السماح بالوصول إلى الميكروفون', true);
+        }
+      } else {
+        if (quickVoiceMediaRecorder && quickVoiceMediaRecorder.state === 'recording') {
+          quickVoiceMediaRecorder.stop();
+        }
+        clearInterval(quickVoiceTimerInterval);
+        quickVoiceRecording = false;
+        if (pill) {
+          pill.classList.remove('flex');
+          pill.classList.add('hidden');
+        }
+        if (btn) btn.classList.remove('bg-red-500/20', 'text-red-400', 'border-red-500/50');
+        if (pulse) pulse.classList.add('hidden');
+      }
     }
 
     // =========================================================================

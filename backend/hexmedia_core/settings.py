@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     'story_writer',
     'image_video',
     'tts',
+    'stt',
     'ai_studio',
 ]
 

@@ -87,8 +87,22 @@
 
 ### What's Next
 
+- [x] **Speech-to-Text Studio & Quick Voice Chat (feat-015)**:
+  - Created standalone Django app `backend/stt/` with `STTJob` model and migration `0001_initial.py`.
+  - Built `stt_engine.py` supporting `gemini-3.5-transcribe`, speaker diarization (`متحدث 1` / `متحدث 2`), timecode estimation, and standard `.srt` subtitle generation.
+  - Implemented STT API endpoints: `GET /api/stt/options`, `POST /api/stt/transcribe`, and `GET /api/stt/history` with user isolation.
+  - Added quick voice chat input: `#voiceRecordBtn` in floating dock with live recording pulse, timer pill (`#voiceRecordStatusPill`), and `POST /api/voice-chat` using `gemini-3.8-flash` (text response only, no audio output).
+  - Designed `#sttConfigModal` in Obsidian/LimeAccent dark theme with drag-and-drop dropzone, live mic recording tab, language detection, target translation, diarization and timestamp toggles.
+  - Added interactive result card `renderSTTAudioCard` in chat with audio playback, formatted speaker badges, timestamps, 1-click copy, and `.txt` / `.srt` downloads.
+  - Integrated user audio note bubbles (`renderUserAudioBubble`) into chat feed and thread history.
+  - Integrated `STTJob` into Profile Hub media library (`GET /api/profile/media`).
+  - Added 11 tests in `backend/stt/tests_stt.py` (11/11 passing).
+  - Total: 191 tests passing via `./init.sh`.
+
+## Next Steps
+
 1. Manual smoke test in browser if desired.
-2. Future extensions (custom voice design personas, SSML inline pause tags).
+2. Future extensions (live streaming transcription over WebSocket).
 
 ## Blockers / Risks
 
@@ -96,18 +110,13 @@
 
 ## Evidence of Completion
 
-- Database migrations 0001 through 0009 and tts 0001 applied cleanly.
+- Database migrations 0001 through 0009, tts 0001, and stt 0001 applied cleanly.
 - `ai_studio.tests`: 46 tests passing.
 - `ai_studio.test_challenger_m1_2`: 26 tests passing.
-- `ai_studio.tests_threads`: 9 tests passing.
+- `ai_studio.tests_threads`: 11 tests passing.
 - `ai_studio.tests_e2e`: 33 tests passing.
 - `ai_studio.tests_profile`: 7 tests passing.
 - `core.tests_modular_architecture`: 4 tests passing.
 - `tts.tests_tts`: 18 tests passing.
-- Total: 178 tests passing via `./init.sh`.
-- `ai_studio.tests_threads`: 7 tests passing.
-- `ai_studio.tests_e2e`: 33 tests passing.
-- `ai_studio.tests_profile`: 7 tests passing.
-- `core.tests_modular_architecture`: 4 tests passing.
-- `tts.tests_tts`: 18 tests passing.
-- Total: 176 tests passing via `./init.sh`.
+- `stt.tests_stt`: 11 tests passing.
+- Total: 191 tests passing via `./init.sh`.

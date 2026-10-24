@@ -111,6 +111,14 @@
       "dependencies": ["feat-011"],
       "status": "completed",
       "evidence": "Purged auto-diacritize toggle and text from backend/templates/chat/index.html, defaulted auto_diacritize to False in backend/tts/api.py and tts_engine.py, updated tests_tts.py with 18/18 passing tests."
+    },
+    {
+      "id": "feat-015",
+      "name": "Speech-to-Text Studio (Gemini 3.5 Transcribe) & Quick Voice Chat (Gemini 3.8 Flash)",
+      "description": "Comprehensive speech intelligence: Quick voice chat mic input (#voiceRecordBtn) powered by Gemini 3.8 Flash with text-only responses and audio bubbles; dedicated STT Studio app ('backend/stt/') powered by Gemini 3.5 Transcribe with file upload dropzone and live mic recording, auto source language detection, target language translation, speaker diarization, word/sentence timestamps, interactive transcript cards, 1-click copy, TXT/SRT subtitle export, and media library profile synchronization.",
+      "dependencies": ["feat-006", "feat-008", "feat-010"],
+      "status": "completed",
+      "evidence": "Created backend/stt app with STTJob model and migration 0001_initial; implemented stt_engine.py with Gemini 3.5 Transcribe and SRT subtitle builder; added /api/stt/transcribe, /api/stt/history, /api/stt/options and /api/voice-chat in backend/ai_studio/api.py; updated index.html with #voiceRecordBtn, #sttConfigModal, renderSTTAudioCard, and renderUserAudioBubble; 11/11 dedicated tests passing in backend/stt/tests_stt.py and 191/191 total tests passing in ./init.sh."
     }
   ]
 }

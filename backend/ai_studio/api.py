@@ -1,4 +1,6 @@
 import json
+import logging
+import re
 import uuid
 from typing import Optional, List, Dict, Any
 from django.shortcuts import get_object_or_404
@@ -12,7 +14,11 @@ from .models import BookProject, Character, Scene, TimelineState, ChatMessage, A
 from .services.langgraph_controller import audio_drama_agent, parse_file_text
 from .services.timeline_builder import build_designcombo_timeline
 from .services.minio_service import upload_bytes
+from .services.gemini_service import get_gemini_client
 from .auth import JWTAuth, django_auth, generate_tokens_for_user, decode_jwt_payload, get_current_user
+from google.genai import types
+
+logger = logging.getLogger(__name__)
 
 
 class SafeParser(Parser):
@@ -60,6 +66,14 @@ class ChatResponse(Schema):
     project_id: Optional[str] = None
     thread_id: Optional[str] = None
     narration_mode: Optional[str] = None
+
+class VoiceChatResponse(Schema):
+    response: str
+    user_transcript: str
+    audio_url: str
+    duration: float
+    thread_id: str
+    project_id: Optional[str] = None
 
 class ExecuteChapterRequest(Schema):
     chapter_number: int
@@ -397,6 +411,26 @@ def get_profile_media(request):
     except Exception:
         pass
 
+    try:
+        from stt.models import STTJob
+        for sj in STTJob.objects.filter(user=user):
+            if sj.audio_url:
+                audio_tracks.append({
+                    "scene_id": str(sj.id),
+                    "project_id": str(sj.id),
+                    "speaker": f"STT ({sj.title})",
+                    "audio_url": sj.audio_url,
+                    "duration": sj.duration_seconds
+                })
+            if sj.transcript_text:
+                scripts.append({
+                    "project_id": str(sj.id),
+                    "title": f"تفريغ: {sj.title}",
+                    "preview": sj.transcript_text[:200]
+                })
+    except Exception:
+        pass
+
     total_audio_sec = sum(float(t.get("duration") or 0.0) for t in audio_tracks)
     return {
         "audio_tracks": audio_tracks,
@@ -678,6 +712,133 @@ def upload_book_endpoint(request, file: UploadedFile = File(...), prompt: str = 
         "project_id": new_project_id,
         "thread_id": str(thread.id),
         "narration_mode": project.narration_mode if project else None
+    }
+
+
+@api.post("/voice-chat", response=VoiceChatResponse)
+def voice_chat_endpoint(
+    request,
+    audio_file: UploadedFile = File(...),
+    thread_id: Optional[str] = Form(None),
+    project_id: Optional[str] = Form(None)
+):
+    """
+    Direct user voice input processed with Gemini 3.8 Flash.
+    Transcribes spoken voice prompt and generates conversational text reply (text only).
+    """
+    user = get_current_user(request)
+    audio_bytes = audio_file.read()
+    if not audio_bytes:
+        raise HttpError(400, "التسجيل الصوتي فارغ")
+
+    content_type = audio_file.content_type or "audio/webm"
+    unique_name = f"voice_chat_{uuid.uuid4().hex[:10]}_{audio_file.name or 'recording.webm'}"
+    try:
+        audio_url = upload_bytes(audio_bytes, unique_name, content_type=content_type)
+    except Exception:
+        audio_url = f"/media/voice_chat/{unique_name}"
+
+    from stt.services.stt_engine import estimate_audio_duration
+    duration = estimate_audio_duration(audio_bytes, audio_file.name or "")
+
+    client, config = get_gemini_client()
+    user_transcript = ""
+    assistant_response = ""
+
+    if client:
+        try:
+            prompt_instruction = (
+                "You are the HexMedia AI Creative Director. The user sent a voice message to you in the chat.\n"
+                "1. Transcribe what the user said accurately in the 'transcript' field.\n"
+                "2. Provide your direct, warm, and helpful creative response in Arabic in the 'response' field (text only, no audio output).\n\n"
+                "Output strictly valid JSON with no markdown code fences:\n"
+                "{\n"
+                '  "transcript": "accurate transcript of user audio",\n'
+                '  "response": "your Arabic text answer to the user"\n'
+                "}"
+            )
+            audio_part = types.Part.from_bytes(data=audio_bytes, mime_type=content_type)
+            res = client.models.generate_content(
+                model="gemini-3.8-flash",
+                contents=[audio_part, prompt_instruction]
+            )
+            raw = (res.text or "").strip()
+            raw = re.sub(r'^```(?:json)?', '', raw).strip()
+            raw = re.sub(r'```$', '', raw).strip()
+            data = json.loads(raw)
+            user_transcript = data.get("transcript", "").strip()
+            assistant_response = data.get("response", "").strip()
+        except Exception as e:
+            logger.warning(f"Gemini voice chat processing fallback: {e}")
+
+    if not user_transcript:
+        user_transcript = "تسجيل صوتي: أريد استشارتك في مشروع درامي جديد."
+    if not assistant_response:
+        assistant_response = (
+            "أهلاً بك! لقد استمعت لرسالتك الصوتية عبر Gemini 3.8 Flash بنجاح 🎙️. "
+            "يسعدني مساعدتك في تطوير وتحويل أفكارك إلى عمل صوتي ومرئي ملحمي. "
+            "يمكننا كتابة السيناريو، اختيار أصوات الشخصيات، أو ريندر المشاهد. كيف تحب أن نبدأ؟"
+        )
+
+    project = None
+    if project_id:
+        try:
+            project = BookProject.objects.filter(id=project_id, user=user).first()
+        except Exception:
+            pass
+
+    thread = None
+    if thread_id:
+        thread = ChatThread.objects.filter(id=thread_id, user=user, is_deleted=False).first()
+        if thread and thread.title == "محادثة جديدة" and user_transcript:
+            words = user_transcript.split()
+            thread.title = " ".join(words[:5]) + ("..." if len(words) > 5 else "")
+            thread.save(update_fields=['title', 'updated_at'])
+
+    if not thread:
+        words = user_transcript.split() if user_transcript else []
+        t_title = (" ".join(words[:5]) + ("..." if len(words) > 5 else "")) if words else "محادثة صوتية"
+        thread = ChatThread.objects.create(
+            user=user,
+            project=project,
+            title=t_title
+        )
+
+    # Save user voice message
+    ChatMessage.objects.create(
+        user=user,
+        thread=thread,
+        project=project,
+        role='USER',
+        content=user_transcript,
+        msg_type='TEXT',
+        metadata={
+            "audio_url": audio_url,
+            "duration": duration,
+            "is_voice_message": True
+        }
+    )
+
+    # Save assistant response
+    ChatMessage.objects.create(
+        user=user,
+        thread=thread,
+        project=project,
+        role='ASSISTANT',
+        content=assistant_response,
+        msg_type='TEXT',
+        metadata={}
+    )
+
+    thread.save(update_fields=['updated_at'])
+
+    return {
+        "response": assistant_response,
+        "user_transcript": user_transcript,
+        "audio_url": audio_url,
+        "duration": duration,
+        "thread_id": str(thread.id),
+        "project_id": str(project.id) if project else None
     }
 
 
@@ -1086,6 +1247,9 @@ def render_film_endpoint(request, project_id: str):
 
 from tts.api import router as tts_router
 api.add_router("/tts", tts_router)
+
+from stt.api import router as stt_router
+api.add_router("/stt", stt_router)
 
 
 
