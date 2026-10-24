@@ -146,3 +146,15 @@ class JWTAuth(HttpBearer):
     """
     def authenticate(self, request, token: str) -> Optional[User]:
         return decode_jwt_token(token)
+
+
+def get_current_user(request) -> User:
+    """Helper to retrieve authenticated user from request.auth or request.user."""
+    user = getattr(request, 'auth', None)
+    if user and isinstance(user, User):
+        return user
+    if getattr(request, 'user', None) and request.user.is_authenticated:
+        return request.user
+    from ninja.errors import HttpError
+    raise HttpError(401, "يجب تسجيل الدخول أولاً")
+

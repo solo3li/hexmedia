@@ -72,3 +72,116 @@ class TTSUnitTests(TestCase):
         self.assertEqual(job.user, user)
         self.assertEqual(job.voice_profile, "Charon")
         self.assertEqual(job.duration_seconds, 45.5)
+
+
+class TTSAPITests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(
+            username="tts_api_user",
+            email="tts_api_user@test.local",
+            password="Password123!"
+        )
+        from ai_studio.auth import generate_tokens_for_user
+        tokens = generate_tokens_for_user(self.user)
+        self.token = tokens["access_token"]
+        self.auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {self.token}"}
+
+    def test_get_tts_options(self):
+        """GET /api/tts/options returns supported languages, voices, emotions, and styles."""
+        res = self.client.get("/api/tts/options")
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("languages", data)
+        self.assertIn("voices", data)
+        self.assertIn("emotions", data)
+        self.assertIn("delivery_styles", data)
+
+        # Check voices include standard Gemini voices
+        voice_names = [v["name"] for v in data["voices"]]
+        self.assertIn("Charon", voice_names)
+        self.assertIn("Puck", voice_names)
+
+    def test_generate_tts_endpoint_short_text(self):
+        """POST /api/tts/generate processes small text and returns 200 with audio URL."""
+        import json
+        payload = {
+            "text": "مرحباً بكم في استوديو هيكس ميديا الصوتي الذكي.",
+            "voice_profile": "Charon",
+            "language": "ar",
+            "dialect": "msa",
+            "emotion": "enthusiastic",
+            "delivery_style": "documentary"
+        }
+        res = self.client.post(
+            "/api/tts/generate",
+            data=json.dumps(payload),
+            content_type="application/json",
+            **self.auth_headers
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("id", data)
+        self.assertIn("audio_url", data)
+        self.assertEqual(data["chunks_count"], 1)
+        self.assertGreater(data["duration_seconds"], 0)
+        self.assertEqual(data["voice_profile"], "Charon")
+
+        # Verify job saved in database
+        job = TTSJob.objects.get(id=data["id"])
+        self.assertEqual(job.user, self.user)
+        self.assertEqual(job.chunks_count, 1)
+
+    def test_generate_tts_long_text_chunking_and_stitching(self):
+        """POST /api/tts/generate splits text > 3000 chars into chunks and stitches into master audio."""
+        import json
+        sentence = "هذا مقطع سردي طويل يصف معالم المدينة القديمة وتاريخها العريق. "
+        long_text = sentence * 60  # > 3000 chars
+        payload = {
+            "text": long_text,
+            "title": "سرد المدينة القديمة",
+            "voice_profile": "Puck",
+            "language": "ar",
+            "dialect": "msa",
+            "emotion": "dramatic",
+            "delivery_style": "storyteller"
+        }
+        res = self.client.post(
+            "/api/tts/generate",
+            data=json.dumps(payload),
+            content_type="application/json",
+            **self.auth_headers
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertGreater(data["chunks_count"], 1)
+        self.assertIn("audio_url", data)
+        self.assertTrue(len(data["chunks"]) > 1)
+
+        # Check job in database
+        job = TTSJob.objects.get(id=data["id"])
+        self.assertGreater(job.chunks_count, 1)
+        self.assertGreater(job.duration_seconds, 0)
+
+    def test_tts_history_endpoint(self):
+        """GET /api/tts/history returns list of user's past conversions."""
+        job = TTSJob.objects.create(
+            user=self.user,
+            title="تسجيل قديم",
+            input_text="نص التسجيل القديم",
+            duration_seconds=15.0,
+            audio_url="http://storage.local/old.wav"
+        )
+        res = self.client.get("/api/tts/history", **self.auth_headers)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(len(data) >= 1)
+        job_ids = [j["id"] for j in data]
+        self.assertIn(str(job.id), job_ids)
+
+    def test_unauthenticated_requests_blocked(self):
+        """Unauthenticated requests return 401."""
+        res_post = self.client.post("/api/tts/generate", data="{}", content_type="application/json")
+        self.assertEqual(res_post.status_code, 401)
+        res_history = self.client.get("/api/tts/history")
+        self.assertEqual(res_history.status_code, 401)

@@ -12,7 +12,7 @@ from .models import BookProject, Character, Scene, TimelineState, ChatMessage, A
 from .services.langgraph_controller import audio_drama_agent, parse_file_text
 from .services.timeline_builder import build_designcombo_timeline
 from .services.minio_service import upload_bytes
-from .auth import JWTAuth, django_auth, generate_tokens_for_user, decode_jwt_payload
+from .auth import JWTAuth, django_auth, generate_tokens_for_user, decode_jwt_payload, get_current_user
 
 
 class SafeParser(Parser):
@@ -382,6 +382,20 @@ def get_profile_media(request):
                     "image_url": sc.image_url,
                     "motion_type": sc.motion_type
                 })
+
+    try:
+        from tts.models import TTSJob
+        for tj in TTSJob.objects.filter(user=user):
+            if tj.audio_url:
+                audio_tracks.append({
+                    "scene_id": str(tj.id),
+                    "project_id": str(tj.id),
+                    "speaker": f"TTS ({tj.voice_profile})",
+                    "audio_url": tj.audio_url,
+                    "duration": tj.duration_seconds
+                })
+    except Exception:
+        pass
 
     total_audio_sec = sum(float(t.get("duration") or 0.0) for t in audio_tracks)
     return {
@@ -1059,6 +1073,11 @@ def render_film_endpoint(request, project_id: str):
     from .services.remotion_bridge import render_or_queue_project
     res = render_or_queue_project(str(project.id))
     return res
+
+
+from tts.api import router as tts_router
+api.add_router("/tts", tts_router)
+
 
 
 
