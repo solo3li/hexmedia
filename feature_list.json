@@ -55,6 +55,14 @@
       "dependencies": ["feat-003"],
       "status": "in-progress",
       "evidence": "frontend/ running on port 5173 with Vite & Tailwind, integrated with Django backend chat templates."
+    },
+    {
+      "id": "feat-016",
+      "name": "Traefik HTTPS Reverse Proxy Deployment (nip.io)",
+      "description": "Deploy HexMedia on hexmedia.169.58.32.179.nip.io with Let's Encrypt SSL via Traefik dynamic provider, proxy headers, CSRF trusted origins, and HTTPS MinIO public asset endpoint without disrupting existing services.",
+      "dependencies": ["feat-001"],
+      "status": "completed",
+      "evidence": "voice_dynamic.yml updated; Let's Encrypt SAN certs issued for hexmedia.169.58.32.179.nip.io and hexmedia-assets.169.58.32.179.nip.io; HTTP-to-HTTPS 308 redirect verified; HTTP/2 200 valid SSL verified; uggu.space and telephony unharmed."
     }
   ]
 }

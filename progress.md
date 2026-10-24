@@ -35,3 +35,28 @@
 - feat-004: Documentary web & visual search integration
 - feat-005: Multi-track DesignCombo Web Studio UI
 - Add M2/M3 dedicated test class (tests_m2_m3.py)
+
+---
+
+## Session 4 — 2026-10-24: Traefik HTTPS Deployment (nip.io)
+
+### Completed ✅
+- **Traefik Dynamic Routing**:
+  - Added `hexmedia-http` (HTTP:80 -> HTTPS:443 308 redirect) and `hexmedia-https` (HTTPS:443 with `myresolver` ACME Let's Encrypt SSL) to `/root/motaem/traefik_data/voice_dynamic.yml`.
+  - Added `hexmedia-minio-http` and `hexmedia-minio-https` for SSL asset streaming (`hexmedia-assets.169.58.32.179.nip.io`).
+  - Added `hexmedia-redirect-https` middleware.
+  - Zero downtime / zero interference with other live systems (`uggu.space`, telephony/voice services).
+- **Django Proxy & Security Settings**:
+  - `SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')`
+  - `USE_X_FORWARDED_HOST = True`
+  - `USE_X_FORWARDED_PORT = True`
+  - `ALLOWED_HOSTS` updated with nip.io domains.
+  - `CSRF_TRUSTED_ORIGINS` updated with `https://hexmedia.169.58.32.179.nip.io`, `https://hexmedia-assets.169.58.32.179.nip.io`, and `https://*.169.58.32.179.nip.io`.
+  - `CORS_ALLOWED_ORIGINS` updated with nip.io domains.
+  - `MINIO_PUBLIC_ENDPOINT` set to `https://hexmedia-assets.169.58.32.179.nip.io`.
+- **Verification**:
+  - Traefik dynamically acquired Let's Encrypt certificate for both domains.
+  - HTTP `http://hexmedia.169.58.32.179.nip.io` -> 308 redirect to HTTPS.
+  - HTTPS `https://hexmedia.169.58.32.179.nip.io` -> HTTP/2 200 with valid TLS.
+  - HTTPS `https://hexmedia-assets.169.58.32.179.nip.io/minio/health/live` -> HTTP/2 200 with valid TLS.
+  - Unbroken continuity on `uggu.space` and `app.169.58.32.179.nip.io`.
