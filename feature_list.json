@@ -79,6 +79,14 @@
       "dependencies": ["feat-009"],
       "status": "completed",
       "evidence": "4 Django apps created and registered in INSTALLED_APPS, models facade preserved, tools popup menu refined to 3 tools in index.html, passing 158 tests via ./init.sh."
+    },
+    {
+      "id": "feat-011",
+      "name": "Standalone TTS Studio App with Large-Text Chunking & Concatenation",
+      "description": "Standalone Django app 'tts' with sentence-boundary chunking (<2500 chars), Gemini Flash TTS synthesis, wave PCM stitching, Arabic auto-diacritization, rich configuration modal (voice profiles, dialects, emotions, styles), and direct audio card playback + Profile Hub integration.",
+      "dependencies": ["feat-006", "feat-009", "feat-010"],
+      "status": "completed",
+      "evidence": "backend/tts/ app created with TTSJob model (migration 0001), chunker, audio_stitcher, and tts_engine; GET /api/tts/options, POST /api/tts/generate, GET /api/tts/history; #ttsConfigModal & renderTTSAudioCard in index.html; passing 11/11 tests in tests_tts.py and 169/169 in ./init.sh."
     }
   ]
 }

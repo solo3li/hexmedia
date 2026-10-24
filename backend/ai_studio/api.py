@@ -400,8 +400,10 @@ def get_profile_media(request):
     total_audio_sec = sum(float(t.get("duration") or 0.0) for t in audio_tracks)
     return {
         "audio_tracks": audio_tracks,
+        "audio": audio_tracks,
         "scripts": scripts,
         "video_scenes": video_scenes,
+        "videos": video_scenes,
         "stats": {
             "projects_count": projects.count(),
             "audio_tracks_count": len(audio_tracks),

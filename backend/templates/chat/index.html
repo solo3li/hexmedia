@@ -382,6 +382,22 @@
               <div class="text-[10px] text-muted">مشاهد مصورة (وثائقي، كرتون، مانجا) وريندر Remotion</div>
             </div>
           </button>
+
+          <!-- Tool 4: Text-to-Speech (TTS Studio) -->
+          <button onclick="openTTSConfigModal()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
+            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-cyan-400 group-hover:border-cyan-400/40 shrink-0">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="22"></line>
+                <line x1="8" y1="22" x2="16" y2="22"></line>
+              </svg>
+            </div>
+            <div>
+              <div class="font-medium text-white group-hover:text-cyan-300 transition">تحويل النص إلى صوت (TTS Studio)</div>
+              <div class="text-[10px] text-muted">أصوات احترافية، لهجات، مشاعر، نصوص طويلة وتشكيل ذكي</div>
+            </div>
+          </button>
         </div>
 
         <!-- The Floating Dock Body -->
@@ -782,6 +798,187 @@
     </div>
   </div>
 
+  <!-- TTS CONFIGURATION MODAL -->
+  <div id="ttsConfigModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeTTSConfigModal()">
+    <div class="bg-surface border border-borderSubtle rounded-3xl w-full max-w-xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden" onclick="event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/40">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center text-lg shrink-0">
+            🎙️
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-medium text-white">إعدادات تحويل النص إلى صوت (TTS Studio)</h3>
+            <p class="text-xs text-muted">تخصيص نبرة الصوت، اللهجة، المشاعر والتشكيل الذكي</p>
+          </div>
+        </div>
+        <button onclick="closeTTSConfigModal()" class="p-2 rounded-xl text-muted hover:text-white hover:bg-obsidian transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
+        
+        <!-- Row 1: Language and Dialect -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-light mb-1.5">اللغة الأساسية</label>
+            <select id="ttsLanguageSelect" onchange="handleTTSLanguageChange()" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+              <option value="ar" selected>العربية (Arabic)</option>
+              <option value="en">English (الإنجليزية)</option>
+              <option value="fr">Français (الفرنسية)</option>
+              <option value="es">Español (الإسبانية)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-light mb-1.5">اللهجة / الطابع اللغوي</label>
+            <select id="ttsDialectSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+              <option value="msa" selected>🇸🇦 فصحى معيارية سينمائية</option>
+              <option value="egyptian">🇪🇬 لهجة مصرية عفوية</option>
+              <option value="gulf">🇦🇪 لهجة خليجية / سعودية</option>
+              <option value="levantine">🇱🇧 لهجة شامية</option>
+              <option value="maghrebi">🇲🇦 لهجة مغاربية</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Voice Profile Selector Grid -->
+        <div>
+          <label class="block font-medium text-light mb-2">الممثل الصوتي (Voice Profile)</label>
+          <div id="ttsVoiceProfilesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <!-- Voice Cards -->
+            <div onclick="selectTTSVoiceProfile('Charon')" id="voiceCard_Charon" class="tts-voice-card p-3 rounded-2xl bg-obsidian/70 border-2 border-cyan-400/80 cursor-pointer hover:border-cyan-400 transition flex items-start gap-3">
+              <span class="text-xl">👨‍💼</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium text-white">Charon (شارون)</span>
+                  <span class="text-[10px] font-mono text-cyan-400 bg-cyan-400/10 px-1.5 py-0.5 rounded">جهوري وقور</span>
+                </div>
+                <p class="text-[11px] text-muted mt-0.5">عميق ورزين للوثائقيات والراوي الفخم</p>
+              </div>
+            </div>
+
+            <div onclick="selectTTSVoiceProfile('Puck')" id="voiceCard_Puck" class="tts-voice-card p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle cursor-pointer hover:border-cyan-400/60 transition flex items-start gap-3">
+              <span class="text-xl">🎙️</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium text-white">Puck (باك)</span>
+                  <span class="text-[10px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">شبابي حيوي</span>
+                </div>
+                <p class="text-[11px] text-muted mt-0.5">طاقة عالية ومشرق للإعلانات والبودكاست</p>
+              </div>
+            </div>
+
+            <div onclick="selectTTSVoiceProfile('Kore')" id="voiceCard_Kore" class="tts-voice-card p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle cursor-pointer hover:border-cyan-400/60 transition flex items-start gap-3">
+              <span class="text-xl">👩‍💼</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium text-white">Kore (كوري)</span>
+                  <span class="text-[10px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">نسائي دافئ</span>
+                </div>
+                <p class="text-[11px] text-muted mt-0.5">ناعم ومهدئ مناسب للقصص وشرح المحتوى</p>
+              </div>
+            </div>
+
+            <div onclick="selectTTSVoiceProfile('Fenrir')" id="voiceCard_Fenrir" class="tts-voice-card p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle cursor-pointer hover:border-cyan-400/60 transition flex items-start gap-3">
+              <span class="text-xl">⚔️</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium text-white">Fenrir (فنرير)</span>
+                  <span class="text-[10px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">ملحمي قوي</span>
+                </div>
+                <p class="text-[11px] text-muted mt-0.5">خشن وحازم للمشاهد القتالية والتريلرات</p>
+              </div>
+            </div>
+
+            <div onclick="selectTTSVoiceProfile('Aoede')" id="voiceCard_Aoede" class="tts-voice-card p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle cursor-pointer hover:border-cyan-400/60 transition flex items-start gap-3 sm:col-span-2">
+              <span class="text-xl">✨</span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium text-white">Aoede (أويدي)</span>
+                  <span class="text-[10px] font-mono text-muted bg-surface px-1.5 py-0.5 rounded">تعبيري درامي</span>
+                </div>
+                <p class="text-[11px] text-muted mt-0.5">صوت نسائي سينمائي مفعم بالعاطفة والتأثير المسرحي</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Emotion and Delivery Style -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-light mb-1.5">الحالة الشعورية (Emotion)</label>
+            <select id="ttsEmotionSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+              <option value="neutral" selected>🎙️ طبيعي / متزن (Neutral)</option>
+              <option value="enthusiastic">🔥 حماسي ومحفز (Enthusiastic)</option>
+              <option value="dramatic">🎭 درامي وجاد (Dramatic)</option>
+              <option value="happy">✨ فرح ومتفائل (Happy)</option>
+              <option value="sad">🌧️ حزين ومؤثر (Melancholic)</option>
+              <option value="whisper">🤫 هادئ وهمس (Whispering)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-light mb-1.5">أسلوب الإلقاء (Delivery Style)</label>
+            <select id="ttsDeliveryStyleSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+              <option value="documentary" selected>تعليق وثائقي فخم (Documentary)</option>
+              <option value="commercial">إعلان ترويجي وتسويقي (Commercial)</option>
+              <option value="storyteller">راوي قصص وروايات (Storyteller)</option>
+              <option value="news">نشرة أخبار رسمية (News Broadcast)</option>
+              <option value="poetic">إلقاء أدبي وشعري (Poetic)</option>
+              <option value="conversational">محادثة عفوية (Conversational)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 4: Auto-Diacritize Toggle -->
+        <div class="p-3 rounded-2xl bg-obsidian/40 border border-borderSubtle flex items-center justify-between gap-3">
+          <div class="space-y-0.5">
+            <span class="font-medium text-white flex items-center gap-1.5">
+              <span>التشكيل التلقائي الذكي للنصوص العربية</span>
+              <span class="text-[10px] font-mono text-cyan-400 bg-cyan-400/10 px-1.5 py-0.2 rounded">موصى به</span>
+            </span>
+            <p class="text-[11px] text-muted">ضبط الحركات الإعرابية ومخارج الحروف آلياً لضمان سلامة النطق الدرامي</p>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            <input type="checkbox" id="ttsAutoDiacritizeToggle" class="sr-only peer" checked>
+            <div class="w-11 h-6 bg-surface border border-borderSubtle peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+          </label>
+        </div>
+
+        <!-- Row 5: Custom Directives -->
+        <div>
+          <label class="block font-medium text-light mb-1.5">توجيهات إضافية للممثل الصوتي (اختياري)</label>
+          <input 
+            type="text" 
+            id="ttsCustomDirectivesInput" 
+            placeholder="مثال: نبرة غامضة وبطيئة، توقف ثانية عند الفواصل..." 
+            class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-white placeholder-muted focus:outline-none focus:border-cyan-400 text-xs"
+          >
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 sm:p-4 border-t border-borderSubtle bg-obsidian/40 flex items-center justify-between text-xs shrink-0">
+        <button onclick="closeTTSConfigModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition">
+          إلغاء
+        </button>
+        <button onclick="confirmTTSConfig()" class="px-5 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-obsidian font-semibold transition active:scale-95 shadow-md flex items-center gap-1.5">
+          <span>تفعيل أداة الصوت وكتابة النص</span>
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- MINIMAL STATUS NOTIFICATION (Toast) -->
   <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-surface border border-borderSubtle text-xs text-light shadow-xl flex items-center gap-2 opacity-0 pointer-events-none transition-all duration-200">
     <span class="w-1.5 h-1.5 rounded-full bg-limeAccent" id="toastDot"></span>
@@ -995,6 +1192,93 @@
       document.getElementById('activeToolIcon').textContent = '✍️';
       const input = document.getElementById('chatInput');
       input.placeholder = 'اسأل أي شيء أو اكتب رسالتك... (اختر أداة من +)';
+    }
+
+    // =========================================================================
+    // TTS STUDIO CONTROLS
+    // =========================================================================
+    let currentTTSConfig = {
+      language: 'ar',
+      dialect: 'msa',
+      voice_profile: 'Charon',
+      emotion: 'neutral',
+      delivery_style: 'documentary',
+      auto_diacritize: true,
+      custom_directives: ''
+    };
+
+    const TTS_DIALECT_MAP = {
+      ar: [
+        { code: 'msa', label: '🇸🇦 فصحى معيارية سينمائية' },
+        { code: 'egyptian', label: '🇪🇬 لهجة مصرية عفوية' },
+        { code: 'gulf', label: '🇦🇪 لهجة خليجية / سعودية' },
+        { code: 'levantine', label: '🇱🇧 لهجة شامية' },
+        { code: 'maghrebi', label: '🇲🇦 لهجة مغاربية' }
+      ],
+      en: [
+        { code: 'us', label: '🇺🇸 American English (US)' },
+        { code: 'uk', label: '🇬🇧 British English (UK)' }
+      ],
+      fr: [
+        { code: 'fr_standard', label: '🇫🇷 Français Standard' }
+      ],
+      es: [
+        { code: 'es_standard', label: '🇪🇸 Español Castellano' }
+      ]
+    };
+
+    function openTTSConfigModal() {
+      toggleToolsMenu();
+      const modal = document.getElementById('ttsConfigModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeTTSConfigModal() {
+      const modal = document.getElementById('ttsConfigModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function handleTTSLanguageChange() {
+      const lang = document.getElementById('ttsLanguageSelect').value;
+      const dialectSelect = document.getElementById('ttsDialectSelect');
+      const dialects = TTS_DIALECT_MAP[lang] || [];
+      dialectSelect.innerHTML = dialects.map(d => `<option value="${d.code}">${d.label}</option>`).join('');
+    }
+
+    function selectTTSVoiceProfile(voiceName) {
+      currentTTSConfig.voice_profile = voiceName;
+      document.querySelectorAll('.tts-voice-card').forEach(card => {
+        card.classList.remove('border-2', 'border-cyan-400/80', 'bg-obsidian/70');
+        card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/40');
+      });
+      const selectedCard = document.getElementById(`voiceCard_${voiceName}`);
+      if (selectedCard) {
+        selectedCard.classList.remove('border-borderSubtle', 'bg-obsidian/40');
+        selectedCard.classList.add('border-2', 'border-cyan-400/80', 'bg-obsidian/70');
+      }
+    }
+
+    function confirmTTSConfig() {
+      currentTTSConfig.language = document.getElementById('ttsLanguageSelect').value;
+      currentTTSConfig.dialect = document.getElementById('ttsDialectSelect').value;
+      currentTTSConfig.emotion = document.getElementById('ttsEmotionSelect').value;
+      currentTTSConfig.delivery_style = document.getElementById('ttsDeliveryStyleSelect').value;
+      currentTTSConfig.auto_diacritize = document.getElementById('ttsAutoDiacritizeToggle').checked;
+      currentTTSConfig.custom_directives = document.getElementById('ttsCustomDirectivesInput').value.trim();
+
+      closeTTSConfigModal();
+      clearSelectedFile();
+      currentActiveTool = 'tts';
+
+      const pill = document.getElementById('activeToolPill');
+      pill.classList.remove('hidden');
+      pill.classList.add('flex');
+      document.getElementById('activeToolIcon').textContent = '🎙️';
+      document.getElementById('activeToolLabel').textContent = `تحويل النص لصوت (${currentTTSConfig.voice_profile} - ${currentTTSConfig.dialect})`;
+      const input = document.getElementById('chatInput');
+      input.placeholder = 'اكتب أو الصق النص هنا لتسجيله صوتياً (يدعم النصوص الطويلة وتجميعها آلياً)...';
+      input.focus();
+      showToast('🎙️ تم تفعيل استوديو الصوت! اكتب النص ثم اضغط إرسال');
     }
 
     function triggerAudioExecution() {
@@ -1936,6 +2220,94 @@
       scrollToBottom();
     }
 
+    function renderTTSAudioCard(jobData) {
+      const area = document.getElementById('dynamicChatFeed');
+      const div = document.createElement('div');
+      div.className = 'flex gap-2.5 sm:gap-3.5 items-start chat-card-assistant';
+
+      const durationStr = jobData.duration_seconds ? `${jobData.duration_seconds.toFixed(1)} ثانية` : 'جاهز';
+      const chunksStr = jobData.chunks_count > 1 ? `مقسم ومدمج من ${jobData.chunks_count} مقاطع` : 'مقطع واحد مباشر';
+      const dialectStr = jobData.dialect ? `لهجة: ${jobData.dialect}` : '';
+      const emotionStr = jobData.emotion ? `مشاعر: ${jobData.emotion}` : '';
+      const styleStr = jobData.delivery_style ? `أسلوب: ${jobData.delivery_style}` : '';
+
+      div.innerHTML = `
+        <div class="w-7 h-7 rounded-lg bg-obsidian border border-cyan-400/40 flex items-center justify-center shrink-0 mt-0.5 text-cyan-400">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="22"></line>
+            <line x1="8" y1="22" x2="16" y2="22"></line>
+          </svg>
+        </div>
+        <div class="flex-1 space-y-2 min-w-0">
+          <div class="text-[11px] font-mono text-cyan-400 flex items-center gap-2">
+            <span>استوديو الصوت الذكي (TTS Studio)</span>
+            <span class="text-[10px] text-muted">• Gemini Flash Voice</span>
+          </div>
+          <div class="p-4 rounded-2xl bg-surface border border-cyan-500/30 shadow-xl space-y-3">
+            
+            <!-- Metadata Header Badges -->
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-borderSubtle pb-2.5">
+              <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <span class="px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-medium">
+                  🎙️ ${jobData.voice_profile || 'Charon'}
+                </span>
+                <span class="px-2 py-0.5 rounded-full bg-obsidian border border-borderSubtle text-light">
+                  ${dialectStr}
+                </span>
+                <span class="px-2 py-0.5 rounded-full bg-obsidian border border-borderSubtle text-light">
+                  ${emotionStr}
+                </span>
+                <span class="px-2 py-0.5 rounded-full bg-obsidian border border-borderSubtle text-light">
+                  ${styleStr}
+                </span>
+              </div>
+              <div class="flex items-center gap-2 text-[11px] font-mono">
+                <span class="text-limeAccent font-bold">⏱️ ${durationStr}</span>
+                <span class="text-zinc-500">•</span>
+                <span class="text-cyan-400">${chunksStr}</span>
+              </div>
+            </div>
+
+            <!-- Diacritized Text Preview -->
+            <div class="bg-obsidian/60 p-3 rounded-xl border border-borderSubtle/60 text-xs sm:text-sm text-light leading-relaxed max-h-48 overflow-y-auto font-sans">
+              <div class="text-[10px] font-mono text-muted mb-1 flex items-center justify-between">
+                <span>النص بعد المعالجة والتشكيل:</span>
+                <span>${jobData.char_count || (jobData.text ? jobData.text.length : 0)} حرف</span>
+              </div>
+              <p class="whitespace-pre-wrap">${escapeHtml(jobData.text || '')}</p>
+            </div>
+
+            <!-- Master Audio Player -->
+            <div class="space-y-1.5 pt-1">
+              <audio controls src="${jobData.audio_url}" class="w-full h-10 rounded-lg outline-none"></audio>
+            </div>
+
+            <!-- Action Controls & Profile Hub Sync -->
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-borderSubtle/60 text-xs">
+              <div class="flex items-center gap-1.5 text-[11px] text-limeAccent font-medium">
+                <span class="w-1.5 h-1.5 rounded-full bg-limeAccent"></span>
+                <span>تم الحفظ تلقائياً في مكتبة ملفك الشخصي</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="openProfileModal('audio')" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-white transition flex items-center gap-1">
+                  <span>📁 مكتبة وسائطي</span>
+                </button>
+                <a href="${jobData.audio_url}" download="tts_${jobData.id || Date.now()}.wav" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-obsidian font-semibold transition active:scale-95 shadow flex items-center gap-1">
+                  <span>⬇️ تحميل WAV</span>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      `;
+
+      area.appendChild(div);
+      scrollToBottom();
+    }
+
     // =========================================================================
     // COMPONENT BUILDERS (Obsidian Script Blocks)
     // =========================================================================
@@ -2717,7 +3089,7 @@
       input.value = '';
       const typingMsg = selectedFile 
         ? "جاري قراءة الرواية واستخراج الفصول والشخصيات..." 
-        : (currentActiveTool === 'story_generator' ? "المخرج الذكي يؤلف المشهد ويوزع الأصوات..." : "جاري التفكير والتوليد...");
+        : (currentActiveTool === 'story_generator' ? "المخرج الذكي يؤلف المشهد ويوزع الأصوات..." : (currentActiveTool === 'tts' ? "جاري تحويل النص وهندسة الصوت وتجميع الأجزاء..." : "جاري التفكير والتوليد..."));
       showTyping(typingMsg);
 
       try {
@@ -2751,6 +3123,32 @@
             startLiveProgressPolling(data.project_id || activeProjectId);
           }
           showToast('تم استيراد الرواية واستخراج الشخصيات!');
+        } else if (currentActiveTool === 'tts') {
+          const res = await authFetch('/api/tts/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: prompt,
+              voice_profile: currentTTSConfig.voice_profile,
+              language: currentTTSConfig.language,
+              dialect: currentTTSConfig.dialect,
+              emotion: currentTTSConfig.emotion,
+              delivery_style: currentTTSConfig.delivery_style,
+              custom_directives: currentTTSConfig.custom_directives,
+              auto_diacritize: currentTTSConfig.auto_diacritize,
+              project_id: activeProjectId || null
+            })
+          });
+          const data = await res.json();
+          hideTyping();
+          clearActiveTool();
+          if (!res.ok) {
+            showToast(data.message || 'حدث خطأ أثناء توليد الصوت', true);
+            renderAssistantMessage(`⚠️ عذراً، تعذر توليد الصوت: ${data.message || 'خطأ غير معروف'}`, 'TEXT');
+            return;
+          }
+          renderTTSAudioCard(data);
+          showToast('🎙️ تم توليد الصوت الموحد بنجاح وحفظه في ملفك الشخصي!');
         } else {
           const toolToSend = currentActiveTool;
           const res = await authFetch('/api/chat', {

@@ -185,3 +185,44 @@ class TTSAPITests(TestCase):
         self.assertEqual(res_post.status_code, 401)
         res_history = self.client.get("/api/tts/history")
         self.assertEqual(res_history.status_code, 401)
+
+    def test_tts_frontend_ui_elements(self):
+        """Frontend index page contains TTS Studio modal, trigger button, and audio card renderer."""
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        content = res.content.decode("utf-8")
+        self.assertIn("openTTSConfigModal", content)
+        self.assertIn('id="ttsConfigModal"', content)
+        self.assertIn('id="ttsLanguageSelect"', content)
+        self.assertIn('id="ttsDialectSelect"', content)
+        self.assertIn('id="ttsVoiceProfilesGrid"', content)
+        self.assertIn('id="ttsAutoDiacritizeToggle"', content)
+        self.assertIn("renderTTSAudioCard", content)
+
+    def test_tts_job_appears_in_profile_media(self):
+        """Generated TTS audio automatically appears in user profile media library."""
+        import json
+        payload = {
+            "text": "هذا اختبار لمكتبة وسائط الحساب الشخصي.",
+            "voice_profile": "Kore",
+            "language": "ar",
+            "dialect": "egyptian",
+            "emotion": "happy",
+            "delivery_style": "commercial"
+        }
+        res_gen = self.client.post(
+            "/api/tts/generate",
+            data=json.dumps(payload),
+            content_type="application/json",
+            **self.auth_headers
+        )
+        self.assertEqual(res_gen.status_code, 200)
+        job_data = res_gen.json()
+
+        # Check /api/profile/media
+        res_media = self.client.get("/api/profile/media", **self.auth_headers)
+        self.assertEqual(res_media.status_code, 200)
+        media_data = res_media.json()
+        audio_urls = [a["audio_url"] for a in media_data["audio"]]
+        self.assertIn(job_data["audio_url"], audio_urls)
+
