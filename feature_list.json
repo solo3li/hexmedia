@@ -6,7 +6,7 @@
       "description": "Confirm the project can run verification, execute syntax checks, and maintain running development services.",
       "dependencies": [],
       "status": "completed",
-      "evidence": "./init.sh ran successfully: python syntax check passed, pytest test suite ready, Django API running on 8100, Vite frontend on 5173."
+      "evidence": "./init.sh ran successfully: python syntax check passed, pytest test suite ready, Django API running on 8100."
     },
     {
       "id": "feat-002",
@@ -34,11 +34,11 @@
     },
     {
       "id": "feat-005",
-      "name": "Multi-track DesignCombo Web Studio UI",
-      "description": "React-based rich multi-track timeline, waveform preview, and live scene editing.",
+      "name": "DesignCombo Web Studio Removal & UI Streamlining",
+      "description": "Completely deprecate and purge DesignCombo React SPA (frontend/), port 5173, and UI deep links, consolidating interface in monolithic Django studio.",
       "dependencies": ["feat-003"],
       "status": "completed",
-      "evidence": "frontend/ running on port 5173 with Vite & Tailwind, integrated with Django backend chat templates."
+      "evidence": "frontend/ directory purged, port 5173 CORS origins removed, UI header button, studio cards, and action chips removed from chat interface."
     },
     {
       "id": "feat-006",

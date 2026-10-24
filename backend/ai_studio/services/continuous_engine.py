@@ -114,8 +114,7 @@ def continuous_generation_worker(project_id: str):
                             "project_id": str(project.id),
                             "action_chips": [
                                 "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
-                                "▶️ تشغيل كل المشاهد بالتتابع",
-                                "🎬 فتح استوديو DesignCombo"
+                                "▶️ تشغيل كل المشاهد بالتتابع"
                             ]
                         }
                     )

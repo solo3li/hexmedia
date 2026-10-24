@@ -194,7 +194,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             "project_id": str(project.id),
             "is_continuous": False,
             "status": "PAUSED",
-            "action_chips": ["▶️ استئناف التوليد المستمر", "🎬 فتح استوديو DesignCombo"]
+            "action_chips": ["▶️ استئناف التوليد المستمر"]
         }
         return state
 
@@ -211,7 +211,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             "project_id": str(project.id),
             "is_continuous": True,
             "status": "CONTINUOUS_GENERATING",
-            "action_chips": ["⏸️ إيقاف مؤقت للتوليد", "🎬 فتح استوديو DesignCombo"]
+            "action_chips": ["⏸️ إيقاف مؤقت للتوليد"]
         }
         return state
 
@@ -247,7 +247,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
                 "is_continuous": True,
                 "project_type": "VIDEO_STUDIO",
                 "target_duration_minutes": target_dur,
-                "action_chips": ["⏸️ إيقاف مؤقت للتوليد", "🎬 تجميع وريندر الفيلم الكامل بـ Remotion", "🎬 فتح استوديو DesignCombo"]
+                "action_chips": ["⏸️ إيقاف مؤقت للتوليد", "🎬 تجميع وريندر الفيلم الكامل بـ Remotion"]
             }
             return state
         else:
@@ -265,7 +265,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
                 "project_id": str(project.id),
                 "is_continuous": True,
                 "target_duration_minutes": target_dur,
-                "action_chips": ["⏸️ إيقاف مؤقت للتوليد", "🎬 فتح استوديو DesignCombo", "⬇️ تحميل الصوت الكامل"]
+                "action_chips": ["⏸️ إيقاف مؤقت للتوليد", "⬇️ تحميل الصوت الكامل"]
             }
             return state
 
@@ -287,8 +287,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             chips = [
                 f"🎬 بدء إنتاج الفيلم للمدة ({dur_label})",
                 "⏱️ مدة مفتوحة ولانهائية",
-                "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
-                "🎬 فتح استوديو DesignCombo"
+                "🎬 تجميع وريندر الفيلم الكامل بـ Remotion"
             ]
         else:
             reply = (
@@ -300,8 +299,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             chips = [
                 f"🎙️ بدء توليد الصوت للمدة المطلوبة ({dur_label})",
                 "🎙️ نفذ الصوت لهذا المشهد فقط",
-                "🎭 تعديل كاستينغ الشخصيات",
-                "🎬 فتح استوديو DesignCombo"
+                "🎭 تعديل كاستينغ الشخصيات"
             ]
 
         state["project_id"] = str(project.id)
@@ -330,7 +328,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             state["metadata"] = {
                 "project_id": str(project.id),
                 "narration_mode": "FULL",
-                "action_chips": ["🎙️ نفذ الصوت لهذا المشهد الآن", "🎬 فتح استوديو DesignCombo"]
+                "action_chips": ["🎙️ نفذ الصوت لهذا المشهد الآن"]
             }
             return state
         elif any(k in prompt_lower for k in ["ذكي", "تحولات", "smart"]):
@@ -346,7 +344,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             state["metadata"] = {
                 "project_id": str(project.id),
                 "narration_mode": "SMART",
-                "action_chips": ["🎙️ نفذ الصوت لهذا المشهد الآن", "🎬 فتح استوديو DesignCombo"]
+                "action_chips": ["🎙️ نفذ الصوت لهذا المشهد الآن"]
             }
             return state
         elif any(k in prompt_lower for k in ["مباشر", "بدون راوي", "بدون تقديم", "none", "إلغاء تقديم"]):
@@ -358,7 +356,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             state["metadata"] = {
                 "project_id": str(project.id),
                 "narration_mode": "NONE",
-                "action_chips": ["🎙️ نفذ الصوت لهذا المشهد الآن", "🎬 فتح استوديو DesignCombo"]
+                "action_chips": ["🎙️ نفذ الصوت لهذا المشهد الآن"]
             }
             return state
 
@@ -388,7 +386,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
                 state["msg_type"] = "TEXT"
                 state["metadata"] = {
                     "project_id": str(project.id),
-                    "action_chips": ["🎙️ نفذ الصوت لهذا المشهد الآن", "🎬 فتح استوديو DesignCombo"]
+                    "action_chips": ["🎙️ نفذ الصوت لهذا المشهد الآن"]
                 }
                 return state
 
@@ -484,8 +482,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             f"🎬 بدء إنتاج الفيلم للمدة ({dur_label})",
             "⏱️ تعديل المدة إلى 10 دقائق",
             "⏱️ مدة مفتوحة ولانهائية",
-            "🎭 تعديل كاستينغ الشخصيات",
-            "🎬 فتح استوديو DesignCombo"
+            "🎭 تعديل كاستينغ الشخصيات"
         ]
 
         state["project_id"] = str(new_project.id)
@@ -580,7 +577,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             chips.append("🎙️ نفذ الصوت لهذا المشهد فقط")
         else:
             chips.append("🎙️ توليد الصوت لهذا المشهد الآن")
-        chips.extend(["🎭 تعديل كاستينغ الشخصيات", "🎬 فتح استوديو DesignCombo"])
+        chips.append("🎭 تعديل كاستينغ الشخصيات")
 
         state["project_id"] = str(new_project.id)
         state["response_text"] = reply
@@ -616,7 +613,7 @@ def chat_node(state: AudioDramaState) -> AudioDramaState:
             chips.append("🎙️ نفذ الصوت لهذا المشهد فقط")
         else:
             chips.append("🎙️ توليد الصوت لهذا المشهد الآن")
-        chips.extend(["🎭 تعديل كاستينغ الشخصيات", "🎬 فتح استوديو DesignCombo"])
+        chips.append("🎭 تعديل كاستينغ الشخصيات")
 
         state["response_text"] = reply
         state["msg_type"] = "TEXT"
@@ -818,8 +815,7 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
             )
             chips = [
                 "⏸️ إيقاف مؤقت للتوليد",
-                "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
-                "🎬 فتح استوديو DesignCombo"
+                "🎬 تجميع وريندر الفيلم الكامل بـ Remotion"
             ]
         else:
             reply = (
@@ -831,7 +827,6 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
             )
             chips = [
                 "⏸️ إيقاف مؤقت للتوليد",
-                "🎬 فتح استوديو DesignCombo",
                 "⬇️ تحميل الصوت الكامل"
             ]
 
@@ -1004,8 +999,7 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
             "action_chips": [
                 "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
                 "▶️ تشغيل كل المشاهد بالتتابع",
-                "🔄 إعادة توليد الكادرات",
-                "🎬 فتح استوديو DesignCombo"
+                "🔄 إعادة توليد الكادرات"
             ]
         }
         return state
@@ -1023,7 +1017,6 @@ def execute_scene_node(state: AudioDramaState) -> AudioDramaState:
         "project_id": str(project.id),
         "scenes": scenes_list,
         "action_chips": [
-            "🎬 فتح استوديو DesignCombo",
             "⬇️ تحميل الصوت الكامل",
             "🔄 إعادة التوليد بنبرة مختلفة",
             "🎙️ ألف ونفذ مشهداً جديداً"
@@ -1231,7 +1224,7 @@ def execute_chapter_node(state: AudioDramaState) -> AudioDramaState:
         chips = ["🎬 تجميع وريندر الفيلم الكامل بـ Remotion", "▶️ تشغيل كل المشاهد بالتتابع"]
         if next_chapter:
             chips.append(f"🎬 إنتاج مشاهد {next_chapter.title}")
-        chips.extend(["🔄 إعادة توليد الكادرات", "🎬 فتح استوديو DesignCombo"])
+        chips.append("🔄 إعادة توليد الكادرات")
 
         response_text = (
             f"🎬 **تم إنتاج وتجهيز المشاهد المصورة والصوتية لـ ({chapter.title}) بنجاح!**\n\n"
@@ -1255,7 +1248,7 @@ def execute_chapter_node(state: AudioDramaState) -> AudioDramaState:
     chips = []
     if next_chapter:
         chips.append(f"🎙️ تنفيذ صوت {next_chapter.title}")
-    chips.extend(["🎬 فتح استوديو DesignCombo", "⬇️ تحميل العمل الصوتي الكامل"])
+    chips.append("⬇️ تحميل العمل الصوتي الكامل")
 
     response_text = (
         f"🎙️ **تم تنفيذ وتوليد المشاهد الصوتية لـ ({chapter.title}) بنجاح عبر Gemini TTS!**\n\n"

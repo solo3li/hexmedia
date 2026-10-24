@@ -206,18 +206,6 @@
 
       <!-- Left: Open Studio & Export Button -->
       <div class="flex items-center gap-2 shrink-0">
-        <button id="studioHeaderBtn" onclick="openDesignComboStudio()" title="فتح في استوديو المونتاج" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface hover:bg-surfaceHover border border-borderSubtle text-xs text-muted hover:text-white transition-colors">
-          <svg class="w-3 h-3 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <line x1="4" y1="21" x2="4" y2="14"></line>
-            <line x1="4" y1="10" x2="4" y2="3"></line>
-            <line x1="12" y1="21" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12" y2="3"></line>
-            <line x1="20" y1="21" x2="20" y2="16"></line>
-            <line x1="20" y1="12" x2="20" y2="3"></line>
-          </svg>
-          <span class="hidden md:inline">الاستوديو</span>
-        </button>
-
         <button id="exportHeaderBtn" onclick="exportAudioMaster()" class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-limeAccent text-obsidian font-medium text-xs transition-colors active:scale-95 shadow-sm">
           <span>تصدير</span>
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
@@ -622,8 +610,6 @@
         if (!isChat) {
           const narratorCtrls = document.getElementById('narratorModeControls');
           if (narratorCtrls) narratorCtrls.classList.remove('hidden');
-          const studioBtn = document.getElementById('studioHeaderBtn');
-          if (studioBtn) studioBtn.classList.remove('hidden');
           const exportBtn = document.getElementById('exportHeaderBtn');
           if (exportBtn) exportBtn.classList.remove('hidden');
         }
@@ -796,12 +782,6 @@
       } else {
         showToast('⚠️ لا يوجد سيناريو درامي نشط. اختر أداة التأليف من (+) أولاً.', true);
       }
-    }
-
-    function openDesignComboStudio() {
-      if (!activeProjectId) return;
-      const url = `${window.location.protocol}//${window.location.hostname}:5173/?project_id=${activeProjectId}`;
-      window.open(url, '_blank');
     }
 
     function startNewChat() {
@@ -1348,25 +1328,6 @@
             <div class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-borderSubtle shadow-2xl">
               <video src="${metadata.video_url}" controls class="w-full h-full object-contain"></video>
             </div>
-          </div>
-        `;
-      }
-
-      // 4. Studio Ready Link
-      if (msgType === 'STUDIO_LINK' && metadata) {
-        const studioUrl = `${window.location.protocol}//${window.location.hostname}:5173/?project_id=${metadata.project_id || activeProjectId}`;
-        cardHtml += `
-          <div class="mt-4 p-3 sm:p-4 rounded-2xl bg-surface border border-borderSubtle flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-            <div>
-              <div class="text-xs font-medium text-white flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full bg-limeAccent shrink-0"></span>
-                <span>العمل جاهز للمعاينة والمونتاج في الاستوديو</span>
-              </div>
-              <p class="text-[11px] text-muted mt-0.5">المدة: ${Math.round(metadata.total_duration || 0)}s • المشاهد: ${metadata.scenes_count || 0}</p>
-            </div>
-            <a href="${studioUrl}" target="_blank" class="self-end sm:self-auto px-4 py-1.5 sm:py-2 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition active:scale-95 shrink-0 text-center">
-              فتح DesignCombo
-            </a>
           </div>
         `;
       }
@@ -2021,8 +1982,7 @@
                     target_duration_minutes: data.target_duration_minutes,
                     action_chips: [
                       "🎬 تجميع وريندر الفيلم الكامل بـ Remotion",
-                      "⏸️ إيقاف مؤقت للتوليد",
-                      "🎬 فتح استوديو DesignCombo"
+                      "⏸️ إيقاف مؤقت للتوليد"
                     ]
                   }
                 );
@@ -2036,7 +1996,6 @@
                   scenes: data.new_scenes,
                   action_chips: [
                     "⏸️ إيقاف مؤقت للتوليد",
-                    "🎬 فتح استوديو DesignCombo",
                     "⬇️ تحميل الصوت الكامل"
                   ]
                 }
@@ -2111,10 +2070,6 @@
     }
 
     function sendActionChip(chipText) {
-      if (chipText.includes("فتح استوديو")) {
-        openDesignComboStudio();
-        return;
-      }
       if (chipText.includes("تحميل")) {
         exportAudioMaster();
         return;

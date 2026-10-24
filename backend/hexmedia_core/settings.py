@@ -84,10 +84,7 @@ CORS_ALLOW_CREDENTIALS = True
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8100',
     'http://127.0.0.1:8100',
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
     'http://169.58.32.179:8100',
-    'http://169.58.32.179:5173',
     'http://169.58.32.179:9101',
     'http://169.58.32.179:8388',
 ]

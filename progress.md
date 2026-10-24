@@ -2,13 +2,20 @@
 
 ## Current State
 
-**Last Updated:** 2026-10-24 07:05
-**Active Milestone:** M1, M2, M3 Completed (Authentication, Conversation Memory, Studio UI)
+**Last Updated:** 2026-10-24 07:22
+**Active Milestone:** DesignCombo Studio Removal Completed; M1, M2, M3 Stable
 
 ## Status
 
 ### What's Done
 
+- [x] **DesignCombo Studio Removal**:
+  - Stopped and killed background Vite process on port 5173.
+  - Deleted `frontend/` directory completely.
+  - Removed `#studioHeaderBtn`, `openDesignComboStudio()`, and `msgType === 'STUDIO_LINK'` from `backend/templates/chat/index.html`.
+  - Removed `"🎬 فتح استوديو DesignCombo"` action chips from `backend/templates/chat/index.html`, `langgraph_controller.py`, and `continuous_engine.py`.
+  - Removed port 5173 from `CSRF_TRUSTED_ORIGINS` in `backend/hexmedia_core/settings.py`.
+  - Updated `README.md` and `feature_list.json` to reflect streamlined single-app architecture.
 - [x] **M1: Hybrid Multi-User Authentication & Data Isolation**:
   - Implemented custom HS256 JWT utility with access (7d) and refresh (30d) tokens in `backend/ai_studio/auth.py`.
   - Added user ownership ForeignKey to `BookProject` and `ChatMessage` (migration 0007).
@@ -31,7 +38,6 @@
 ### What's In Progress
 
 - [ ] Verifying full test suite via `./init.sh`.
-- [ ] Restarting persistent background services (Django dev server on port 8100, Vite dev server on port 5173).
 
 ### What's Next
 
