@@ -63,6 +63,14 @@
       "dependencies": ["feat-006", "feat-007"],
       "status": "completed",
       "evidence": "RTL obsidian theme updated in backend/templates/chat/index.html with login/register modals, authFetch wrapper, dynamic sidebar thread rendering, and /api/profile/media endpoint."
+    },
+    {
+      "id": "feat-009",
+      "name": "Profile & Projects Hub Modal with Media Library & Multi-User Isolation",
+      "description": "Interactive modern obsidian modal (#profileModal) with tabs for Projects, Audio Clips, Video Scenes, Scripts, and Account Stats, featuring inline project renaming, project deletion, direct audio streaming, and dual access triggers in header and sidebar.",
+      "dependencies": ["feat-006", "feat-008"],
+      "status": "completed",
+      "evidence": "Implemented #profileModal and #projectRenameModal in index.html, added PATCH /api/projects/{id}/rename and DELETE /api/projects/{id} endpoints in api.py, enhanced GET /api/profile/media with stats, passing 7 dedicated tests in tests_profile.py."
     }
   ]
 }

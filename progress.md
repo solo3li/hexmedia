@@ -34,6 +34,13 @@
   - Added visitor onboarding flow: preserves unauthenticated prompts, shows auth modal, and auto-dispatches upon login/register.
   - Implemented `/api/profile/media` returning user deliverables (audio tracks, scripts, video scenes).
   - Verified 33 E2E test cases passing in `tests_e2e.py`.
+- [x] **Profile & Projects Hub Modal with Media Library (feat-009)**:
+  - Added `#profileModal` interactive obsidian hub in `backend/templates/chat/index.html` with 5 tabs: Projects, Audio Clips, Video Scenes, Scripts, and Stats.
+  - Added project rename modal `#projectRenameModal` and inline project deletion with confirmation.
+  - Implemented dual access triggers: User dropdown menu in top header and dedicated Hub button in sidebar bottom.
+  - Added backend endpoints: `PATCH /api/projects/{id}/rename`, `DELETE /api/projects/{id}`, and enhanced `GET /api/profile/media` with aggregate statistics.
+  - Verified multi-user isolation (unauthorized users cannot rename/delete projects).
+  - Created and passed 7 tests in `backend/ai_studio/tests_profile.py`.
 
 ### What's In Progress
 
