@@ -461,13 +461,6 @@
             </svg>
           </button>
 
-          <!-- Master Sequential Audio Playback Button -->
-          <button id="masterPlayBtn" onclick="toggleMasterPlay()" title="تشغيل كل المشاهد بالتتابع" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-obsidian hover:bg-limeAccent text-light hover:text-obsidian border border-borderSubtle flex items-center justify-center shrink-0 transition-transform active:scale-95">
-            <svg id="masterPlayIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-              <polygon points="6 4 20 12 6 20 6 4"></polygon>
-            </svg>
-          </button>
-
           <!-- Live Voice Recording Duration Pill -->
           <div id="voiceRecordStatusPill" class="hidden items-center gap-1.5 px-2.5 py-1 bg-red-500/10 border border-red-500/30 rounded-full shrink-0 animate-pulse">
             <span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
@@ -4028,7 +4021,8 @@
         activeBlockId = null;
       }
       isMasterPlaying = false;
-      document.getElementById('masterPlayIcon').innerHTML = '<polygon points="6 4 20 12 6 20 6 4"></polygon>';
+      const mIcon = document.getElementById('masterPlayIcon');
+      if (mIcon) mIcon.innerHTML = '<polygon points="6 4 20 12 6 20 6 4"></polygon>';
     }
 
     function toggleMasterPlay() {
@@ -4048,7 +4042,8 @@
 
       stopAllPlayback();
       isMasterPlaying = true;
-      document.getElementById('masterPlayIcon').innerHTML = '<rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect>';
+      const mIcon = document.getElementById('masterPlayIcon');
+      if (mIcon) mIcon.innerHTML = '<rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect>';
 
       const sceneIds = allAudios.map(btn => btn.id.replace('play_btn_', ''));
       playSequentialIndex(sceneIds, 0);
