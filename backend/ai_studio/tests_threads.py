@@ -171,3 +171,24 @@ class ChatThreadAPITests(TestCase):
         parsed_uuid = uuid.UUID(data["id"])
         self.assertEqual(str(parsed_uuid), data["id"])
         self.assertTrue(ChatThread.objects.filter(id=data["id"], user=self.user_a).exists())
+
+    def test_visitor_full_width_and_sidebar_toggle_controls(self):
+        """Home view includes collapsible sidebar styles, header toggle button and direct new chat button."""
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        content = res.content.decode("utf-8")
+        self.assertIn("sidebarToggleBtn", content)
+        self.assertIn("headerNewChatBtn", content)
+        self.assertIn("body.is-visitor #sidebar", content)
+        self.assertIn("body.sidebar-collapsed #sidebar", content)
+
+    def test_rapid_new_chat_generation_generates_distinct_threads(self):
+        """Sequential POST /api/threads calls generate unique threads for the authenticated user."""
+        res1 = self.client.post("/api/threads", content_type="application/json", **self.auth_headers_a)
+        res2 = self.client.post("/api/threads", content_type="application/json", **self.auth_headers_a)
+        self.assertEqual(res1.status_code, 200)
+        self.assertEqual(res2.status_code, 200)
+        id1 = res1.json()["id"]
+        id2 = res2.json()["id"]
+        self.assertNotEqual(id1, id2)
+        self.assertEqual(ChatThread.objects.filter(user=self.user_a).count(), 2)

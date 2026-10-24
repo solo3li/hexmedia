@@ -67,6 +67,14 @@
   - Added auto-titling in `chat_endpoint` in `api.py` so a newly generated UUID thread inherits an intelligent title from the user's first prompt.
   - Added 2 new tests in `tests_threads.py` verifying visitor history suppression and UUID generation.
   - Verified total 178 tests passing via `./init.sh`.
+- [x] **Desktop Collapsible Sidebar, Guest Full-Width Canvas & Fast New-Chat Flow (feat-013)**:
+  - Added `#sidebarToggleBtn` in header and wired keyboard shortcut `Ctrl+B` / `Cmd+B` to toggle the sidebar on both Desktop and Mobile.
+  - On Desktop (`min-width: 1024px`), `#sidebar` collapses smoothly from `w-64` to `w-0` with `overflow-hidden` via CSS transition, expanding the chat canvas to 100% full width.
+  - Preserved user collapse preference across reloads in `localStorage.getItem('sidebar_collapsed')`.
+  - Completely purged and hid the sidebar and toggle button in logged-out visitor mode (`body.is-visitor #sidebar { display: none !important; }`), ensuring an immaculate 100% full-width chat canvas with zero residual records.
+  - Added instant `#headerNewChatBtn` (Ctrl+K) directly in the top header.
+  - Refactored `startNewChat()` to ensure clean reset: closes mobile drawer, provisions fresh UUID via `POST /api/threads`, clears `#dynamicChatFeed`, resets URL parameter, reveals `welcomeHero`, and refreshes sidebar thread selection.
+  - Added 2 new tests in `tests_threads.py` verifying visitor controls and distinct sequential thread generation (11/11 passing).
 
 ### What's In Progress
 

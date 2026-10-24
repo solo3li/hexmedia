@@ -95,6 +95,14 @@
       "dependencies": ["feat-007", "feat-008"],
       "status": "completed",
       "evidence": "backend/ai_studio/views.py filters projects to request.user only (empty for guests); index.html renders login CTA without history leaks; startNewChat generates new UUID thread via POST /api/threads, updates URL to ?thread_id=<uuid>, wipes #dynamicChatFeed; chat_endpoint automatically titles threads upon first message; passing 9/9 in tests_threads.py and 178/178 in ./init.sh."
+    },
+    {
+      "id": "feat-013",
+      "name": "Desktop Collapsible Sidebar, Guest Full-Width Canvas & Fast New-Chat Flow",
+      "description": "Smooth toggleable sidebar for desktop and mobile with persistent state in localStorage; completely hide sidebar and toggle controls for logged-out visitors for 100% full-width chat canvas without history leaks; provide header '+ محادثة جديدة' action and robust state-resetting startNewChat flow.",
+      "dependencies": ["feat-008", "feat-012"],
+      "status": "completed",
+      "evidence": "backend/templates/chat/index.html updated with desktop sidebar-collapsed CSS transition, unified #sidebarToggleBtn (Ctrl+B), #headerNewChatBtn (Ctrl+K), visitor mode complete DOM purge and hide, and isolated startNewChat thread generation; 11/11 tests passing in backend/ai_studio/tests_threads.py."
     }
   ]
 }
