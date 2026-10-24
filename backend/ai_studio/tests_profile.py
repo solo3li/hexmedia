@@ -179,3 +179,9 @@ class ProfileAndProjectsAPITests(TestCase):
         self.assertIn("function openProjectInChat(", content)
         self.assertIn("function submitRenameProject(", content)
         self.assertIn("function deleteProjectInProfile(", content)
+
+        # Tools Menu Content Check
+        self.assertIn("إنتاج فيلم وفيديو بالصور", content)
+        self.assertNotIn("تنفيذ وتوليد الصوت الآن", content)
+        self.assertIn("تحويل كتاب إلى دراما مسموعة", content)
+        self.assertIn("تأليف وتطوير قصة وسيناريو", content)

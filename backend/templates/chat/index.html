@@ -363,18 +363,7 @@
             </div>
           </button>
 
-          <!-- Tool 3: Execute TTS Audio -->
-          <button onclick="triggerAudioExecution()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
-            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-emerald-400 shrink-0">
-              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
-            </div>
-            <div>
-              <div class="font-medium text-white group-hover:text-emerald-300 transition">تنفيذ وتوليد الصوت الآن</div>
-              <div class="text-[10px] text-muted">إنتاج المشاهد بأصوات Gemini TTS</div>
-            </div>
-          </button>
-
-          <!-- Tool 4: Film & Video Studio -->
+          <!-- Tool 3: Film & Video from Images Studio -->
           <button onclick="activateVideoTool()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
             <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-amber-400 group-hover:border-amber-400/40 shrink-0">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -389,7 +378,7 @@
               </svg>
             </div>
             <div>
-              <div class="font-medium text-white group-hover:text-amber-300 transition">إنتاج فيلم وفيديو سينمائي</div>
+              <div class="font-medium text-white group-hover:text-amber-300 transition">إنتاج فيلم وفيديو بالصور</div>
               <div class="text-[10px] text-muted">مشاهد مصورة (وثائقي، كرتون، مانجا) وريندر Remotion</div>
             </div>
           </button>
@@ -991,11 +980,11 @@
       pill.classList.remove('hidden');
       pill.classList.add('flex');
       document.getElementById('activeToolIcon').textContent = '🎬';
-      document.getElementById('activeToolLabel').textContent = 'إنتاج فيلم وفيديو سينمائي';
+      document.getElementById('activeToolLabel').textContent = 'إنتاج فيلم وفيديو بالصور';
       const input = document.getElementById('chatInput');
-      input.placeholder = 'اكتب فكرة الفيلم (وثائقي، كرتون، سينمائي، مانجا) لإنتاج المشاهد المصورة والصوت...';
+      input.placeholder = 'اكتب فكرة الفيلم المصور (وثائقي، كرتون، مانجا) لإنتاج الكادرات البصرية بالصور والصوت...';
       input.focus();
-      showToast('🎬 تم تفعيل استوديو إنتاج الأفلام والفيديو المصور');
+      showToast('🎬 تم تفعيل أداة إنتاج الفيلم والفيديو بالصور');
     }
 
     function clearActiveTool() {
