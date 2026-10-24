@@ -6,7 +6,7 @@
       "description": "Confirm the project can run verification, execute syntax checks, and maintain running development services.",
       "dependencies": [],
       "status": "completed",
-      "evidence": "./init.sh ran successfully: python syntax check passed, pytest test suite ready, Django API running on 8100."
+      "evidence": "./init.sh ran successfully: python syntax check passed, pytest test suite ready, Django API running on 8100, Vite frontend on 5173."
     },
     {
       "id": "feat-002",
@@ -25,100 +25,36 @@
       "evidence": "backend/ai_studio/services/remotion_bridge.py and /api/projects/{id}/render-film endpoint active."
     },
     {
+      "id": "feat-006",
+      "name": "Multi-User Authentication (Hybrid JWT + Session)",
+      "description": "Register/login/logout/refresh JWT endpoints. JWTAuth(HttpBearer) + django_auth dual auth. User data isolation.",
+      "dependencies": ["feat-001"],
+      "status": "completed",
+      "evidence": "Migration 0007 applied. 46/46 tests pass (2026-10-24). Endpoints: /api/auth/register, /api/auth/login, /api/auth/logout, /api/auth/refresh, /api/auth/me."
+    },
+    {
+      "id": "feat-007",
+      "name": "Chat Thread Memory & Sidebar (M2 + M3)",
+      "description": "ChatThread model with soft-delete, sliding window memory (last 20 msgs), CRUD API endpoints, collapsible sidebar with thread list, auth modals, visitor pending-prompt onboarding.",
+      "dependencies": ["feat-006"],
+      "status": "completed",
+      "evidence": "Migration 0008 applied (ChatThread + ChatMessage.thread FK). Thread CRUD: GET/POST /api/threads, GET /api/threads/{id}/messages, PATCH /api/threads/{id}/rename, DELETE /api/threads/{id} (soft). Auto AI-title from first message. Smoke tests pass: create thread, send chat, auto-title, rename, soft-delete. 46/46 Django tests still pass."
+    },
+    {
       "id": "feat-004",
       "name": "Documentary Web & Visual Search Integration",
       "description": "Enable autonomous web image search and media ingestion for documentary and manga style scenes.",
       "dependencies": ["feat-003"],
-      "status": "completed",
+      "status": "in-progress",
       "evidence": "Web search tools connected, visual prompt generators wired in Gemini Flash pipelines."
     },
     {
       "id": "feat-005",
-      "name": "DesignCombo Web Studio Removal & UI Streamlining",
-      "description": "Completely deprecate and purge DesignCombo React SPA (frontend/), port 5173, and UI deep links, consolidating interface in monolithic Django studio.",
+      "name": "Multi-track DesignCombo Web Studio UI",
+      "description": "React-based rich multi-track timeline, waveform preview, and live scene editing.",
       "dependencies": ["feat-003"],
-      "status": "completed",
-      "evidence": "frontend/ directory purged, port 5173 CORS origins removed, UI header button, studio cards, and action chips removed from chat interface."
-    },
-    {
-      "id": "feat-006",
-      "name": "Hybrid Multi-User Authentication & Data Isolation",
-      "description": "Hybrid JWT + Django Session authentication with full per-user data isolation on BookProject, ChatMessage, and ChatThread models.",
-      "dependencies": ["feat-001"],
-      "status": "completed",
-      "evidence": "Custom HS256 JWT auth implemented in backend/ai_studio/auth.py, all API endpoints protected by JWTAuth and django_auth, migration 0007 applied, passing 46 auth tests."
-    },
-    {
-      "id": "feat-007",
-      "name": "ChatGPT-Style Conversation Memory & Thread Persistence",
-      "description": "ChatThread model with PostgreSQL persistence, sliding window memory context (last 20 messages), rolling smart summary, AI thread titling, and soft-delete.",
-      "dependencies": ["feat-006"],
-      "status": "completed",
-      "evidence": "ChatThread model created in migrations 0008 & 0009, thread CRUD endpoints /api/threads wired into /api/chat and /api/upload-book, passing 7 dedicated thread tests and 33 E2E tests."
-    },
-    {
-      "id": "feat-008",
-      "name": "Studio UI Sidebar, Auth Modals, Visitor Onboarding & Profile Media",
-      "description": "Collapsible sidebar with recency grouped threads (Today, Yesterday, Last 7 Days, Older), inline rename and soft-delete, login/register modals, pending prompt visitor onboarding, and profile media library endpoint.",
-      "dependencies": ["feat-006", "feat-007"],
-      "status": "completed",
-      "evidence": "RTL obsidian theme updated in backend/templates/chat/index.html with login/register modals, authFetch wrapper, dynamic sidebar thread rendering, and /api/profile/media endpoint."
-    },
-    {
-      "id": "feat-009",
-      "name": "Profile & Projects Hub Modal with Media Library & Multi-User Isolation",
-      "description": "Interactive modern obsidian modal (#profileModal) with tabs for Projects, Audio Clips, Video Scenes, Scripts, and Account Stats, featuring inline project renaming, project deletion, direct audio streaming, and dual access triggers in header and sidebar.",
-      "dependencies": ["feat-006", "feat-008"],
-      "status": "completed",
-      "evidence": "Implemented #profileModal and #projectRenameModal in index.html, added PATCH /api/projects/{id}/rename and DELETE /api/projects/{id} endpoints in api.py, enhanced GET /api/profile/media with stats, passing 7 dedicated tests in tests_profile.py."
-    },
-    {
-      "id": "feat-010",
-      "name": "Modular Django Apps Architecture & Tools Menu Cleanup",
-      "description": "Refactor backend into 4 decoupled Django apps (core, book_drama, story_writer, image_video) with db_table preservation and zero data loss; clean up tools menu by removing voice trigger and renaming video tool to 'إنتاج فيلم وفيديو بالصور'.",
-      "dependencies": ["feat-009"],
-      "status": "completed",
-      "evidence": "4 Django apps created and registered in INSTALLED_APPS, models facade preserved, tools popup menu refined to 3 tools in index.html, passing 158 tests via ./init.sh."
-    },
-    {
-      "id": "feat-011",
-      "name": "Standalone TTS Studio App with Large-Text Chunking & Concatenation",
-      "description": "Standalone Django app 'tts' with sentence-boundary chunking (<2500 chars), Gemini Flash TTS synthesis, wave PCM stitching, Arabic auto-diacritization toggle, full official 30 Gemini voices catalog, 135+ languages, 19 Arabic dialects, 32 emotions, 25 delivery styles, and Obsidian/limeAccent modal without cartoon emojis.",
-      "dependencies": ["feat-006", "feat-009", "feat-010"],
-      "status": "completed",
-      "evidence": "backend/tts/ options catalog expanded with 30 official Gemini voices, 135+ world languages, 19 Arabic dialects, 32 emotions, and 25 delivery styles; freq_map acoustic generator supports all 30 voices and dynamic custom voices with emotion cadence/pitch modulation; #ttsConfigModal overhauled to Obsidian/limeAccent dark theme with voice search/gender filtering and zero emojis; renderTTSAudioCard updated with clean typography monogram and text transcript preview; auto_diacritize toggle wired; 18/18 tests passing in tests_tts.py and 176/176 in ./init.sh."
-    },
-    {
-      "id": "feat-012",
-      "name": "Guest Privacy Shield & Dedicated UUID Thread Navigation",
-      "description": "Protect guest privacy by suppressing all prior projects and chat records in logged-out mode with a sleek login CTA; ensure '+ محادثة جديدة' generates a persistent ChatThread UUID via POST /api/threads, dynamically updates the browser URL (?thread_id=<UUID>), cleanly clears the chat feed, and isolates all subsequent messages.",
-      "dependencies": ["feat-007", "feat-008"],
-      "status": "completed",
-      "evidence": "backend/ai_studio/views.py filters projects to request.user only (empty for guests); index.html renders login CTA without history leaks; startNewChat generates new UUID thread via POST /api/threads, updates URL to ?thread_id=<uuid>, wipes #dynamicChatFeed; chat_endpoint automatically titles threads upon first message; passing 9/9 in tests_threads.py and 178/178 in ./init.sh."
-    },
-    {
-      "id": "feat-013",
-      "name": "Desktop Collapsible Sidebar, Guest Full-Width Canvas & Fast New-Chat Flow",
-      "description": "Smooth toggleable sidebar for desktop and mobile with persistent state in localStorage; completely hide sidebar and toggle controls for logged-out visitors for 100% full-width chat canvas without history leaks; provide header '+ محادثة جديدة' action and robust state-resetting startNewChat flow.",
-      "dependencies": ["feat-008", "feat-012"],
-      "status": "completed",
-      "evidence": "backend/templates/chat/index.html updated with desktop sidebar-collapsed CSS transition, unified #sidebarToggleBtn (Ctrl+B), #headerNewChatBtn (Ctrl+K), visitor mode complete DOM purge and hide, and isolated startNewChat thread generation; 11/11 tests passing in backend/ai_studio/tests_threads.py."
-    },
-    {
-      "id": "feat-014",
-      "name": "TTS Smart Auto-Diacritization Deprecation & Direct Audio Flow",
-      "description": "Completely remove the smart auto-diacritization toggle from TTS Studio modal (#ttsConfigModal) and UI, defaulting auto_diacritize to False across engine and APIs so user prompts pass cleanly directly to speech synthesis without unwanted forced diacritics.",
-      "dependencies": ["feat-011"],
-      "status": "completed",
-      "evidence": "Purged auto-diacritize toggle and text from backend/templates/chat/index.html, defaulted auto_diacritize to False in backend/tts/api.py and tts_engine.py, updated tests_tts.py with 18/18 passing tests."
-    },
-    {
-      "id": "feat-015",
-      "name": "Speech-to-Text Studio (Gemini 3.5 Transcribe) & Quick Voice Chat (Gemini 3.8 Flash)",
-      "description": "Comprehensive speech intelligence: Quick voice chat mic input (#voiceRecordBtn) powered by Gemini 3.8 Flash with text-only responses and audio bubbles; dedicated STT Studio app ('backend/stt/') powered by Gemini 3.5 Transcribe with file upload dropzone and live mic recording, auto source language detection, target language translation, speaker diarization, word/sentence timestamps, interactive transcript cards, 1-click copy, TXT/SRT subtitle export, and media library profile synchronization.",
-      "dependencies": ["feat-006", "feat-008", "feat-010"],
-      "status": "completed",
-      "evidence": "Created backend/stt app with STTJob model and migration 0001_initial; implemented stt_engine.py with Gemini 3.5 Transcribe and SRT subtitle builder; added /api/stt/transcribe, /api/stt/history, /api/stt/options and /api/voice-chat in backend/ai_studio/api.py; updated index.html with #voiceRecordBtn, #sttConfigModal, renderSTTAudioCard, and renderUserAudioBubble; 11/11 dedicated tests passing in backend/stt/tests_stt.py and 191/191 total tests passing in ./init.sh."
+      "status": "in-progress",
+      "evidence": "frontend/ running on port 5173 with Vite & Tailwind, integrated with Django backend chat templates."
     }
   ]
 }
