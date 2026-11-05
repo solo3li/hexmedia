@@ -63,6 +63,14 @@
       "dependencies": ["feat-001"],
       "status": "completed",
       "evidence": "voice_dynamic.yml updated; Let's Encrypt SAN certs issued for hexmedia.169.58.32.179.nip.io and hexmedia-assets.169.58.32.179.nip.io; HTTP-to-HTTPS 308 redirect verified; HTTP/2 200 valid SSL verified; uggu.space and telephony unharmed."
+    },
+    {
+      "id": "feat-017",
+      "name": "Gemini 3.8 Flash Voice Cloning & TTS Studio Integration",
+      "description": "Voice cloning tool in toolsMenu with 4-step wizard modal (source recording/upload, biometric consent recording, 24kHz mono WAV conversion, Gemini Voices API replication, audition test) and TTS Studio integration with 'My Voices' section above prebuilt voices.",
+      "dependencies": ["feat-001"],
+      "status": "completed",
+      "evidence": "Migration 0002 applied for ClonedVoice; ffmpeg WAV 24kHz mono converter in voice_cloner.py; Gemini Voices API replication client; endpoints /api/tts/voices/clone, /cloned, /test, /delete; voiceCloneModal and TTS Studio My Voices UI in index.html; 27/27 TTS tests pass, 200/200 total tests pass in ./init.sh."
     }
   ]
 }

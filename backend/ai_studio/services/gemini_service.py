@@ -477,6 +477,36 @@ def generate_voice_audio(
             else:
                 contents_payload = clean_text
 
+            # Check if voice_name is a replicated voice ID (starts with voice_)
+            if voice_name and voice_name.startswith("voice_"):
+                try:
+                    interaction_input = [{
+                        "type": "user_input",
+                        "content": [{
+                            "type": "text",
+                            "text": clean_text,
+                            "annotations": [{"type": "speech_metadata", "style": style_str}] if style_str else []
+                        }]
+                    }]
+                    interaction = client.interactions.create(
+                        model=tts_model,
+                        input=interaction_input,
+                        response_format={"type": "audio"},
+                        generation_config={
+                            "speech_config": [
+                                {"voice": voice_name}
+                            ]
+                        }
+                    )
+                    if hasattr(interaction, "output_audio") and interaction.output_audio and hasattr(interaction.output_audio, "data"):
+                        audio_data = interaction.output_audio.data
+                        if isinstance(audio_data, str):
+                            import base64
+                            return base64.b64decode(audio_data)
+                        return audio_data
+                except Exception as e_inter:
+                    logger.warning(f"interactions.create failed for voice {voice_name}: {e_inter}")
+
             try:
                 response = client.models.generate_content(
                     model=tts_model,

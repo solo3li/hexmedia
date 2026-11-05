@@ -68,3 +68,32 @@
   - HTTPS `https://hexmedia.169.58.32.179.nip.io` -> HTTP/2 200 with valid TLS.
   - HTTPS `https://hexmedia-assets.169.58.32.179.nip.io/minio/health/live` -> HTTP/2 200 with valid TLS.
   - Unbroken continuity on `uggu.space` and `app.169.58.32.179.nip.io`.
+
+---
+
+## Session 6 — 2026-11-05: Gemini 3.8 Flash Voice Cloning & TTS Studio Integration
+
+### Completed ✅
+- **Voice Cloning Tool in `#toolsMenu`**:
+  - Added "استنساخ الصوت (Clone Your Voice)" item to the floating dock tools menu in `backend/templates/chat/index.html`.
+- **4-Step Wizard Modal (`#voiceCloneModal`)**:
+  - Step 1: Record reference audio (`source_audio`) with microphone (live audio level / recording timer) or upload audio file.
+  - Step 2: Record mandatory biometric consent audio (`consent_audio`) reading exact Arabic phrase:
+    "أنا مالك هذا الصوت وأوافق على أن تستخدم google هذا الصوت لإنشاء نموذج صوتي اصطناعي."
+  - Step 3: Server converts audio to 24kHz mono 16-bit WAV using ffmpeg pipe conversion (`voice_cloner.py`), calls Gemini Voices API `client.voices.create(store=True, ...)`, verifies speaker match, and stores the `voice.id`.
+  - Step 4: Audition / test voice with custom sentence, play generated sample, and save voice.
+- **TTS Studio Integration (`#ttsConfigModal`)**:
+  - Added dedicated "أصواتي المستنسخة (My Voices)" section at the very top of voice selection with real-time count badge.
+  - Allows selecting any replicated voice for speech synthesis instead of prebuilt voices (`Puck`, `Charon`, etc.).
+- **Backend Model & API Endpoints**:
+  - `ClonedVoice` model in `backend/tts/models.py` (migration `0002_clonedvoice.py`).
+  - `POST /api/tts/voices/clone`: Uploads source & consent audio, converts via ffmpeg, replicates via Gemini API.
+  - `GET /api/tts/voices/cloned`: Returns user's cloned voices.
+  - `POST /api/tts/voices/cloned/{voice_id}/test`: Audition endpoint synthesizing test phrases.
+  - `DELETE /api/tts/voices/cloned/{voice_id}`: Deletes record and remote Gemini voice.
+- **TTS Engine Update**:
+  - `generate_voice_audio` in `backend/ai_studio/services/gemini_service.py` supports replicated voice IDs (`voice_...`) using Gemini interaction/speech config with graceful fallback.
+- **Verification**:
+  - 27/27 TTS unit tests pass (`backend/tts/tests_tts.py`).
+  - 200/200 total test suite passes (`./init.sh`).
+  - Python compileall syntax check clean.

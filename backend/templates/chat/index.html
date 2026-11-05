@@ -448,6 +448,20 @@
               <div class="text-[10px] text-muted">تحويل الصوت لنص، تمييز المتحدثين، وتصدير SRT / TXT بواسطة Gemini 3.5 Transcribe</div>
             </div>
           </button>
+
+          <!-- Tool 6: Clone Your Voice -->
+          <button onclick="openVoiceCloneModal()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
+            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-limeAccent group-hover:border-limeAccent/40 shrink-0">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M19 11a7 7 0 0 1-7 7m0 0a7 7 0 0 1-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 0 1-3-3V5a3 3 0 1 1 6 0v6a3 3 0 0 1-3 3z"></path>
+                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="font-medium text-white group-hover:text-limeAccent transition">استنساخ الصوت (Clone Your Voice)</div>
+              <div class="text-[10px] text-muted">استنساخ بصمة صوتك ونبرتك الطبيعية باستخدام Gemini 3.8 Flash TTS</div>
+            </div>
+          </button>
         </div>
 
         <!-- The Floating Dock Body -->
@@ -956,6 +970,28 @@
 
         <!-- Row 2: Voice Profile Selector Grid with Filter and Search -->
         <div class="bg-surface/60 p-3.5 rounded-2xl border border-borderSubtle/60">
+
+          <!-- Section: My Cloned Voices (أصواتي المستنسخة) -->
+          <div class="mb-4 pb-3 border-b border-borderSubtle/60">
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-white text-xs">أصواتي المستنسخة (My Voices)</span>
+                <span id="ttsClonedVoiceCountBadge" class="text-[9px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">0 أصوات</span>
+              </div>
+              <button type="button" onclick="closeTTSConfigModal(); openVoiceCloneModal();" class="text-[10px] font-medium text-limeAccent hover:text-white flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface border border-borderSubtle hover:border-limeAccent/40 transition">
+                <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>استنساخ صوت جديد</span>
+              </button>
+            </div>
+            <div id="ttsClonedVoicesContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              <!-- Rendered dynamically by JS -->
+            </div>
+          </div>
+
+          <!-- Section: Gemini Voice Catalog -->
           <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
             <div class="flex items-center gap-2">
               <label class="font-medium text-light">مكتبة الأصوات الرسمية (Gemini Voice Catalog)</label>
@@ -1099,6 +1135,376 @@
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- CLONE YOUR VOICE MODAL (Gemini 3.8 Flash TTS Voice Replication) -->
+  <!-- ========================================================================= -->
+  <div id="voiceCloneModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeVoiceCloneModal()">
+    <div class="bg-[#0c0c10] border border-[#232330] ring-1 ring-white/5 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.95)] overflow-hidden" onclick="event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-[#1f1f2a] flex items-center justify-between shrink-0 bg-[#08080a]">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-2xl bg-surface border border-borderSubtle text-limeAccent font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
+            VC
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm sm:text-base font-semibold text-white tracking-tight">استنساخ الصوت (Clone Your Voice)</h3>
+              <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">Gemini 3.8 Flash TTS</span>
+            </div>
+            <p class="text-[11px] text-muted mt-0.5">استنساخ بصمة صوتك الطبيعية واستخدامها في تحويل النص إلى كلام وسرد القصص</p>
+          </div>
+        </div>
+        <button onclick="closeVoiceCloneModal()" class="p-2 rounded-xl text-muted hover:text-white hover:bg-surface border border-transparent hover:border-borderSubtle transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Wizard Step Indicator -->
+      <div class="px-5 py-3 border-b border-borderSubtle/60 bg-surface/30 flex items-center justify-between text-xs shrink-0">
+        <div class="flex items-center gap-2" id="vcStepPill1">
+          <span class="w-5 h-5 rounded-full bg-limeAccent text-obsidian font-mono font-bold text-[10px] flex items-center justify-center shrink-0">1</span>
+          <span class="font-medium text-white text-[11px] hidden sm:inline">الصوت المرجعي</span>
+        </div>
+        <div class="h-0.5 w-6 sm:w-10 bg-borderSubtle" id="vcStepLine1"></div>
+        <div class="flex items-center gap-2" id="vcStepPill2">
+          <span class="w-5 h-5 rounded-full bg-surface border border-borderSubtle text-muted font-mono font-bold text-[10px] flex items-center justify-center shrink-0">2</span>
+          <span class="font-medium text-muted text-[11px] hidden sm:inline">إقرار الموافقة</span>
+        </div>
+        <div class="h-0.5 w-6 sm:w-10 bg-borderSubtle" id="vcStepLine2"></div>
+        <div class="flex items-center gap-2" id="vcStepPill3">
+          <span class="w-5 h-5 rounded-full bg-surface border border-borderSubtle text-muted font-mono font-bold text-[10px] flex items-center justify-center shrink-0">3</span>
+          <span class="font-medium text-muted text-[11px] hidden sm:inline">المعالجة</span>
+        </div>
+        <div class="h-0.5 w-6 sm:w-10 bg-borderSubtle" id="vcStepLine3"></div>
+        <div class="flex items-center gap-2" id="vcStepPill4">
+          <span class="w-5 h-5 rounded-full bg-surface border border-borderSubtle text-muted font-mono font-bold text-[10px] flex items-center justify-center shrink-0">4</span>
+          <span class="font-medium text-muted text-[11px] hidden sm:inline">التجربة والاعتماد</span>
+        </div>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs bg-[#0c0c10]">
+
+        <!-- STEP 1: REFERENCE AUDIO -->
+        <div id="vcStepContainer1" class="space-y-4">
+          <div>
+            <label class="block font-medium text-light mb-1.5">اسم الصوت المستنسخ</label>
+            <input 
+              type="text" 
+              id="vcVoiceNameInput" 
+              value="صوتي المستنسخ" 
+              placeholder="مثال: صوتي الطبيعي، نبرة السرد الإخباري..." 
+              class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white placeholder-muted focus:outline-none focus:border-limeAccent text-xs transition"
+            >
+          </div>
+
+          <!-- Source Tabs: Mic vs Upload -->
+          <div class="flex items-center gap-2 p-1 bg-surface/70 rounded-xl border border-borderSubtle/60">
+            <button id="vcTabMicBtn" type="button" onclick="switchVoiceCloneSourceTab('mic')" class="flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                <line x1="12" y1="18" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+              </svg>
+              <span>تسجيل مباشر بالميكروفون</span>
+            </button>
+            <button id="vcTabUploadBtn" type="button" onclick="switchVoiceCloneSourceTab('upload')" class="flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span>رفع ملف صوتي مسجل</span>
+            </button>
+          </div>
+
+          <!-- Tab A: Live Mic -->
+          <div id="vcSourceMicContainer" class="space-y-3">
+            <div class="bg-surface/50 border border-borderSubtle/80 rounded-2xl p-3.5 sm:p-4 text-right">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[11px] font-semibold text-limeAccent">نص مقترح للقراءة أثناء التسجيل:</span>
+                <span class="text-[10px] font-mono text-muted">10 - 60 ثانية</span>
+              </div>
+              <p class="text-xs text-light/90 leading-relaxed bg-obsidian/60 p-3 rounded-xl border border-borderSubtle/60 select-all font-sans">
+                «في أعماق الليل الساكن، تتلألأ النجوم لتروي حكايات الكون القديم، وتنثر أسرار الزمان على دروب السائرين نحو فجر جديد مليء بالأمل والجمال. إن الصوت هو جسر المشاعر ومرآة الروح التي تعبر عن المعاني بصدق ووضوح.»
+              </p>
+            </div>
+
+            <!-- Mic Record Area -->
+            <div class="border border-borderSubtle/80 rounded-2xl p-4 sm:p-5 bg-surface/30 flex flex-col items-center justify-center gap-3 text-center">
+              <div class="relative">
+                <div id="vcSourcePulse" class="absolute -inset-2 rounded-full bg-red-500/20 animate-ping hidden"></div>
+                <button 
+                  type="button"
+                  id="vcSourceRecordBtn" 
+                  onclick="toggleVoiceCloneSourceRecording()" 
+                  class="relative w-14 h-14 rounded-full bg-obsidian border-2 border-borderSubtle hover:border-limeAccent text-white flex items-center justify-center transition active:scale-95 shadow-lg group"
+                >
+                  <svg id="vcSourceMicIcon" class="w-6 h-6 text-limeAccent group-hover:scale-110 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                    <line x1="12" y1="18" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                  <span id="vcSourceStopSquare" class="w-4 h-4 rounded bg-red-400 hidden"></span>
+                </button>
+              </div>
+
+              <div>
+                <p id="vcSourceStatusText" class="font-medium text-white text-xs">اضغط على الميكروفون لبدء التسجيل (الحد الأدنى 10 ثوانٍ)</p>
+                <div class="flex items-center justify-center gap-2 mt-1.5">
+                  <span id="vcSourceTimer" class="font-mono text-xs font-semibold text-limeAccent bg-obsidian px-2.5 py-0.5 rounded-full border border-borderSubtle">00:00 / 01:00</span>
+                  <span id="vcSourceMinBadge" class="text-[10px] font-mono text-muted bg-surface px-2 py-0.5 rounded-full border border-borderSubtle/60">متبقي للحد الأدنى: 10 ثوانٍ</span>
+                </div>
+              </div>
+
+              <!-- Audio playback preview -->
+              <audio id="vcSourceAudioPreview" controls class="w-full max-w-md hidden mt-2"></audio>
+            </div>
+          </div>
+
+          <!-- Tab B: Upload File -->
+          <div id="vcSourceUploadContainer" class="hidden space-y-3">
+            <div 
+              id="vcDropzone" 
+              onclick="document.getElementById('vcSourceFileInput').click()"
+              class="border-2 border-dashed border-borderSubtle hover:border-limeAccent/60 bg-surface/30 hover:bg-surface/60 rounded-2xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2 group"
+            >
+              <div class="w-12 h-12 rounded-2xl bg-obsidian border border-borderSubtle flex items-center justify-center text-muted group-hover:text-limeAccent group-hover:border-limeAccent/30 transition">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                  <path d="M9 18V5l12-2v13"></path>
+                  <circle cx="6" cy="18" r="3"></circle>
+                  <circle cx="18" cy="16" r="3"></circle>
+                </svg>
+              </div>
+              <div>
+                <p class="font-medium text-white group-hover:text-limeAccent transition text-xs">اسحب وأفلت ملف الصوت هنا أو اضغط للتصفح</p>
+                <p class="text-[11px] text-muted mt-1">يدعم WAV, MP3, M4A, OGG, WEBM (مدة 10 إلى 60 ثانية بنبرة واضحة)</p>
+              </div>
+              <input type="file" id="vcSourceFileInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.webm" class="hidden" onchange="handleVoiceCloneFileSelected(event)">
+            </div>
+            <div id="vcSourceFileInfo" class="hidden p-3 rounded-xl bg-obsidian border border-borderSubtle flex items-center justify-between">
+              <span id="vcSourceFileName" class="text-xs text-white truncate max-w-xs font-mono">audio.wav</span>
+              <audio id="vcSourceUploadAudioPreview" controls class="h-8 max-w-[200px]"></audio>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: BIOMETRIC CONSENT -->
+        <div id="vcStepContainer2" class="hidden space-y-4">
+          <div class="bg-surface/50 border border-borderSubtle rounded-2xl p-4 text-right space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-white">إقرار الموافقة البيومترية الإلزامي (Biometric Consent)</span>
+              <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">Gemini Policy</span>
+            </div>
+            <p class="text-[11px] text-muted leading-relaxed">
+              وفقاً لسياسات الأمان لمطابقة المتحدث في Google Gemini 3.8 Flash TTS، يرجى قراءة العبارة النظامية التالية بدقة وبصوتك المسموع:
+            </p>
+            <div class="bg-obsidian border border-limeAccent/30 rounded-xl p-3.5 text-center my-2 shadow-inner">
+              <p class="text-sm font-semibold text-limeAccent leading-relaxed font-sans">
+                «أنا مالك هذا الصوت وأوافق على أن تستخدم google هذا الصوت لإنشاء نموذج صوتي اصطناعي.»
+              </p>
+            </div>
+            <p class="text-[10px] text-muted text-center">
+              سيقوم نظام الذكاء الاصطناعي بمطابقة نبرة الصوت مع المقطع المرجعي للتأكد من هوية المتحدث.
+            </p>
+          </div>
+
+          <!-- Consent Mic Record Area -->
+          <div class="border border-borderSubtle/80 rounded-2xl p-4 sm:p-5 bg-surface/30 flex flex-col items-center justify-center gap-3 text-center">
+            <div class="relative">
+              <div id="vcConsentPulse" class="absolute -inset-2 rounded-full bg-red-500/20 animate-ping hidden"></div>
+              <button 
+                type="button"
+                id="vcConsentRecordBtn" 
+                onclick="toggleVoiceCloneConsentRecording()" 
+                class="relative w-14 h-14 rounded-full bg-obsidian border-2 border-borderSubtle hover:border-limeAccent text-white flex items-center justify-center transition active:scale-95 shadow-lg group"
+              >
+                <svg id="vcConsentMicIcon" class="w-6 h-6 text-limeAccent group-hover:scale-110 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                  <line x1="12" y1="18" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+                <span id="vcConsentStopSquare" class="w-4 h-4 rounded bg-red-400 hidden"></span>
+              </button>
+            </div>
+
+            <div>
+              <p id="vcConsentStatusText" class="font-medium text-white text-xs">اضغط على الميكروفون واقرأ عبارة الموافقة بصوتك</p>
+              <span id="vcConsentTimer" class="font-mono text-xs font-semibold text-limeAccent bg-obsidian px-2.5 py-0.5 rounded-full border border-borderSubtle mt-1.5 inline-block">00:00</span>
+            </div>
+
+            <!-- Consent Audio Preview -->
+            <audio id="vcConsentAudioPreview" controls class="w-full max-w-md hidden mt-2"></audio>
+          </div>
+        </div>
+
+        <!-- STEP 3: PROCESSING SCREEN -->
+        <div id="vcStepContainer3" class="hidden py-8 flex flex-col items-center justify-center text-center space-y-4">
+          <div class="relative w-20 h-20 flex items-center justify-center">
+            <div class="absolute inset-0 rounded-full border-2 border-limeAccent/20 border-t-limeAccent animate-spin"></div>
+            <div class="w-12 h-12 rounded-full bg-obsidian border border-borderSubtle flex items-center justify-center text-limeAccent font-mono font-bold text-xs">
+              AI
+            </div>
+          </div>
+          <div>
+            <h4 class="text-sm font-semibold text-white">جاري استنساخ ومطابقة الصوت...</h4>
+            <p id="vcProcessingStatusMsg" class="text-xs text-muted mt-1">تحويل التسجيلات إلى 24kHz Mono 16-bit WAV ومطابقة البصمة عبر Gemini Voices API</p>
+          </div>
+
+          <div class="w-full max-w-sm space-y-2 text-right bg-surface/40 p-3 rounded-xl border border-borderSubtle/60 text-[11px]">
+            <div class="flex items-center gap-2 text-limeAccent" id="vcProcStep1">
+              <span class="w-4 h-4 rounded-full bg-limeAccent/20 border border-limeAccent/40 flex items-center justify-center text-[9px] font-bold">1</span>
+              <span>تحويل المقاطع الصوتية إلى صيغة WAV 24kHz 16-bit</span>
+            </div>
+            <div class="flex items-center gap-2 text-light" id="vcProcStep2">
+              <span class="w-4 h-4 rounded-full bg-surface border border-borderSubtle flex items-center justify-center text-[9px] font-bold">2</span>
+              <span>التحقق من مطابقة المتحدث وتوثيق الموافقة البيومترية</span>
+            </div>
+            <div class="flex items-center gap-2 text-light" id="vcProcStep3">
+              <span class="w-4 h-4 rounded-full bg-surface border border-borderSubtle flex items-center justify-center text-[9px] font-bold">3</span>
+              <span>توليد نموذج الصوت المستنسخ وتسجيل Voice ID</span>
+            </div>
+          </div>
+
+          <div id="vcProcessingError" class="hidden p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs max-w-md">
+            <p id="vcProcessingErrorMsg">حدث خطأ أثناء عملية الاستنساخ.</p>
+            <button type="button" onclick="setVoiceCloneStep(2)" class="mt-2 px-3 py-1 bg-surface rounded-lg text-white hover:bg-surfaceHover text-[11px] border border-borderSubtle">
+              الرجوع والمحاولة مجدداً
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 4: AUDITION & SAVE -->
+        <div id="vcStepContainer4" class="hidden space-y-4">
+          <!-- Voice Success Card -->
+          <div class="p-4 rounded-2xl bg-surface/60 border border-limeAccent/40 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-obsidian border border-limeAccent/40 flex items-center justify-center text-limeAccent">
+                <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <div class="text-right">
+                <div class="flex items-center gap-2">
+                  <span id="vcResultVoiceName" class="font-semibold text-white text-xs sm:text-sm">صوتي المستنسخ</span>
+                  <span class="text-[9px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">جاهز للاستخدام</span>
+                </div>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-[10px] text-muted">المعرف:</span>
+                  <span id="vcResultVoiceId" class="text-[10px] font-mono text-light">voice_...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audition Test Box -->
+          <div class="bg-surface/40 border border-borderSubtle rounded-2xl p-4 text-right space-y-2.5">
+            <div class="flex items-center justify-between">
+              <label class="font-medium text-white text-xs">تجربة ونطق عينة بصوتك المستنسخ</label>
+              <span class="text-[10px] font-mono text-muted">Gemini 3.8 Flash TTS</span>
+            </div>
+            <textarea 
+              id="vcTestSentenceInput" 
+              rows="2" 
+              class="w-full bg-obsidian border border-borderSubtle rounded-xl p-3 text-white placeholder-muted focus:outline-none focus:border-limeAccent text-xs transition leading-relaxed resize-none"
+            >أهلاً بك! هذا اختباري الأول بصوتي المستنسخ الجديد عبر تقنية جيميناي 3.8 فلاش في استوديو هيكس ميديا.</textarea>
+
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1">
+              <button 
+                type="button" 
+                id="vcRunTestBtn" 
+                onclick="runClonedVoiceTest()" 
+                class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-limeAccent font-medium text-xs flex items-center justify-center gap-2 transition"
+              >
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span id="vcRunTestBtnText">توليد وسماع العينة الصوتية</span>
+              </button>
+              <audio id="vcTestAudioPlayer" controls class="h-8 hidden flex-1 max-w-xs"></audio>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 sm:p-4 border-t border-[#1f1f2a] bg-[#08080a] flex items-center justify-between text-xs shrink-0">
+        <!-- Step 1 Footer -->
+        <div id="vcFooterStep1" class="w-full flex items-center justify-between">
+          <button type="button" onclick="closeVoiceCloneModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition">
+            إلغاء
+          </button>
+          <button 
+            type="button" 
+            id="vcStep1NextBtn" 
+            onclick="setVoiceCloneStep(2)" 
+            disabled
+            class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] disabled:opacity-40 disabled:cursor-not-allowed text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2"
+          >
+            <span>التالي: إقرار الموافقة البيومترية</span>
+            <svg class="w-3.5 h-3.5 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Step 2 Footer -->
+        <div id="vcFooterStep2" class="w-full hidden items-center justify-between">
+          <button type="button" onclick="setVoiceCloneStep(1)" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span>السابق</span>
+          </button>
+          <button 
+            type="button" 
+            id="vcStep2NextBtn" 
+            onclick="submitVoiceClone()" 
+            disabled
+            class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] disabled:opacity-40 disabled:cursor-not-allowed text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2"
+          >
+            <span>بدء الاستنساخ عبر Gemini 3.8</span>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Step 3 Footer -->
+        <div id="vcFooterStep3" class="w-full hidden items-center justify-center">
+          <span class="text-muted text-[11px]">يرجى الانتظار، جاري التواصل مع خوادم Google Gemini...</span>
+        </div>
+
+        <!-- Step 4 Footer -->
+        <div id="vcFooterStep4" class="w-full hidden items-center justify-between">
+          <button type="button" onclick="closeVoiceCloneModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition">
+            إغلاق
+          </button>
+          <button 
+            type="button" 
+            id="vcUseInTTSBtn" 
+            onclick="useClonedVoiceInTTS()" 
+            class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2"
+          >
+            <span>اختيار هذا الصوت في TTS Studio</span>
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </button>
+        </div>
       </div>
 
     </div>
@@ -1842,11 +2248,102 @@
       }
     }
 
+    async function loadTTSClonedVoices() {
+      const container = document.getElementById('ttsClonedVoicesContainer');
+      const badge = document.getElementById('ttsClonedVoiceCountBadge');
+      if (!container) return;
+
+      try {
+        const res = await authFetch('/api/tts/voices/cloned');
+        if (res.ok) {
+          const list = await res.json();
+          window.TTS_CLONED_VOICES = list || [];
+          if (badge) {
+            badge.textContent = `${list.length} أصوات مستنسخة`;
+          }
+          if (!list.length) {
+            container.innerHTML = `
+              <div class="col-span-full p-3 rounded-xl bg-obsidian/40 border border-borderSubtle/60 text-center text-muted">
+                <p class="text-[11px]">لا توجد أصوات مستنسخة بعد. اضغط على "+ استنساخ صوت جديد" لإنشاء بصمتك الصوتية.</p>
+              </div>
+            `;
+            return;
+          }
+
+          container.innerHTML = list.map(cv => {
+            const isSelected = (currentTTSConfig.voice_profile === cv.gemini_voice_id) || (currentTTSConfig.voice_profile === cv.id);
+            const selectedClasses = isSelected
+              ? 'border-2 border-limeAccent bg-[#181822] shadow-sm ring-1 ring-limeAccent/30'
+              : 'border border-borderSubtle bg-obsidian/50 hover:border-limeAccent/50 hover:bg-obsidian/80';
+            const initial = cv.name ? cv.name.charAt(0).toUpperCase() : 'C';
+
+            return `
+              <div 
+                onclick="selectTTSClonedVoice('${cv.gemini_voice_id || cv.id}', '${escapeHtml(cv.name)}')" 
+                id="clonedVoiceCard_${cv.gemini_voice_id || cv.id}" 
+                class="tts-cloned-card p-3 rounded-2xl ${selectedClasses} cursor-pointer transition flex items-start gap-2.5 text-right select-none group"
+              >
+                <div class="w-7 h-7 rounded-lg bg-surface border border-limeAccent/40 flex items-center justify-center shrink-0 mt-0.5 font-mono text-[11px] font-bold text-limeAccent select-none shadow-sm">
+                  ${initial}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center justify-between gap-1">
+                    <span class="font-semibold text-white text-xs truncate">${escapeHtml(cv.name)}</span>
+                    <span class="text-[9px] font-mono text-limeAccent bg-limeAccent/10 px-1.5 py-0.5 rounded border border-limeAccent/20">مستنسخ</span>
+                  </div>
+                  <div class="text-[10px] font-mono text-muted mt-0.5 truncate">${escapeHtml(cv.gemini_voice_id || 'voice_...')}</div>
+                  ${cv.sample_audio_url ? `
+                    <div class="mt-1.5 flex items-center gap-1.5" onclick="event.stopPropagation()">
+                      <button type="button" onclick="playClonedVoiceAudioPreview('${cv.sample_audio_url}')" class="text-[10px] text-limeAccent hover:text-white flex items-center gap-1">
+                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        <span>سماع العينة</span>
+                      </button>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        console.warn('loadTTSClonedVoices failed:', err);
+      }
+    }
+
+    function selectTTSClonedVoice(voiceId, voiceName) {
+      currentTTSConfig.voice_profile = voiceId;
+      const customInput = document.getElementById('ttsCustomVoiceInput');
+      if (customInput) customInput.value = voiceId;
+
+      document.querySelectorAll('.tts-voice-card').forEach(card => {
+        card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+        card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
+      });
+
+      document.querySelectorAll('.tts-cloned-card').forEach(card => {
+        card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+        card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
+      });
+
+      const selectedCard = document.getElementById(`clonedVoiceCard_${voiceId}`);
+      if (selectedCard) {
+        selectedCard.classList.remove('border-borderSubtle', 'bg-obsidian/50');
+        selectedCard.classList.add('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+      }
+    }
+
+    function playClonedVoiceAudioPreview(url) {
+      if (!url) return;
+      const audio = new Audio(url);
+      audio.play().catch(e => console.warn('Audio play failed:', e));
+    }
+
     function openTTSConfigModal() {
       toggleToolsMenu();
       const modal = document.getElementById('ttsConfigModal');
       if (modal) modal.classList.remove('hidden');
       loadTTSOptionsCatalog();
+      loadTTSClonedVoices();
       renderTTSVoiceCards(currentTTSGenderFilter, document.getElementById('ttsVoiceSearchInput')?.value || '');
     }
 
@@ -1884,10 +2381,17 @@
       currentTTSConfig.voice_profile = voiceName;
       const customInput = document.getElementById('ttsCustomVoiceInput');
       if (customInput) customInput.value = '';
+
       document.querySelectorAll('.tts-voice-card').forEach(card => {
         card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
         card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
       });
+
+      document.querySelectorAll('.tts-cloned-card').forEach(card => {
+        card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+        card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
+      });
+
       const selectedCard = document.getElementById(`voiceCard_${voiceName}`);
       if (selectedCard) {
         selectedCard.classList.remove('border-borderSubtle', 'bg-obsidian/50');
@@ -3515,6 +4019,447 @@
         if (submitBtn) submitBtn.disabled = false;
         if (submitText) submitText.textContent = 'بدء تفريغ الصوت';
       }
+    }
+
+    // --- Voice Cloning Wizard (Clone Your Voice - Gemini 3.8 Flash TTS) Controllers ---
+    let vcCurrentStep = 1;
+    let vcSourceSourceTab = 'mic';
+    let vcSourceMediaRecorder = null;
+    let vcSourceRecordedBlob = null;
+    let vcSourceUploadedFile = null;
+    let vcSourceTimerInterval = null;
+    let vcSourceSeconds = 0;
+    let vcSourceIsRecording = false;
+
+    let vcConsentMediaRecorder = null;
+    let vcConsentRecordedBlob = null;
+    let vcConsentTimerInterval = null;
+    let vcConsentSeconds = 0;
+    let vcConsentIsRecording = false;
+
+    let currentCreatedClonedVoice = null;
+
+    function openVoiceCloneModal() {
+      const toolsMenu = document.getElementById('toolsMenu');
+      if (toolsMenu && !toolsMenu.classList.contains('hidden')) {
+        toolsMenu.classList.add('hidden');
+      }
+      resetVoiceCloneWizard();
+      const modal = document.getElementById('voiceCloneModal');
+      if (modal) modal.classList.remove('hidden');
+      setVoiceCloneStep(1);
+    }
+
+    function closeVoiceCloneModal() {
+      const modal = document.getElementById('voiceCloneModal');
+      if (modal) modal.classList.add('hidden');
+      stopAllVoiceCloneRecordings();
+    }
+
+    function stopAllVoiceCloneRecordings() {
+      if (vcSourceMediaRecorder && vcSourceMediaRecorder.state === 'recording') {
+        vcSourceMediaRecorder.stop();
+      }
+      clearInterval(vcSourceTimerInterval);
+      vcSourceIsRecording = false;
+
+      if (vcConsentMediaRecorder && vcConsentMediaRecorder.state === 'recording') {
+        vcConsentMediaRecorder.stop();
+      }
+      clearInterval(vcConsentTimerInterval);
+      vcConsentIsRecording = false;
+    }
+
+    function resetVoiceCloneWizard() {
+      stopAllVoiceCloneRecordings();
+      vcCurrentStep = 1;
+      vcSourceRecordedBlob = null;
+      vcSourceUploadedFile = null;
+      vcSourceSeconds = 0;
+      vcConsentRecordedBlob = null;
+      vcConsentSeconds = 0;
+      currentCreatedClonedVoice = null;
+
+      // Reset Step 1 UI
+      const nameInput = document.getElementById('vcVoiceNameInput');
+      if (nameInput) nameInput.value = 'صوتي المستنسخ';
+      const sourceTimer = document.getElementById('vcSourceTimer');
+      if (sourceTimer) sourceTimer.textContent = '00:00 / 01:00';
+      const minBadge = document.getElementById('vcSourceMinBadge');
+      if (minBadge) {
+        minBadge.textContent = 'متبقي للحد الأدنى: 10 ثوانٍ';
+        minBadge.className = 'text-[10px] font-mono text-muted bg-surface px-2 py-0.5 rounded-full border border-borderSubtle/60';
+      }
+      const sourceAudio = document.getElementById('vcSourceAudioPreview');
+      if (sourceAudio) {
+        sourceAudio.src = '';
+        sourceAudio.classList.add('hidden');
+      }
+      const fileInfo = document.getElementById('vcSourceFileInfo');
+      if (fileInfo) fileInfo.classList.add('hidden');
+      const step1NextBtn = document.getElementById('vcStep1NextBtn');
+      if (step1NextBtn) step1NextBtn.disabled = true;
+
+      // Reset Step 2 UI
+      const consentTimer = document.getElementById('vcConsentTimer');
+      if (consentTimer) consentTimer.textContent = '00:00';
+      const consentAudio = document.getElementById('vcConsentAudioPreview');
+      if (consentAudio) {
+        consentAudio.src = '';
+        consentAudio.classList.add('hidden');
+      }
+      const step2NextBtn = document.getElementById('vcStep2NextBtn');
+      if (step2NextBtn) step2NextBtn.disabled = true;
+
+      // Reset Step 3 UI
+      const errBox = document.getElementById('vcProcessingError');
+      if (errBox) errBox.classList.add('hidden');
+
+      // Reset Step 4 UI
+      const testAudio = document.getElementById('vcTestAudioPlayer');
+      if (testAudio) {
+        testAudio.src = '';
+        testAudio.classList.add('hidden');
+      }
+    }
+
+    function setVoiceCloneStep(step) {
+      vcCurrentStep = step;
+      [1, 2, 3, 4].forEach(s => {
+        const container = document.getElementById(`vcStepContainer${s}`);
+        const footer = document.getElementById(`vcFooterStep${s}`);
+        const pill = document.getElementById(`vcStepPill${s}`);
+        const line = document.getElementById(`vcStepLine${s}`);
+
+        if (container) {
+          if (s === step) container.classList.remove('hidden');
+          else container.classList.add('hidden');
+        }
+        if (footer) {
+          if (s === step) footer.classList.remove('hidden');
+          else footer.classList.add('hidden');
+        }
+        if (pill) {
+          const numSpan = pill.querySelector('span:first-child');
+          const textSpan = pill.querySelector('span:last-child');
+          if (s === step) {
+            if (numSpan) numSpan.className = 'w-5 h-5 rounded-full bg-limeAccent text-obsidian font-mono font-bold text-[10px] flex items-center justify-center shrink-0';
+            if (textSpan) textSpan.className = 'font-medium text-white text-[11px] hidden sm:inline';
+          } else if (s < step) {
+            if (numSpan) numSpan.className = 'w-5 h-5 rounded-full bg-limeAccent/30 text-limeAccent font-mono font-bold text-[10px] flex items-center justify-center shrink-0';
+            if (textSpan) textSpan.className = 'font-medium text-light text-[11px] hidden sm:inline';
+          } else {
+            if (numSpan) numSpan.className = 'w-5 h-5 rounded-full bg-surface border border-borderSubtle text-muted font-mono font-bold text-[10px] flex items-center justify-center shrink-0';
+            if (textSpan) textSpan.className = 'font-medium text-muted text-[11px] hidden sm:inline';
+          }
+        }
+        if (line) {
+          if (s < step) line.className = 'h-0.5 w-6 sm:w-10 bg-limeAccent/60';
+          else line.className = 'h-0.5 w-6 sm:w-10 bg-borderSubtle';
+        }
+      });
+    }
+
+    function switchVoiceCloneSourceTab(tab) {
+      vcSourceSourceTab = tab;
+      const micBtn = document.getElementById('vcTabMicBtn');
+      const uploadBtn = document.getElementById('vcTabUploadBtn');
+      const micContainer = document.getElementById('vcSourceMicContainer');
+      const uploadContainer = document.getElementById('vcSourceUploadContainer');
+
+      if (tab === 'mic') {
+        if (micBtn) micBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle';
+        if (uploadBtn) uploadBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white';
+        if (micContainer) micContainer.classList.remove('hidden');
+        if (uploadContainer) uploadContainer.classList.add('hidden');
+        const nextBtn = document.getElementById('vcStep1NextBtn');
+        if (nextBtn) nextBtn.disabled = !(vcSourceRecordedBlob && vcSourceSeconds >= 10);
+      } else {
+        if (uploadBtn) uploadBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle';
+        if (micBtn) micBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white';
+        if (uploadContainer) uploadContainer.classList.remove('hidden');
+        if (micContainer) micContainer.classList.add('hidden');
+        const nextBtn = document.getElementById('vcStep1NextBtn');
+        if (nextBtn) nextBtn.disabled = !vcSourceUploadedFile;
+      }
+    }
+
+    async function toggleVoiceCloneSourceRecording() {
+      const statusText = document.getElementById('vcSourceStatusText');
+      const pulse = document.getElementById('vcSourcePulse');
+      const micIcon = document.getElementById('vcSourceMicIcon');
+      const stopSq = document.getElementById('vcSourceStopSquare');
+      const timer = document.getElementById('vcSourceTimer');
+      const minBadge = document.getElementById('vcSourceMinBadge');
+      const preview = document.getElementById('vcSourceAudioPreview');
+      const nextBtn = document.getElementById('vcStep1NextBtn');
+
+      if (!vcSourceIsRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const chunks = [];
+          vcSourceMediaRecorder = new MediaRecorder(stream);
+          vcSourceMediaRecorder.ondataavailable = e => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+          vcSourceMediaRecorder.onstop = () => {
+            vcSourceRecordedBlob = new Blob(chunks, { type: 'audio/webm' });
+            if (preview) {
+              preview.src = URL.createObjectURL(vcSourceRecordedBlob);
+              preview.classList.remove('hidden');
+            }
+            stream.getTracks().forEach(t => t.stop());
+            if (nextBtn) {
+              nextBtn.disabled = (vcSourceSeconds < 10);
+            }
+          };
+
+          vcSourceMediaRecorder.start();
+          vcSourceIsRecording = true;
+          vcSourceSeconds = 0;
+
+          if (pulse) pulse.classList.remove('hidden');
+          if (micIcon) micIcon.classList.add('hidden');
+          if (stopSq) stopSq.classList.remove('hidden');
+          if (statusText) statusText.textContent = 'جاري التسجيل... اقرأ النص المقترح أعلاه بوضوح';
+
+          vcSourceTimerInterval = setInterval(() => {
+            vcSourceSeconds++;
+            const s = String(vcSourceSeconds % 60).padStart(2, '0');
+            const m = String(Math.floor(vcSourceSeconds / 60)).padStart(2, '0');
+            if (timer) timer.textContent = `${m}:${s} / 01:00`;
+
+            if (minBadge) {
+              if (vcSourceSeconds >= 10) {
+                minBadge.textContent = 'تم تحقيق الحد الأدنى (10 ثوانٍ)';
+                minBadge.className = 'text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20';
+              } else {
+                minBadge.textContent = `متبقي للحد الأدنى: ${10 - vcSourceSeconds} ثوانٍ`;
+              }
+            }
+
+            if (vcSourceSeconds >= 60) {
+              toggleVoiceCloneSourceRecording();
+            }
+          }, 1000);
+        } catch (err) {
+          showToast('يرجى السماح بالوصول إلى الميكروفون للتسجيل', true);
+        }
+      } else {
+        if (vcSourceMediaRecorder && vcSourceMediaRecorder.state === 'recording') {
+          vcSourceMediaRecorder.stop();
+        }
+        clearInterval(vcSourceTimerInterval);
+        vcSourceIsRecording = false;
+
+        if (pulse) pulse.classList.add('hidden');
+        if (micIcon) micIcon.classList.remove('hidden');
+        if (stopSq) stopSq.classList.add('hidden');
+
+        if (vcSourceSeconds < 10) {
+          if (statusText) statusText.textContent = 'التسجيل أقل من 10 ثوانٍ. يرجى إعادة التسجيل لمدة 10 ثوانٍ على الأقل.';
+          showToast('مدة التسجيل يجب ألا تقل عن 10 ثوانٍ', true);
+          if (nextBtn) nextBtn.disabled = true;
+        } else {
+          if (statusText) statusText.textContent = 'تم التسجيل بنجاح! يمكنك الاستماع للمعاينة أدناه أو المتابعة.';
+          if (nextBtn) nextBtn.disabled = false;
+        }
+      }
+    }
+
+    function handleVoiceCloneFileSelected(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      vcSourceUploadedFile = file;
+      vcSourceRecordedBlob = null;
+
+      const fileInfo = document.getElementById('vcSourceFileInfo');
+      const fileName = document.getElementById('vcSourceFileName');
+      const audioPrev = document.getElementById('vcSourceUploadAudioPreview');
+      const nextBtn = document.getElementById('vcStep1NextBtn');
+
+      if (fileName) fileName.textContent = file.name;
+      if (audioPrev) audioPrev.src = URL.createObjectURL(file);
+      if (fileInfo) fileInfo.classList.remove('hidden');
+      if (nextBtn) nextBtn.disabled = false;
+    }
+
+    async function toggleVoiceCloneConsentRecording() {
+      const statusText = document.getElementById('vcConsentStatusText');
+      const pulse = document.getElementById('vcConsentPulse');
+      const micIcon = document.getElementById('vcConsentMicIcon');
+      const stopSq = document.getElementById('vcConsentStopSquare');
+      const timer = document.getElementById('vcConsentTimer');
+      const preview = document.getElementById('vcConsentAudioPreview');
+      const nextBtn = document.getElementById('vcStep2NextBtn');
+
+      if (!vcConsentIsRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const chunks = [];
+          vcConsentMediaRecorder = new MediaRecorder(stream);
+          vcConsentMediaRecorder.ondataavailable = e => {
+            if (e.data && e.data.size > 0) chunks.push(e.data);
+          };
+          vcConsentMediaRecorder.onstop = () => {
+            vcConsentRecordedBlob = new Blob(chunks, { type: 'audio/webm' });
+            if (preview) {
+              preview.src = URL.createObjectURL(vcConsentRecordedBlob);
+              preview.classList.remove('hidden');
+            }
+            stream.getTracks().forEach(t => t.stop());
+            if (nextBtn) nextBtn.disabled = false;
+          };
+
+          vcConsentMediaRecorder.start();
+          vcConsentIsRecording = true;
+          vcConsentSeconds = 0;
+
+          if (pulse) pulse.classList.remove('hidden');
+          if (micIcon) micIcon.classList.add('hidden');
+          if (stopSq) stopSq.classList.remove('hidden');
+          if (statusText) statusText.textContent = 'جاري تسجيل الموافقة... اقرأ العبارة المحددة بدقة';
+
+          vcConsentTimerInterval = setInterval(() => {
+            vcConsentSeconds++;
+            const s = String(vcConsentSeconds % 60).padStart(2, '0');
+            const m = String(Math.floor(vcConsentSeconds / 60)).padStart(2, '0');
+            if (timer) timer.textContent = `${m}:${s}`;
+            if (vcConsentSeconds >= 30) {
+              toggleVoiceCloneConsentRecording();
+            }
+          }, 1000);
+        } catch (err) {
+          showToast('يرجى السماح بالوصول إلى الميكروفون لتسجيل الموافقة', true);
+        }
+      } else {
+        if (vcConsentMediaRecorder && vcConsentMediaRecorder.state === 'recording') {
+          vcConsentMediaRecorder.stop();
+        }
+        clearInterval(vcConsentTimerInterval);
+        vcConsentIsRecording = false;
+
+        if (pulse) pulse.classList.add('hidden');
+        if (micIcon) micIcon.classList.remove('hidden');
+        if (stopSq) stopSq.classList.add('hidden');
+        if (statusText) statusText.textContent = 'تم تسجيل إقرار الموافقة! يمكنك الآن بدء الاستنساخ.';
+        if (nextBtn) nextBtn.disabled = false;
+      }
+    }
+
+    async function submitVoiceClone() {
+      const voiceName = (document.getElementById('vcVoiceNameInput')?.value || '').trim() || 'صوتي المستنسخ';
+
+      const sourceAudio = vcSourceRecordedBlob || vcSourceUploadedFile;
+      if (!sourceAudio) {
+        showToast('يرجى تسجيل أو رفع المقطع الصوتي المرجعي أولاً', true);
+        setVoiceCloneStep(1);
+        return;
+      }
+
+      if (!vcConsentRecordedBlob) {
+        showToast('يرجى تسجيل إقرار الموافقة البيومترية أولاً', true);
+        setVoiceCloneStep(2);
+        return;
+      }
+
+      setVoiceCloneStep(3);
+
+      const errBox = document.getElementById('vcProcessingError');
+      if (errBox) errBox.classList.add('hidden');
+
+      const formData = new FormData();
+      formData.append('name', voiceName);
+      if (vcSourceRecordedBlob) {
+        formData.append('source_audio', vcSourceRecordedBlob, 'source.webm');
+      } else if (vcSourceUploadedFile) {
+        formData.append('source_audio', vcSourceUploadedFile, vcSourceUploadedFile.name);
+      }
+      formData.append('consent_audio', vcConsentRecordedBlob, 'consent.webm');
+
+      try {
+        const res = await authFetch('/api/tts/voices/clone', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          currentCreatedClonedVoice = data;
+          
+          const nameSpan = document.getElementById('vcResultVoiceName');
+          const idSpan = document.getElementById('vcResultVoiceId');
+          if (nameSpan) nameSpan.textContent = data.name;
+          if (idSpan) idSpan.textContent = data.gemini_voice_id || data.id;
+
+          setVoiceCloneStep(4);
+          showToast('تم استنساخ الصوت بنجاح بواسطة Gemini 3.8 Flash!');
+        } else {
+          let errText = 'فشل استنساخ الصوت. يرجى التأكد من جودة التسجيل ومطابقة المتحدث.';
+          try {
+            const errData = await res.json();
+            if (errData && errData.message) errText = errData.message;
+          } catch (_) {}
+
+          if (errBox) {
+            document.getElementById('vcProcessingErrorMsg').textContent = errText;
+            errBox.classList.remove('hidden');
+          }
+          showToast(errText, true);
+        }
+      } catch (e) {
+        console.error('submitVoiceClone error:', e);
+        if (errBox) {
+          document.getElementById('vcProcessingErrorMsg').textContent = 'حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.';
+          errBox.classList.remove('hidden');
+        }
+        showToast('تعذر إتمام عملية الاستنساخ', true);
+      }
+    }
+
+    async function runClonedVoiceTest() {
+      if (!currentCreatedClonedVoice) return;
+      const text = (document.getElementById('vcTestSentenceInput')?.value || '').trim();
+      const btn = document.getElementById('vcRunTestBtn');
+      const btnText = document.getElementById('vcRunTestBtnText');
+      const player = document.getElementById('vcTestAudioPlayer');
+
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.textContent = 'جاري التوليد عبر Gemini...';
+
+      try {
+        const res = await authFetch(`/api/tts/voices/cloned/${currentCreatedClonedVoice.id}/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (player && data.audio_url) {
+            player.src = data.audio_url;
+            player.classList.remove('hidden');
+            player.play().catch(e => console.warn('Autoplay prevented:', e));
+          }
+          showToast('تم توليد العينة الصوتية بنجاح!');
+        } else {
+          showToast('تعذر توليد العينة الصوتية التجريبية', true);
+        }
+      } catch (e) {
+        console.error('runClonedVoiceTest error:', e);
+        showToast('خطأ في توليد العينة الصوتية', true);
+      } finally {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.textContent = 'توليد وسماع العينة الصوتية';
+      }
+    }
+
+    function useClonedVoiceInTTS() {
+      if (!currentCreatedClonedVoice) return;
+      closeVoiceCloneModal();
+      currentTTSConfig.voice_profile = currentCreatedClonedVoice.gemini_voice_id || currentCreatedClonedVoice.id;
+      openTTSConfigModal();
+      showToast(`تم اختيار الصوت المستنسخ: ${currentCreatedClonedVoice.name}`);
     }
 
     // --- Quick Voice Chat Controller (Gemini 3.8 Flash) ---

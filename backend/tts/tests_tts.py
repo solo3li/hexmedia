@@ -2,9 +2,11 @@ import io
 import wave
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from tts.services.chunker import split_text_into_chunks
 from tts.services.audio_stitcher import stitch_wav_buffers
-from tts.models import TTSJob
+from tts.models import TTSJob, ClonedVoice
+from tts.services.voice_cloner import convert_to_wav_24k_mono, create_fallback_wav, replicate_voice_with_gemini
 from ai_studio.services.gemini_service import generate_voice_audio
 
 
@@ -417,5 +419,225 @@ class TTSAPITests(TestCase):
         # Ensure no cartoon emojis inside modal
         for emoji_char in ["🎙️", "👨‍💼", "⚔️", "🔥", "🌧️", "🤫"]:
             self.assertNotIn(emoji_char, modal_html)
+
+
+class VoiceCloneTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user_a = User.objects.create_user(
+            username="voice_clone_user_a",
+            email="clone_a@test.local",
+            password="Password123!"
+        )
+        self.user_b = User.objects.create_user(
+            username="voice_clone_user_b",
+            email="clone_b@test.local",
+            password="Password123!"
+        )
+        from ai_studio.auth import generate_tokens_for_user
+        self.token_a = generate_tokens_for_user(self.user_a)["access_token"]
+        self.token_b = generate_tokens_for_user(self.user_b)["access_token"]
+        self.auth_headers_a = {"HTTP_AUTHORIZATION": f"Bearer {self.token_a}"}
+        self.auth_headers_b = {"HTTP_AUTHORIZATION": f"Bearer {self.token_b}"}
+
+    def test_voice_cloner_audio_conversion(self):
+        """Audio conversion produces a valid 24kHz mono 16-bit PCM WAV."""
+        raw_pcm = create_fallback_wav(sample_rate=24000, duration_seconds=1.0, freq=440.0)
+        wav_converted = convert_to_wav_24k_mono(raw_pcm)
+        self.assertGreater(len(wav_converted), 1000)
+        with wave.open(io.BytesIO(wav_converted), 'rb') as wf:
+            self.assertEqual(wf.getnchannels(), 1)
+            self.assertEqual(wf.getframerate(), 24000)
+            self.assertEqual(wf.getsampwidth(), 2)
+
+    def test_cloned_voice_model_creation(self):
+        """ClonedVoice model stores identity, audio urls, and Gemini voice ID."""
+        cv = ClonedVoice.objects.create(
+            user=self.user_a,
+            name="صوتي الإخباري",
+            gemini_voice_id="voice_news_anchor_123",
+            source_audio_url="http://storage.local/source.wav",
+            consent_audio_url="http://storage.local/consent.wav",
+            status="READY"
+        )
+        self.assertEqual(cv.user, self.user_a)
+        self.assertEqual(cv.name, "صوتي الإخباري")
+        self.assertEqual(cv.gemini_voice_id, "voice_news_anchor_123")
+        self.assertEqual(cv.status, "READY")
+        self.assertIn("voice_news_anchor_123", str(cv))
+
+    def test_clone_voice_endpoint_success(self):
+        """POST /api/tts/voices/clone accepts audio files, creates ClonedVoice, and returns 200."""
+        source_audio = SimpleUploadedFile("source.wav", create_fallback_wav(duration_seconds=12.0), content_type="audio/wav")
+        consent_audio = SimpleUploadedFile("consent.wav", create_fallback_wav(duration_seconds=4.0), content_type="audio/wav")
+
+        res = self.client.post(
+            "/api/tts/voices/clone",
+            data={
+                "name": "صوتي الطبيعي",
+                "source_audio": source_audio,
+                "consent_audio": consent_audio
+            },
+            **self.auth_headers_a
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("id", data)
+        self.assertEqual(data["name"], "صوتي الطبيعي")
+        self.assertTrue(data["gemini_voice_id"].startswith("voice_"))
+        self.assertIn("source_audio_url", data)
+        self.assertIn("consent_audio_url", data)
+        self.assertEqual(data["status"], "READY")
+
+        # Verify DB entry
+        cv = ClonedVoice.objects.get(id=data["id"])
+        self.assertEqual(cv.user, self.user_a)
+        self.assertEqual(cv.name, "صوتي الطبيعي")
+
+    def test_clone_voice_endpoint_validation_errors(self):
+        """POST /api/tts/voices/clone returns 400 or 422 if recordings are missing."""
+        source_audio = SimpleUploadedFile("source.wav", create_fallback_wav(duration_seconds=5.0), content_type="audio/wav")
+        res = self.client.post(
+            "/api/tts/voices/clone",
+            data={"name": "صوت تجريبي", "source_audio": source_audio},
+            **self.auth_headers_a
+        )
+        self.assertIn(res.status_code, [400, 422])
+
+        consent_audio = SimpleUploadedFile("consent.wav", create_fallback_wav(duration_seconds=3.0), content_type="audio/wav")
+        res2 = self.client.post(
+            "/api/tts/voices/clone",
+            data={"name": "صوت تجريبي", "consent_audio": consent_audio},
+            **self.auth_headers_a
+        )
+        self.assertIn(res2.status_code, [400, 422])
+
+    def test_list_cloned_voices_and_user_isolation(self):
+        """GET /api/tts/voices/cloned isolates voices per authenticated user."""
+        cv_a = ClonedVoice.objects.create(
+            user=self.user_a,
+            name="صوت أ",
+            gemini_voice_id="voice_user_a_1",
+            status="READY"
+        )
+        cv_b = ClonedVoice.objects.create(
+            user=self.user_b,
+            name="صوت ب",
+            gemini_voice_id="voice_user_b_1",
+            status="READY"
+        )
+
+        res_a = self.client.get("/api/tts/voices/cloned", **self.auth_headers_a)
+        self.assertEqual(res_a.status_code, 200)
+        data_a = res_a.json()
+        ids_a = [v["id"] for v in data_a]
+        self.assertIn(str(cv_a.id), ids_a)
+        self.assertNotIn(str(cv_b.id), ids_a)
+
+        res_b = self.client.get("/api/tts/voices/cloned", **self.auth_headers_b)
+        self.assertEqual(res_b.status_code, 200)
+        data_b = res_b.json()
+        ids_b = [v["id"] for v in data_b]
+        self.assertIn(str(cv_b.id), ids_b)
+        self.assertNotIn(str(cv_a.id), ids_b)
+
+    def test_test_cloned_voice_endpoint(self):
+        """POST /api/tts/voices/cloned/<id>/test synthesizes a speech sample."""
+        cv = ClonedVoice.objects.create(
+            user=self.user_a,
+            name="صوت الاختبار",
+            gemini_voice_id="voice_test_replicated_88",
+            status="READY"
+        )
+        payload = {"text": "هذا اختبار نطق بالعينة المستنسخة"}
+        import json
+        res = self.client.post(
+            f"/api/tts/voices/cloned/{cv.id}/test",
+            data=json.dumps(payload),
+            content_type="application/json",
+            **self.auth_headers_a
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["voice_id"], str(cv.id))
+        self.assertIn("audio_url", data)
+        self.assertGreater(data["duration_seconds"], 0)
+
+        # Check DB updated with sample_audio_url
+        cv.refresh_from_db()
+        self.assertTrue(len(cv.sample_audio_url) > 0)
+
+    def test_delete_cloned_voice_endpoint(self):
+        """DELETE /api/tts/voices/cloned/<id> deletes voice and prevents cross-user deletion."""
+        cv = ClonedVoice.objects.create(
+            user=self.user_a,
+            name="صوت للحذف",
+            gemini_voice_id="voice_delete_me_99",
+            status="READY"
+        )
+
+        # User B cannot delete User A's voice
+        res_fail = self.client.delete(f"/api/tts/voices/cloned/{cv.id}", **self.auth_headers_b)
+        self.assertIn(res_fail.status_code, [404, 403])
+        self.assertTrue(ClonedVoice.objects.filter(id=cv.id).exists())
+
+        # User A can delete their own voice
+        res_ok = self.client.delete(f"/api/tts/voices/cloned/{cv.id}", **self.auth_headers_a)
+        self.assertEqual(res_ok.status_code, 200)
+        self.assertFalse(ClonedVoice.objects.filter(id=cv.id).exists())
+
+    def test_tts_generation_with_cloned_voice(self):
+        """POST /api/tts/generate succeeds with cloned voice ID (voice_...)."""
+        import json
+        cv = ClonedVoice.objects.create(
+            user=self.user_a,
+            name="صوتي الوثائقي",
+            gemini_voice_id="voice_rep_custom_speaker_101",
+            status="READY"
+        )
+        payload = {
+            "text": "هذا مقطع صوتي مخصص باستخدام الصوت المستنسخ التابع للمستخدم.",
+            "voice_profile": cv.gemini_voice_id,
+            "language": "ar",
+            "dialect": "msa",
+            "emotion": "dramatic"
+        }
+        res = self.client.post(
+            "/api/tts/generate",
+            data=json.dumps(payload),
+            content_type="application/json",
+            **self.auth_headers_a
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["voice_profile"], cv.gemini_voice_id)
+        self.assertIn("audio_url", data)
+
+    def test_frontend_voice_clone_elements(self):
+        """Frontend contains Clone Your Voice tool menu item, wizard modal, and My Voices section."""
+        res = self.client.get("/")
+        self.assertEqual(res.status_code, 200)
+        content = res.content.decode("utf-8")
+
+        # Tool entry
+        self.assertIn("openVoiceCloneModal", content)
+        self.assertIn("استنساخ الصوت (Clone Your Voice)", content)
+
+        # Modal
+        self.assertIn('id="voiceCloneModal"', content)
+        self.assertIn('id="vcVoiceNameInput"', content)
+        self.assertIn('id="vcStepContainer1"', content)
+        self.assertIn('id="vcStepContainer2"', content)
+        self.assertIn('id="vcStepContainer3"', content)
+        self.assertIn('id="vcStepContainer4"', content)
+
+        # Biometric consent text exact wording
+        self.assertIn("أنا مالك هذا الصوت وأوافق على أن تستخدم google هذا الصوت لإنشاء نموذج صوتي اصطناعي.", content)
+
+        # TTS Studio My Voices section
+        self.assertIn("أصواتي المستنسخة (My Voices)", content)
+        self.assertIn('id="ttsClonedVoicesContainer"', content)
+        self.assertIn('id="ttsClonedVoiceCountBadge"', content)
+
 
 
