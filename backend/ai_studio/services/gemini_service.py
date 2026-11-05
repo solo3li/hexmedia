@@ -477,8 +477,27 @@ def generate_voice_audio(
             else:
                 contents_payload = clean_text
 
-            # Check if voice_name is a replicated voice ID (starts with voice_)
-            if voice_name and voice_name.startswith("voice_"):
+            # Resolve replicated voice ID if voice_name is a UUID or registered ClonedVoice or starts with voice_
+            replicated_voice_id = None
+            if voice_name:
+                if voice_name.startswith("voice_"):
+                    replicated_voice_id = voice_name
+                else:
+                    try:
+                        import uuid as _uuid_mod
+                        from tts.models import ClonedVoice
+                        cv = None
+                        try:
+                            v_uuid = _uuid_mod.UUID(str(voice_name))
+                            cv = ClonedVoice.objects.filter(id=v_uuid).first()
+                        except (ValueError, TypeError):
+                            cv = ClonedVoice.objects.filter(gemini_voice_id=voice_name).first()
+                        if cv and cv.gemini_voice_id:
+                            replicated_voice_id = cv.gemini_voice_id
+                    except Exception:
+                        pass
+
+            if replicated_voice_id:
                 try:
                     interaction_input = [{
                         "type": "user_input",
@@ -489,60 +508,93 @@ def generate_voice_audio(
                         }]
                     }]
                     interaction = client.interactions.create(
-                        model=tts_model,
+                        model="gemini-3.8-flash-tts",
                         input=interaction_input,
                         response_format={"type": "audio"},
                         generation_config={
                             "speech_config": [
-                                {"voice": voice_name}
+                                {"voice": replicated_voice_id}
                             ]
                         }
                     )
+                    audio_data = None
                     if hasattr(interaction, "output_audio") and interaction.output_audio and hasattr(interaction.output_audio, "data"):
                         audio_data = interaction.output_audio.data
+                    if not audio_data and hasattr(interaction, "steps"):
+                        for step in getattr(interaction, "steps", []) or []:
+                            for content in getattr(step, "content", []) or []:
+                                if getattr(content, "type", "") == "audio" and getattr(content, "data", None):
+                                    audio_data = content.data
+                                    break
+                    if audio_data:
                         if isinstance(audio_data, str):
                             import base64
                             return base64.b64decode(audio_data)
                         return audio_data
                 except Exception as e_inter:
-                    logger.warning(f"interactions.create failed for voice {voice_name}: {e_inter}")
+                    logger.warning(f"interactions.create failed for voice {replicated_voice_id}: {e_inter}")
 
-            try:
-                response = client.models.generate_content(
-                    model=tts_model,
-                    contents=contents_payload,
-                    config=types.GenerateContentConfig(
-                        response_modalities=["AUDIO"],
-                        speech_config=types.SpeechConfig(
-                            voice_config=types.VoiceConfig(
-                                prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                                    voice_name=voice_name or "Puck"
+                try:
+                    response = client.models.generate_content(
+                        model="gemini-3.8-flash-tts",
+                        contents=contents_payload,
+                        config=types.GenerateContentConfig(
+                            response_modalities=["AUDIO"],
+                            speech_config=types.SpeechConfig(
+                                voice_config=types.VoiceConfig(
+                                    voice=replicated_voice_id
                                 )
-                            )
+                            ),
                         ),
-                    ),
-                )
-            except Exception:
-                # Direct string content fallback if speech_metadata schema differs
-                response = client.models.generate_content(
-                    model=tts_model,
-                    contents=clean_text,
-                    config=types.GenerateContentConfig(
-                        response_modalities=["AUDIO"],
-                        speech_config=types.SpeechConfig(
-                            voice_config=types.VoiceConfig(
-                                prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                                    voice_name=voice_name or "Puck"
-                                )
-                            )
-                        ),
-                    ),
-                )
+                    )
+                    if response.parts:
+                        for part in response.parts:
+                            if part.inline_data and part.inline_data.data:
+                                return part.inline_data.data
+                except Exception as e_gen:
+                    logger.warning(f"generate_content with VoiceConfig(voice=...) failed for {replicated_voice_id}: {e_gen}")
 
-            if response.parts:
-                for part in response.parts:
-                    if part.inline_data and part.inline_data.data:
-                        return part.inline_data.data
+                # Do not run prebuilt voice generation with a replicated voice ID.
+                # Proceed directly to high-quality acoustic fallback.
+                logger.info(f"Replicated voice {replicated_voice_id} falling back to acoustic generator.")
+            else:
+                # Prebuilt voice generation
+                try:
+                    response = client.models.generate_content(
+                        model=tts_model,
+                        contents=contents_payload,
+                        config=types.GenerateContentConfig(
+                            response_modalities=["AUDIO"],
+                            speech_config=types.SpeechConfig(
+                                voice_config=types.VoiceConfig(
+                                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                        voice_name=voice_name or "Puck"
+                                    )
+                                )
+                            ),
+                        ),
+                    )
+                except Exception:
+                    # Direct string content fallback if speech_metadata schema differs
+                    response = client.models.generate_content(
+                        model=tts_model,
+                        contents=clean_text,
+                        config=types.GenerateContentConfig(
+                            response_modalities=["AUDIO"],
+                            speech_config=types.SpeechConfig(
+                                voice_config=types.VoiceConfig(
+                                    prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                        voice_name=voice_name or "Puck"
+                                    )
+                                )
+                            ),
+                        ),
+                    )
+
+                if response.parts:
+                    for part in response.parts:
+                        if part.inline_data and part.inline_data.data:
+                            return part.inline_data.data
         except Exception as e:
             logger.error(f"Gemini TTS direct API call failed ({voice_name}): {e}. Using acoustic voice sample.")
 

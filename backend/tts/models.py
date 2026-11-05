@@ -18,7 +18,7 @@ class TTSJob(models.Model):
     vocalized_text = models.TextField(blank=True)
     language = models.CharField(max_length=20, default='ar')
     dialect = models.CharField(max_length=50, default='msa')
-    voice_profile = models.CharField(max_length=50, default='Charon')
+    voice_profile = models.CharField(max_length=255, default='Charon')
     emotion = models.CharField(max_length=50, default='neutral')
     delivery_style = models.CharField(max_length=50, default='documentary')
     custom_instructions = models.TextField(blank=True)

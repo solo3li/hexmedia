@@ -92,8 +92,12 @@
   - `POST /api/tts/voices/cloned/{voice_id}/test`: Audition endpoint synthesizing test phrases.
   - `DELETE /api/tts/voices/cloned/{voice_id}`: Deletes record and remote Gemini voice.
 - **TTS Engine Update**:
-  - `generate_voice_audio` in `backend/ai_studio/services/gemini_service.py` supports replicated voice IDs (`voice_...`) using Gemini interaction/speech config with graceful fallback.
+  - `generate_voice_audio` in `backend/ai_studio/services/gemini_service.py` supports replicated voice IDs (`voice_...`) and resolves `ClonedVoice` UUIDs, preventing invalid prebuilt voice crashes.
+  - Migration `0003_alter_ttsjob_voice_profile.py` expands `TTSJob.voice_profile` to `max_length=255` preventing DB truncation errors with real Gemini voice IDs.
+  - Piped ffmpeg audio output corrected via `fix_wav_header_sizes` preventing 4GB duration artifacts.
+  - Gemini biometric speaker mismatch errors properly bubbled as 400 Bad Request instead of masked with fake "READY" voices.
+  - TTS Studio My Voices cards updated with safe UUID selectors, display names, and direct delete actions.
 - **Verification**:
-  - 27/27 TTS unit tests pass (`backend/tts/tests_tts.py`).
-  - 200/200 total test suite passes (`./init.sh`).
+  - 31/31 TTS unit tests pass (`backend/tts/tests_tts.py`).
+  - 204/204 total test suite passes (`./init.sh`).
   - Python compileall syntax check clean.

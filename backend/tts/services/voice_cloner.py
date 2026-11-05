@@ -28,6 +28,22 @@ def create_fallback_wav(sample_rate: int = 24000, duration_seconds: float = 10.0
     return buf.getvalue()
 
 
+def fix_wav_header_sizes(wav_bytes: bytes) -> bytes:
+    """Fixes 0xFFFFFFFF placeholder chunk sizes written by ffmpeg pipe output."""
+    if len(wav_bytes) < 44 or not wav_bytes.startswith(b'RIFF'):
+        return wav_bytes
+    data_pos = wav_bytes.find(b'data')
+    if data_pos == -1 or len(wav_bytes) < data_pos + 8:
+        return wav_bytes
+    total_len = len(wav_bytes)
+    riff_size = total_len - 8
+    data_size = total_len - (data_pos + 8)
+    b = bytearray(wav_bytes)
+    struct.pack_into('<I', b, 4, riff_size)
+    struct.pack_into('<I', b, data_pos + 4, data_size)
+    return bytes(b)
+
+
 def convert_to_wav_24k_mono(audio_bytes: bytes) -> bytes:
     """
     Converts audio bytes of any container format (webm, wav, mp3, ogg, m4a, aac)
@@ -55,7 +71,7 @@ def convert_to_wav_24k_mono(audio_bytes: bytes) -> bytes:
         )
         out, err = proc.communicate(input=audio_bytes, timeout=30)
         if proc.returncode == 0 and out and len(out) > 44:
-            return out
+            return fix_wav_header_sizes(out)
         logger.warning(f"ffmpeg conversion returned code {proc.returncode}: {err.decode('utf-8', errors='ignore')[:300]}")
     except Exception as e:
         logger.warning(f"ffmpeg execution failed: {e}")
@@ -65,11 +81,18 @@ def convert_to_wav_24k_mono(audio_bytes: bytes) -> bytes:
 
 
 def get_wav_duration(wav_bytes: bytes) -> float:
-    """Reads duration in seconds from WAV header."""
+    """Reads duration in seconds from WAV header or byte length."""
     try:
         with wave.open(io.BytesIO(wav_bytes), 'rb') as wf:
             frames = wf.getnframes()
             rate = wf.getframerate()
+            channels = wf.getnchannels() or 1
+            sampwidth = wf.getsampwidth() or 2
+            if frames == 2147483647 or frames <= 0 or (frames * channels * sampwidth) > len(wav_bytes):
+                pcm_bytes = max(0, len(wav_bytes) - 78)
+                bytes_per_sec = rate * channels * sampwidth
+                if bytes_per_sec > 0:
+                    return round(pcm_bytes / float(bytes_per_sec), 2)
             if rate > 0 and frames > 0:
                 return round(frames / float(rate), 2)
     except Exception:
@@ -81,6 +104,7 @@ def replicate_voice_with_gemini(name: str, source_wav: bytes, consent_wav: bytes
     """
     Calls Gemini Voices API (client.voices.create) to create a replicated voice profile.
     Returns (gemini_voice_id, status).
+    Raises ValueError if speaker match fails or Gemini API rejects the request.
     """
     client, config = get_gemini_client()
     if not client:
@@ -111,8 +135,8 @@ def replicate_voice_with_gemini(name: str, source_wav: bytes, consent_wav: bytes
         voice_id = getattr(replicated_voice, "id", None) or getattr(replicated_voice, "name", None)
         if voice_id:
             return str(voice_id), "READY"
+        raise ValueError("استجابة غير متوقعة من خادم Gemini: لم يتم إرجاع معرف الصوت")
     except Exception as e:
         logger.error(f"Gemini client.voices.create error: {e}")
+        raise ValueError(f"فشل التحقق البيومتري من الصوت عبر Gemini: {e}")
 
-    # Fallback identifier for dev/sandbox/offline environments
-    return f"voice_rep_{uuid.uuid4().hex[:12]}", "READY"

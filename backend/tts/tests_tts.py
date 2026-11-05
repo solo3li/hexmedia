@@ -638,6 +638,95 @@ class VoiceCloneTests(TestCase):
         self.assertIn("أصواتي المستنسخة (My Voices)", content)
         self.assertIn('id="ttsClonedVoicesContainer"', content)
         self.assertIn('id="ttsClonedVoiceCountBadge"', content)
+        self.assertIn("deleteTTSClonedVoice", content)
+
+    def test_tts_generation_with_long_gemini_voice_id(self):
+        """TTSJob and /api/tts/generate properly support realistic Gemini voice IDs > 50 characters."""
+        import json
+        long_voice_id = "voice_rep_google_gemini_38_flash_replicated_speaker_998877665544332211"
+        self.assertGreater(len(long_voice_id), 50)
+        cv = ClonedVoice.objects.create(
+            user=self.user_a,
+            name="صوت طويل المعرف",
+            gemini_voice_id=long_voice_id,
+            status="READY"
+        )
+        payload = {
+            "text": "اختبار لتوليد صوت باستخدام معرف صوت طويل يتجاوز خمسين حرفاً.",
+            "voice_profile": cv.gemini_voice_id,
+            "language": "ar",
+            "dialect": "msa",
+            "emotion": "neutral"
+        }
+        res = self.client.post(
+            "/api/tts/generate",
+            data=json.dumps(payload),
+            content_type="application/json",
+            **self.auth_headers_a
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertEqual(data["voice_profile"], long_voice_id)
+        job = TTSJob.objects.get(id=data["id"])
+        self.assertEqual(job.voice_profile, long_voice_id)
+
+    def test_clone_voice_rejects_audio_under_10_seconds(self):
+        """POST /api/tts/voices/clone rejects reference audio shorter than 10 seconds."""
+        # 4 seconds reference audio (< 9.5s requirement)
+        short_source = SimpleUploadedFile("short.wav", create_fallback_wav(duration_seconds=4.0), content_type="audio/wav")
+        consent_audio = SimpleUploadedFile("consent.wav", create_fallback_wav(duration_seconds=4.0), content_type="audio/wav")
+
+        res = self.client.post(
+            "/api/tts/voices/clone",
+            data={
+                "name": "صوت قصير",
+                "source_audio": short_source,
+                "consent_audio": consent_audio
+            },
+            **self.auth_headers_a
+        )
+        self.assertEqual(res.status_code, 400)
+        data = res.json()
+        err_msg = data.get("detail") or data.get("message", "")
+        self.assertIn("قصير جداً", err_msg)
+
+    def test_clone_voice_fails_on_biometric_speaker_mismatch(self):
+        """POST /api/tts/voices/clone raises 400 if Gemini speaker verification rejects audio."""
+        from unittest.mock import MagicMock, patch
+        mock_client = MagicMock()
+        mock_client.voices.create.side_effect = Exception("Speaker mismatch detected: consent audio does not match speaker")
+
+        source_audio = SimpleUploadedFile("source.wav", create_fallback_wav(duration_seconds=12.0), content_type="audio/wav")
+        consent_audio = SimpleUploadedFile("consent.wav", create_fallback_wav(duration_seconds=4.0), content_type="audio/wav")
+
+        with patch("tts.services.voice_cloner.get_gemini_client", return_value=(mock_client, MagicMock())):
+            res = self.client.post(
+                "/api/tts/voices/clone",
+                data={
+                    "name": "صوت غير مطابق",
+                    "source_audio": source_audio,
+                    "consent_audio": consent_audio
+                },
+                **self.auth_headers_a
+            )
+            self.assertEqual(res.status_code, 400)
+            data = res.json()
+            err_msg = data.get("detail") or data.get("message", "")
+            self.assertIn("فشل استنساخ الصوت", err_msg)
+            self.assertFalse(ClonedVoice.objects.filter(name="صوت غير مطابق").exists())
+
+    def test_generate_voice_audio_with_cloned_voice_uuid(self):
+        """generate_voice_audio properly resolves ClonedVoice UUID to its gemini_voice_id."""
+        from ai_studio.services.gemini_service import generate_voice_audio
+        cv = ClonedVoice.objects.create(
+            user=self.user_a,
+            name="صوت UUID",
+            gemini_voice_id="voice_rep_uuid_test_99",
+            status="READY"
+        )
+        audio_bytes = generate_voice_audio("مرحبا بكم في هذا الاختبار", voice_name=str(cv.id))
+        self.assertGreater(len(audio_bytes), 1000)
+
 
 
 

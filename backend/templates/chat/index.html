@@ -2202,7 +2202,12 @@
       const val = (document.getElementById('ttsCustomVoiceInput')?.value || '').trim();
       if (val) {
         currentTTSConfig.voice_profile = val;
+        currentTTSConfig.voice_display_name = val;
         document.querySelectorAll('.tts-voice-card').forEach(card => {
+          card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+          card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
+        });
+        document.querySelectorAll('.tts-cloned-card').forEach(card => {
           card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
           card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
         });
@@ -2279,9 +2284,9 @@
 
             return `
               <div 
-                onclick="selectTTSClonedVoice('${cv.gemini_voice_id || cv.id}', '${escapeHtml(cv.name)}')" 
-                id="clonedVoiceCard_${cv.gemini_voice_id || cv.id}" 
-                class="tts-cloned-card p-3 rounded-2xl ${selectedClasses} cursor-pointer transition flex items-start gap-2.5 text-right select-none group"
+                onclick="selectTTSClonedVoice('${cv.id}')" 
+                id="clonedVoiceCard_${cv.id}" 
+                class="tts-cloned-card p-3 rounded-2xl ${selectedClasses} cursor-pointer transition flex items-start gap-2.5 text-right select-none group relative"
               >
                 <div class="w-7 h-7 rounded-lg bg-surface border border-limeAccent/40 flex items-center justify-center shrink-0 mt-0.5 font-mono text-[11px] font-bold text-limeAccent select-none shadow-sm">
                   ${initial}
@@ -2289,7 +2294,15 @@
                 <div class="min-w-0 flex-1">
                   <div class="flex items-center justify-between gap-1">
                     <span class="font-semibold text-white text-xs truncate">${escapeHtml(cv.name)}</span>
-                    <span class="text-[9px] font-mono text-limeAccent bg-limeAccent/10 px-1.5 py-0.5 rounded border border-limeAccent/20">مستنسخ</span>
+                    <div class="flex items-center gap-1">
+                      <span class="text-[9px] font-mono text-limeAccent bg-limeAccent/10 px-1.5 py-0.5 rounded border border-limeAccent/20">مستنسخ</span>
+                      <button type="button" onclick="deleteTTSClonedVoice('${cv.id}', event)" title="حذف الصوت" class="text-muted hover:text-red-400 p-0.5 rounded hover:bg-surface transition">
+                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                   <div class="text-[10px] font-mono text-muted mt-0.5 truncate">${escapeHtml(cv.gemini_voice_id || 'voice_...')}</div>
                   ${cv.sample_audio_url ? `
@@ -2310,10 +2323,15 @@
       }
     }
 
-    function selectTTSClonedVoice(voiceId, voiceName) {
-      currentTTSConfig.voice_profile = voiceId;
+    function selectTTSClonedVoice(voiceId) {
+      const found = (window.TTS_CLONED_VOICES || []).find(v => v.id === voiceId || v.gemini_voice_id === voiceId);
+      const targetId = (found && found.gemini_voice_id) ? found.gemini_voice_id : voiceId;
+      const targetName = found ? found.name : 'صوت مستنسخ';
+
+      currentTTSConfig.voice_profile = targetId;
+      currentTTSConfig.voice_display_name = targetName;
       const customInput = document.getElementById('ttsCustomVoiceInput');
-      if (customInput) customInput.value = voiceId;
+      if (customInput) customInput.value = targetId;
 
       document.querySelectorAll('.tts-voice-card').forEach(card => {
         card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
@@ -2325,10 +2343,31 @@
         card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
       });
 
-      const selectedCard = document.getElementById(`clonedVoiceCard_${voiceId}`);
+      const cardId = found ? `clonedVoiceCard_${found.id}` : `clonedVoiceCard_${voiceId}`;
+      const selectedCard = document.getElementById(cardId);
       if (selectedCard) {
         selectedCard.classList.remove('border-borderSubtle', 'bg-obsidian/50');
         selectedCard.classList.add('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+      }
+    }
+
+    async function deleteTTSClonedVoice(voiceId, event) {
+      if (event) event.stopPropagation();
+      if (!confirm('هل أنت متأكد من حذف هذا الصوت المستنسخ نهائياً؟')) return;
+      try {
+        const res = await authFetch(`/api/tts/voices/cloned/${voiceId}`, { method: 'DELETE' });
+        if (res.ok) {
+          showToast('تم حذف الصوت المستنسخ بنجاح');
+          await loadTTSClonedVoices();
+          if (currentTTSConfig.voice_profile === voiceId) {
+            currentTTSConfig.voice_profile = 'Charon';
+            currentTTSConfig.voice_display_name = 'Charon';
+          }
+        } else {
+          showToast('فشل حذف الصوت المستنسخ', true);
+        }
+      } catch (err) {
+        showToast('خطأ أثناء حذف الصوت', true);
       }
     }
 
@@ -2339,7 +2378,10 @@
     }
 
     function openTTSConfigModal() {
-      toggleToolsMenu();
+      const menu = document.getElementById('toolsMenu');
+      if (menu && !menu.classList.contains('hidden')) {
+        toggleToolsMenu();
+      }
       const modal = document.getElementById('ttsConfigModal');
       if (modal) modal.classList.remove('hidden');
       loadTTSOptionsCatalog();
@@ -2379,6 +2421,7 @@
 
     function selectTTSVoiceProfile(voiceName) {
       currentTTSConfig.voice_profile = voiceName;
+      currentTTSConfig.voice_display_name = voiceName;
       const customInput = document.getElementById('ttsCustomVoiceInput');
       if (customInput) customInput.value = '';
 
@@ -2402,6 +2445,9 @@
     function confirmTTSConfig() {
       const customVoice = (document.getElementById('ttsCustomVoiceInput')?.value || '').trim();
       currentTTSConfig.voice_profile = customVoice || currentTTSConfig.voice_profile || 'Charon';
+      if (!currentTTSConfig.voice_display_name || customVoice) {
+        currentTTSConfig.voice_display_name = customVoice || currentTTSConfig.voice_profile;
+      }
       currentTTSConfig.language = document.getElementById('ttsLanguageSelect').value;
       currentTTSConfig.dialect = document.getElementById('ttsDialectSelect').value;
       currentTTSConfig.emotion = document.getElementById('ttsEmotionSelect').value;
@@ -2419,11 +2465,12 @@
       document.getElementById('activeToolIcon').innerHTML = `
         <span class="font-mono font-bold text-limeAccent text-xs">TTS</span>
       `;
-      document.getElementById('activeToolLabel').textContent = `تحويل النص لصوت (${currentTTSConfig.voice_profile})`;
+      const label = currentTTSConfig.voice_display_name || currentTTSConfig.voice_profile;
+      document.getElementById('activeToolLabel').textContent = `تحويل النص لصوت (${label})`;
       const input = document.getElementById('chatInput');
       input.placeholder = 'اكتب أو الصق النص هنا لتسجيله صوتياً (يدعم النصوص الطويلة وتجميعها آلياً)...';
       input.focus();
-      showToast(`تم تفعيل استوديو الصوت (${currentTTSConfig.voice_profile}). اكتب النص ثم اضغط إرسال`);
+      showToast(`تم تفعيل استوديو الصوت (${label}). اكتب النص ثم اضغط إرسال`);
     }
 
     function triggerAudioExecution() {
@@ -4279,9 +4326,23 @@
       const nextBtn = document.getElementById('vcStep1NextBtn');
 
       if (fileName) fileName.textContent = file.name;
-      if (audioPrev) audioPrev.src = URL.createObjectURL(file);
+      const fileUrl = URL.createObjectURL(file);
+      if (audioPrev) audioPrev.src = fileUrl;
       if (fileInfo) fileInfo.classList.remove('hidden');
-      if (nextBtn) nextBtn.disabled = false;
+
+      if (nextBtn) nextBtn.disabled = true;
+      const tempAudio = new Audio(fileUrl);
+      tempAudio.onloadedmetadata = () => {
+        if (tempAudio.duration && tempAudio.duration < 9.5) {
+          showToast('الملف الصوتي أقل من 10 ثوانٍ. يرجى اختيار تسجيل مدته 10 ثوانٍ على الأقل.', true);
+          if (nextBtn) nextBtn.disabled = true;
+        } else {
+          if (nextBtn) nextBtn.disabled = false;
+        }
+      };
+      tempAudio.onerror = () => {
+        if (nextBtn) nextBtn.disabled = false;
+      };
     }
 
     async function toggleVoiceCloneConsentRecording() {
@@ -4458,6 +4519,7 @@
       if (!currentCreatedClonedVoice) return;
       closeVoiceCloneModal();
       currentTTSConfig.voice_profile = currentCreatedClonedVoice.gemini_voice_id || currentCreatedClonedVoice.id;
+      currentTTSConfig.voice_display_name = currentCreatedClonedVoice.name || currentCreatedClonedVoice.gemini_voice_id;
       openTTSConfigModal();
       showToast(`تم اختيار الصوت المستنسخ: ${currentCreatedClonedVoice.name}`);
     }

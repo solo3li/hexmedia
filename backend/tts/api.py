@@ -203,6 +203,12 @@ def clone_voice_endpoint(
     source_wav = convert_to_wav_24k_mono(source_bytes)
     consent_wav = convert_to_wav_24k_mono(consent_bytes)
 
+    source_dur = get_wav_duration(source_wav)
+    if source_dur < 9.5:
+        raise HttpError(400, "التسجيل الصوتي المرجعي قصير جداً. يجب أن تكون مدته 10 ثوانٍ على الأقل وحتى 60 ثانية.")
+    if source_dur > 70.0:
+        raise HttpError(400, "التسجيل الصوتي المرجعي يتجاوز الحد الأقصى المسموح به (60 ثانية).")
+
     voice_uuid = uuid.uuid4()
     source_filename = f"cloned_voices/{voice_uuid}/source.wav"
     consent_filename = f"cloned_voices/{voice_uuid}/consent.wav"
@@ -211,11 +217,15 @@ def clone_voice_endpoint(
     consent_url = upload_bytes(consent_wav, consent_filename)
 
     # Call Gemini voices.create API
-    gemini_voice_id, status = replicate_voice_with_gemini(
-        name=voice_name,
-        source_wav=source_wav,
-        consent_wav=consent_wav
-    )
+    try:
+        gemini_voice_id, status = replicate_voice_with_gemini(
+            name=voice_name,
+            source_wav=source_wav,
+            consent_wav=consent_wav
+        )
+    except Exception as e:
+        logger.error(f"Replication failed: {e}")
+        raise HttpError(400, f"فشل استنساخ الصوت: {e}")
 
     cloned_voice = ClonedVoice.objects.create(
         id=voice_uuid,
