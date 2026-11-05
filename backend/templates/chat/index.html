@@ -1310,10 +1310,20 @@
             <p class="text-[11px] text-muted leading-relaxed">
               وفقاً لسياسات الأمان لمطابقة المتحدث في Google Gemini 3.8 Flash TTS، يرجى قراءة العبارة النظامية التالية بدقة وبصوتك المسموع:
             </p>
-            <div class="bg-obsidian border border-limeAccent/30 rounded-xl p-3.5 text-center my-2 shadow-inner">
-              <p class="text-sm font-semibold text-limeAccent leading-relaxed font-sans">
-                «أنا مالك هذا الصوت وأوافق على أن تستخدم google هذا الصوت لإنشاء نموذج صوتي اصطناعي.»
-              </p>
+            <div class="bg-obsidian border border-limeAccent/30 rounded-xl p-3.5 text-center my-2 shadow-inner space-y-3">
+              <div class="border-b border-borderSubtle/60 pb-2.5">
+                <span class="text-[10px] font-mono text-limeAccent/80 block mb-1">الخيار الأول: باللغة العربية (اقرأ الجملة بدقة وبصوت واضح):</span>
+                <p class="text-xs sm:text-sm font-semibold text-limeAccent leading-relaxed font-sans select-all">
+                  «أنا مالك هذا الصوت وأوافق على أن تستخدم google هذا الصوت لإنشاء نموذج صوتي اصطناعي.»
+                </p>
+                <span class="text-[10px] text-muted/80 block mt-1">نطق كلمة Google: <b>جوجل</b></span>
+              </div>
+              <div class="pt-0.5">
+                <span class="text-[10px] font-mono text-cyan-400/90 block mb-1">الخيار الثاني: باللغة الإنجليزية (مدعومة ومضمونة الدقة لدى Google):</span>
+                <p class="text-[11px] sm:text-xs font-mono text-cyan-300 select-all tracking-tight" dir="ltr">
+                  "I am the owner of this voice and I consent to Google using this voice to create a synthetic voice model."
+                </p>
+              </div>
             </div>
             <p class="text-[10px] text-muted text-center">
               سيقوم نظام الذكاء الاصطناعي بمطابقة نبرة الصوت مع المقطع المرجعي للتأكد من هوية المتحدث.
@@ -4459,7 +4469,9 @@
           let errText = 'فشل استنساخ الصوت. يرجى التأكد من جودة التسجيل ومطابقة المتحدث.';
           try {
             const errData = await res.json();
-            if (errData && errData.message) errText = errData.message;
+            if (errData && (errData.detail || errData.message)) {
+              errText = errData.detail || errData.message;
+            }
           } catch (_) {}
 
           if (errBox) {

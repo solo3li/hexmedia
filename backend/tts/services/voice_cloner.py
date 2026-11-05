@@ -137,6 +137,11 @@ def replicate_voice_with_gemini(name: str, source_wav: bytes, consent_wav: bytes
             return str(voice_id), "READY"
         raise ValueError("استجابة غير متوقعة من خادم Gemini: لم يتم إرجاع معرف الصوت")
     except Exception as e:
-        logger.error(f"Gemini client.voices.create error: {e}")
-        raise ValueError(f"فشل التحقق البيومتري من الصوت عبر Gemini: {e}")
+        err_str = str(e)
+        logger.error(f"Gemini client.voices.create error: {err_str}")
+        if any(keyword in err_str for keyword in ["didn't match the text", "Consent flow failed", "INPUT_VR_TAKEDOWN", "prompt exactly"]):
+            raise ValueError("عبارة الموافقة المسجلة لم تطابق النص المطلوب تماماً. يرجى قراءة الجملة بدقة ونطق الكلمات بوضوح.")
+        if any(keyword in err_str.lower() for keyword in ["speaker_verification_failed", "speaker", "mismatch", "not match"]):
+            raise ValueError("فشل التحقق البيومتري: نبرة الصوت في تسجيل الموافقة لا تطابق عينة الصوت المرجعية. تأكد من أن نفس الشخص يسجل كلا المقطعين.")
+        raise ValueError(f"فشل التحقق من الصوت عبر Gemini: {err_str[:220]}")
 
