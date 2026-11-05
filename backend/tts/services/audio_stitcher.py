@@ -1,6 +1,10 @@
 import io
 import wave
+import subprocess
+import logging
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 
 def stitch_wav_buffers(wav_buffers: List[bytes], pause_seconds: float = 0.3) -> bytes:
@@ -46,3 +50,35 @@ def stitch_wav_buffers(wav_buffers: List[bytes], pause_seconds: float = 0.3) -> 
                 continue
 
     return master_buf.getvalue()
+
+
+def convert_to_mp3(audio_bytes: bytes, bitrate: str = "192k") -> bytes:
+    """
+    Converts audio bytes (e.g. WAV, PCM) to MP3 using ffmpeg libmp3lame.
+    Falls back to original audio_bytes if ffmpeg fails.
+    """
+    if not audio_bytes:
+        return b""
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", "pipe:0",
+        "-c:a", "libmp3lame",
+        "-b:a", bitrate,
+        "-f", "mp3",
+        "pipe:1"
+    ]
+    try:
+        proc = subprocess.Popen(
+            cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        out, err = proc.communicate(input=audio_bytes, timeout=30)
+        if proc.returncode == 0 and out and len(out) > 100:
+            return out
+        logger.warning(f"ffmpeg MP3 conversion returned code {proc.returncode}: {err.decode('utf-8', errors='ignore')[:300]}")
+    except Exception as e:
+        logger.warning(f"ffmpeg MP3 conversion failed: {e}")
+    return audio_bytes
+

@@ -5,7 +5,7 @@ import wave
 import logging
 from typing import List, Dict, Any, Tuple
 from .chunker import split_text_into_chunks
-from .audio_stitcher import stitch_wav_buffers
+from .audio_stitcher import stitch_wav_buffers, convert_to_mp3
 from ai_studio.services.gemini_service import generate_voice_audio, call_gemini_chat
 from ai_studio.services.minio_service import upload_bytes
 
@@ -93,8 +93,9 @@ def process_tts_generation(
         except Exception:
             chunk_dur = max(2.0, len(c.split()) * 0.45)
 
-        chunk_filename = f"tts/{job_id}/chunk_{idx + 1}.wav"
-        chunk_url = upload_bytes(wav_bytes, chunk_filename)
+        chunk_filename = f"tts/{job_id}/chunk_{idx + 1}.mp3"
+        chunk_mp3 = convert_to_mp3(wav_bytes)
+        chunk_url = upload_bytes(chunk_mp3, chunk_filename, content_type="audio/mpeg")
 
         chunk_meta_list.append({
             "order": idx + 1,
@@ -112,8 +113,10 @@ def process_tts_generation(
     except Exception:
         master_dur = sum(c["duration"] for c in chunk_meta_list)
 
-    master_filename = f"tts/{job_id}/master_tts.wav"
-    master_audio_url = upload_bytes(master_wav, master_filename)
+    # Convert master audio to high-quality MP3 format
+    master_mp3 = convert_to_mp3(master_wav)
+    master_filename = f"tts/{job_id}/master_tts.mp3"
+    master_audio_url = upload_bytes(master_mp3, master_filename, content_type="audio/mpeg")
 
     full_vocalized = "\n\n".join(vocalized_chunks)
     active_text = full_vocalized or text

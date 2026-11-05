@@ -11,6 +11,7 @@ from ai_studio.auth import JWTAuth, django_auth, get_current_user
 from .models import TTSJob, ClonedVoice
 from .services.tts_options import LANGUAGES, VOICES, EMOTIONS, DELIVERY_STYLES
 from .services.tts_engine import process_tts_generation
+from .services.audio_stitcher import convert_to_mp3
 from .services.voice_cloner import convert_to_wav_24k_mono, replicate_voice_with_gemini, get_wav_duration
 from ai_studio.services.gemini_service import generate_voice_audio, get_gemini_client
 from ai_studio.services.minio_service import upload_bytes
@@ -288,8 +289,9 @@ def test_cloned_voice_endpoint(request, voice_id: str, data: Optional[ClonedVoic
         dialect="msa"
     )
 
-    sample_filename = f"cloned_voices/{cloned_voice.id}/sample_test.wav"
-    sample_url = upload_bytes(wav_bytes, sample_filename)
+    sample_mp3 = convert_to_mp3(wav_bytes)
+    sample_filename = f"cloned_voices/{cloned_voice.id}/sample_test.mp3"
+    sample_url = upload_bytes(sample_mp3, sample_filename, content_type="audio/mpeg")
 
     cloned_voice.sample_audio_url = sample_url
     cloned_voice.save(update_fields=['sample_audio_url'])

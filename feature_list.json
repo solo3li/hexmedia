@@ -70,7 +70,7 @@
       "description": "Voice cloning tool in toolsMenu with 4-step wizard modal (source recording/upload, biometric consent recording, 24kHz mono WAV conversion, Gemini Voices API replication, audition test) and TTS Studio integration with 'My Voices' section above prebuilt voices.",
       "dependencies": ["feat-001"],
       "status": "completed",
-      "evidence": "Migrations 0002 & 0003 applied; TTSJob.voice_profile extended to max_length=255; ffmpeg WAV 24kHz mono converter with fix_wav_header_sizes in voice_cloner.py; Gemini Voices API replication client with biometric error bubbling; UUID voice resolution in generate_voice_audio; endpoints /api/tts/voices/clone, /cloned, /test, /delete; voiceCloneModal and TTS Studio My Voices UI with safe select & deletion in index.html; 31/31 TTS tests pass, 204/204 total tests pass in ./init.sh."
+      "evidence": "Migrations 0002 & 0003 applied; TTSJob.voice_profile extended to max_length=255; ffmpeg WAV 24kHz mono converter with fix_wav_header_sizes in voice_cloner.py; MP3 192k encoder in audio_stitcher.py converting chunk and master audio outputs to .mp3 format; Gemini Voices API replication client with biometric error bubbling; UUID voice resolution in generate_voice_audio; endpoints /api/tts/voices/clone, /cloned, /test, /delete; voiceCloneModal and TTS Studio My Voices UI with safe select & deletion in index.html; 32/32 TTS tests pass, 214/214 total tests pass in ./init.sh."
     },
     {
       "id": "feat-018",

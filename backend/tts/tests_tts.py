@@ -4,7 +4,7 @@ from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from tts.services.chunker import split_text_into_chunks
-from tts.services.audio_stitcher import stitch_wav_buffers
+from tts.services.audio_stitcher import stitch_wav_buffers, convert_to_mp3
 from tts.models import TTSJob, ClonedVoice
 from tts.services.voice_cloner import convert_to_wav_24k_mono, create_fallback_wav, replicate_voice_with_gemini
 from ai_studio.services.gemini_service import generate_voice_audio
@@ -55,6 +55,15 @@ class TTSUnitTests(TestCase):
             total_frames = sw.getnframes()
             # Total frames must be approximately frames1 + frames2 + pause_frames
             self.assertGreater(total_frames, frames1 + frames2)
+
+    def test_convert_to_mp3(self):
+        """convert_to_mp3 converts WAV PCM audio to valid MP3 audio stream."""
+        wav = create_fallback_wav(sample_rate=24000, duration_seconds=1.0)
+        mp3 = convert_to_mp3(wav)
+        self.assertGreater(len(mp3), 100)
+        # MP3 file starts with ID3 header (0x49 0x44 0x33) or sync frame header (0xFF 0xFB/0xF3/0xF2)
+        is_mp3 = mp3[:3] == b'ID3' or mp3[:2] in (b'\xff\xfb', b'\xff\xf3', b'\xff\xf2')
+        self.assertTrue(is_mp3)
 
     def test_tts_job_model(self):
         """TTSJob stores conversion data with user ownership and parameters."""
@@ -125,6 +134,7 @@ class TTSAPITests(TestCase):
         data = res.json()
         self.assertIn("id", data)
         self.assertIn("audio_url", data)
+        self.assertTrue(data["audio_url"].endswith(".mp3"))
         self.assertEqual(data["chunks_count"], 1)
         self.assertGreater(data["duration_seconds"], 0)
         self.assertEqual(data["voice_profile"], "Charon")
@@ -158,6 +168,7 @@ class TTSAPITests(TestCase):
         data = res.json()
         self.assertGreater(data["chunks_count"], 1)
         self.assertIn("audio_url", data)
+        self.assertTrue(data["audio_url"].endswith(".mp3"))
         self.assertTrue(len(data["chunks"]) > 1)
 
         # Check job in database
@@ -201,6 +212,7 @@ class TTSAPITests(TestCase):
         self.assertNotIn('id="ttsAutoDiacritizeToggle"', content)
         self.assertNotIn("التشكيل التلقائي الذكي", content)
         self.assertIn("renderTTSAudioCard", content)
+        self.assertIn("تحميل MP3", content)
 
     def test_tts_job_appears_in_profile_media(self):
         """Generated TTS audio automatically appears in user profile media library."""
