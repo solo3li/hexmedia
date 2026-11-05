@@ -71,6 +71,14 @@
       "dependencies": ["feat-001"],
       "status": "completed",
       "evidence": "Migrations 0002 & 0003 applied; TTSJob.voice_profile extended to max_length=255; ffmpeg WAV 24kHz mono converter with fix_wav_header_sizes in voice_cloner.py; Gemini Voices API replication client with biometric error bubbling; UUID voice resolution in generate_voice_audio; endpoints /api/tts/voices/clone, /cloned, /test, /delete; voiceCloneModal and TTS Studio My Voices UI with safe select & deletion in index.html; 31/31 TTS tests pass, 204/204 total tests pass in ./init.sh."
+    },
+    {
+      "id": "feat-018",
+      "name": "Full Light Theme & Dual Theme Switching (Zero FOUC)",
+      "description": "Comprehensive Warm Paper / Cream Light Theme support alongside Dark Theme with seamless header toggle, localStorage persistence, Zero FOUC, and full token architecture adaptation across all modals, tools menu, docks, and dynamic chat cards.",
+      "dependencies": ["feat-001"],
+      "status": "completed",
+      "evidence": "Tailwind CSS variable tokens defined for :root and html.dark with space-separated RGB values for full opacity modifier support; Zero-FOUC script in <head>; Sun/Moon themeToggleBtn added to header with smooth 300ms rotate/scale morphing transitions; all modals (ttsConfigModal, voiceCloneModal, sttConfigModal, voiceModal, loginModal, registerModal, profileModal) audited and converted from hardcoded dark hex/white to semantic theme variables; eliminated residual low-contrast zinc classes across transcripts, modals, and thread lists; 9/9 theme tests pass in backend/ai_studio/tests_theme.py; full 213 test suite passes cleanly in ./init.sh."
     }
   ]
 }

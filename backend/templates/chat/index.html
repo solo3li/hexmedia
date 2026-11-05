@@ -4,6 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HexMedia | أستوديو الروايات والدراما الصوتية الذكية</title>
+
+  <!-- Theme Init Script (Zero-FOUC: Dark / Light Theme Persistence) -->
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('hexmedia_theme');
+        if (savedTheme === 'light') {
+          document.documentElement.classList.remove('dark');
+        } else {
+          document.documentElement.classList.add('dark');
+          if (!savedTheme) {
+            localStorage.setItem('hexmedia_theme', 'dark');
+          }
+        }
+      } catch (e) {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
   
   <!-- Google Fonts: IBM Plex Sans Arabic & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,13 +38,13 @@
       theme: {
         extend: {
           colors: {
-            obsidian: '#08080a',
-            surface: '#0e0e12',
-            surfaceHover: '#14141a',
-            borderSubtle: '#1c1c22',
-            limeAccent: '#e2ff44',
-            muted: '#71717a',
-            light: '#f4f4f6'
+            obsidian: 'rgb(var(--color-obsidian-rgb) / <alpha-value>)',
+            surface: 'rgb(var(--color-surface-rgb) / <alpha-value>)',
+            surfaceHover: 'rgb(var(--color-surfaceHover-rgb) / <alpha-value>)',
+            borderSubtle: 'rgb(var(--color-borderSubtle-rgb) / <alpha-value>)',
+            limeAccent: 'rgb(var(--color-limeAccent-rgb) / <alpha-value>)',
+            muted: 'rgb(var(--color-muted-rgb) / <alpha-value>)',
+            light: 'rgb(var(--color-light-rgb) / <alpha-value>)'
           },
           fontFamily: {
             sans: ['"IBM Plex Sans Arabic"', 'sans-serif'],
@@ -43,10 +62,48 @@
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
+    :root {
+      /* Warm Paper / Cream Light Theme */
+      --color-obsidian: #faf8f5;
+      --color-surface: #ffffff;
+      --color-surfaceHover: #f3f0ea;
+      --color-borderSubtle: #e6e2d8;
+      --color-light: #292524;
+      --color-muted: #78716c;
+      --color-limeAccent: #65a30d;
+
+      --color-obsidian-rgb: 250 248 245;
+      --color-surface-rgb: 255 255 255;
+      --color-surfaceHover-rgb: 243 240 234;
+      --color-borderSubtle-rgb: 230 226 216;
+      --color-light-rgb: 41 37 36;
+      --color-muted-rgb: 120 113 108;
+      --color-limeAccent-rgb: 101 163 13;
+    }
+
+    html.dark {
+      /* Deep Obsidian Dark Theme */
+      --color-obsidian: #08080a;
+      --color-surface: #0e0e12;
+      --color-surfaceHover: #14141a;
+      --color-borderSubtle: #1c1c22;
+      --color-light: #f4f4f6;
+      --color-muted: #71717a;
+      --color-limeAccent: #e2ff44;
+
+      --color-obsidian-rgb: 8 8 10;
+      --color-surface-rgb: 14 14 18;
+      --color-surfaceHover-rgb: 20 20 26;
+      --color-borderSubtle-rgb: 28 28 34;
+      --color-light-rgb: 244 244 246;
+      --color-muted-rgb: 113 113 122;
+      --color-limeAccent-rgb: 226 255 68;
+    }
+
     * {
       box-sizing: border-box;
       scrollbar-width: thin;
-      scrollbar-color: #1c1c22 transparent;
+      scrollbar-color: var(--color-borderSubtle) transparent;
     }
 
     *::-webkit-scrollbar {
@@ -57,15 +114,29 @@
       background: transparent;
     }
     *::-webkit-scrollbar-thumb {
-      background: #1c1c22;
+      background: var(--color-borderSubtle);
       border-radius: 9999px;
     }
 
     body {
-      background-color: #08080a;
-      color: #f4f4f6;
+      background-color: var(--color-obsidian);
+      color: var(--color-light);
       font-family: 'IBM Plex Sans Arabic', sans-serif;
       -webkit-font-smoothing: antialiased;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    body, aside, header, #messagesContainer, .floating-dock {
+      transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+    }
+
+    select option {
+      background-color: var(--color-surface);
+      color: var(--color-light);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: var(--color-muted);
     }
 
     .wave-bar {
@@ -73,14 +144,14 @@
     }
 
     .floating-dock {
-      background: rgba(14, 14, 18, 0.90);
+      background: rgba(var(--color-surface-rgb), 0.90);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
     }
 
     [contenteditable="true"]:focus {
       outline: none;
-      background: rgba(255, 255, 255, 0.04);
+      background: rgba(var(--color-light-rgb), 0.05);
       border-radius: 6px;
     }
 
@@ -139,13 +210,13 @@
           <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center shadow-sm">
             <svg class="w-4 h-4 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"></polygon>
-              <circle cx="12" cy="12" r="2" fill="#e2ff44" stroke="none"></circle>
+              <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"></circle>
             </svg>
           </div>
-          <span class="font-medium tracking-wide text-sm text-white">HexMedia</span>
+          <span class="font-medium tracking-wide text-sm text-light">HexMedia</span>
         </div>
 
-        <button onclick="toggleSidebar(false)" title="إغلاق القائمة" class="p-1.5 rounded-lg text-muted hover:text-white hover:bg-obsidian transition-colors lg:hidden active:scale-95">
+        <button onclick="toggleSidebar(false)" title="إغلاق القائمة" class="p-1.5 rounded-lg text-muted hover:text-light hover:bg-obsidian transition-colors lg:hidden active:scale-95">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -175,7 +246,7 @@
 
       <!-- Profile & Projects Hub Trigger in Sidebar -->
       <div class="pt-3 pb-1 shrink-0">
-        <button id="sidebarProfileBtn" onclick="openProfileModal()" class="w-full py-2 px-3 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle hover:border-limeAccent/40 text-xs text-light hover:text-white flex items-center justify-between transition-all group shadow-sm active:scale-[0.98]">
+        <button id="sidebarProfileBtn" onclick="openProfileModal()" class="w-full py-2 px-3 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle hover:border-limeAccent/40 text-xs text-light hover:text-light flex items-center justify-between transition-all group shadow-sm active:scale-[0.98]">
           <div class="flex items-center gap-2">
             <svg class="w-4 h-4 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -194,7 +265,7 @@
         <span class="w-1.5 h-1.5 rounded-full bg-limeAccent"></span>
         <span class="font-mono text-[10px]">Gemini 3.8 Flash</span>
       </div>
-      <a href="/admin/ai_studio/aiconfiguration/" target="_blank" class="font-mono text-[10px] text-zinc-500 hover:text-white transition">API Keys</a>
+      <a href="/admin/ai_studio/aiconfiguration/" target="_blank" class="font-mono text-[10px] text-muted hover:text-light transition">API Keys</a>
     </div>
   </aside>
 
@@ -207,7 +278,7 @@
       <!-- Right: Title, Controls & Breadcrumb -->
       <div class="flex items-center gap-2 sm:gap-3 min-w-0">
         <!-- Sidebar Toggle Trigger (Desktop & Mobile for Logged-In Users) -->
-        <button id="sidebarToggleBtn" onclick="toggleSidebar()" title="طي / توسيع سجل المحادثات (Ctrl+B)" class="p-2 rounded-xl text-muted hover:text-white hover:bg-surface border border-borderSubtle active:scale-95 transition-all shrink-0 hidden">
+        <button id="sidebarToggleBtn" onclick="toggleSidebar()" title="طي / توسيع سجل المحادثات (Ctrl+B)" class="p-2 rounded-xl text-muted hover:text-light hover:bg-surface border border-borderSubtle active:scale-95 transition-all shrink-0 hidden">
           <svg id="sidebarToggleIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="15" y1="3" x2="15" y2="21"></line>
@@ -215,7 +286,7 @@
         </button>
 
         <!-- New Chat Trigger in Header (Instant 1-Click Action for Logged-In Users) -->
-        <button id="headerNewChatBtn" onclick="startNewChat()" title="محادثة جديدة (Ctrl+K)" class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-surface/80 hover:bg-surface border border-borderSubtle hover:border-limeAccent/40 text-xs text-light hover:text-white transition-all active:scale-95 shrink-0">
+        <button id="headerNewChatBtn" onclick="startNewChat()" title="محادثة جديدة (Ctrl+K)" class="hidden items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-surface/80 hover:bg-surface border border-borderSubtle hover:border-limeAccent/40 text-xs text-light hover:text-light transition-all active:scale-95 shrink-0">
           <svg class="w-3.5 h-3.5 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -223,12 +294,12 @@
           <span class="hidden md:inline font-medium">محادثة جديدة</span>
         </button>
 
-        <h1 id="headerTitle" class="text-xs sm:text-sm font-medium text-white truncate max-w-[150px] sm:max-w-xs">محادثة جديدة</h1>
+        <h1 id="headerTitle" class="text-xs sm:text-sm font-medium text-light truncate max-w-[150px] sm:max-w-xs">محادثة جديدة</h1>
         
         <div id="chapterSelectorContainer" class="hidden flex items-center gap-1.5 sm:gap-2">
           <span class="text-borderSubtle">/</span>
           <div class="relative">
-            <select id="chapterSelector" onchange="handleChapterChange(this.value)" class="appearance-none bg-surface hover:bg-surfaceHover border border-borderSubtle rounded-lg pl-6 sm:pl-7 pr-2.5 sm:pr-3 py-1 text-[11px] sm:text-xs text-muted hover:text-white focus:outline-none cursor-pointer transition-colors font-mono">
+            <select id="chapterSelector" onchange="handleChapterChange(this.value)" class="appearance-none bg-surface hover:bg-surfaceHover border border-borderSubtle rounded-lg pl-6 sm:pl-7 pr-2.5 sm:pr-3 py-1 text-[11px] sm:text-xs text-muted hover:text-light focus:outline-none cursor-pointer transition-colors font-mono">
               <!-- Populated by JS -->
             </select>
             <svg class="w-3 h-3 text-muted absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -240,20 +311,20 @@
 
       <!-- Center: Narrator Mode Minimalist Segmented Pill Control (Visible only in Audio Drama Mode) -->
       <div id="narratorModeControls" class="hidden md:flex items-center bg-surface p-1 rounded-full border border-borderSubtle">
-        <button onclick="setNarratorMode('SMART')" id="mode-SMART" class="px-3.5 py-1 rounded-full text-xs font-medium bg-obsidian text-white border border-borderSubtle transition-all">
+        <button onclick="setNarratorMode('SMART')" id="mode-SMART" class="px-3.5 py-1 rounded-full text-xs font-medium bg-obsidian text-light border border-borderSubtle transition-all">
           سرد ذكي
         </button>
-        <button onclick="setNarratorMode('FULL')" id="mode-FULL" class="px-3.5 py-1 rounded-full text-xs font-medium text-muted hover:text-white border border-transparent transition-all">
+        <button onclick="setNarratorMode('FULL')" id="mode-FULL" class="px-3.5 py-1 rounded-full text-xs font-medium text-muted hover:text-light border border-transparent transition-all">
           سرد كامل
         </button>
-        <button onclick="setNarratorMode('NONE')" id="mode-NONE" class="px-3.5 py-1 rounded-full text-xs font-medium text-muted hover:text-white border border-transparent transition-all">
+        <button onclick="setNarratorMode('NONE')" id="mode-NONE" class="px-3.5 py-1 rounded-full text-xs font-medium text-muted hover:text-light border border-transparent transition-all">
           حوار فقط
         </button>
       </div>
 
-      <!-- Left: Open Studio & Export Button -->
+      <!-- Left: Open Studio, Theme Toggle & Export Button -->
       <div class="flex items-center gap-2 shrink-0">
-        <button id="exportHeaderBtn" onclick="exportAudioMaster()" class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-limeAccent text-obsidian font-medium text-xs transition-colors active:scale-95 shadow-sm">
+        <button id="exportHeaderBtn" onclick="exportAudioMaster()" class="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface hover:bg-limeAccent text-light hover:text-obsidian border border-borderSubtle font-medium text-xs transition-colors active:scale-95 shadow-sm">
           <span>تصدير</span>
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -262,9 +333,59 @@
           </svg>
         </button>
 
+        <!-- Theme Toggle Button (Light / Dark) -->
+        <button 
+          id="themeToggleBtn" 
+          onclick="toggleTheme()" 
+          type="button" 
+          title="تبديل المظهر" 
+          aria-label="تبديل المظهر" 
+          class="relative w-8 h-8 rounded-full bg-surface hover:bg-surfaceHover border border-borderSubtle text-light hover:text-limeAccent flex items-center justify-center transition-all duration-200 active:scale-90 shadow-sm cursor-pointer overflow-hidden group"
+        >
+          <!-- Sun Icon (Shown in Dark mode: indicates click to turn into Light mode) -->
+          <svg id="themeIconSun" class="w-4 h-4 absolute inset-0 m-auto transition-all duration-300 transform rotate-0 scale-100 opacity-100" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <!-- Moon Icon (Shown in Light mode: indicates click to turn into Dark mode) -->
+          <svg id="themeIconMoon" class="w-4 h-4 absolute inset-0 m-auto transition-all duration-300 transform -rotate-90 scale-0 opacity-0 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+        <script>
+          (function() {
+            var isDark = document.documentElement.classList.contains('dark');
+            var s = document.getElementById('themeIconSun');
+            var m = document.getElementById('themeIconMoon');
+            var b = document.getElementById('themeToggleBtn');
+            if (isDark) {
+              if (s) { s.className = 'w-4 h-4 absolute inset-0 m-auto transition-all duration-300 transform rotate-0 scale-100 opacity-100'; }
+              if (m) { m.className = 'w-4 h-4 absolute inset-0 m-auto transition-all duration-300 transform -rotate-90 scale-0 opacity-0 pointer-events-none'; }
+              if (b) {
+                b.setAttribute('title', 'تبديل إلى الوضع الفاتح (Light Mode)');
+                b.setAttribute('aria-label', 'تبديل إلى الوضع الفاتح');
+              }
+            } else {
+              if (s) { s.className = 'w-4 h-4 absolute inset-0 m-auto transition-all duration-300 transform rotate-90 scale-0 opacity-0 pointer-events-none'; }
+              if (m) { m.className = 'w-4 h-4 absolute inset-0 m-auto transition-all duration-300 transform rotate-0 scale-100 opacity-100'; }
+              if (b) {
+                b.setAttribute('title', 'تبديل إلى الوضع الداكن (Dark Mode)');
+                b.setAttribute('aria-label', 'تبديل إلى الوضع الداكن');
+              }
+            }
+          })();
+        </script>
+
         <!-- User Profile & Auth Trigger -->
         <div id="authHeaderContainer" class="flex items-center">
-          <button id="loginHeaderBtn" onclick="openLoginModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface hover:bg-surfaceHover border border-borderSubtle text-xs text-light hover:text-white transition-colors">
+          <button id="loginHeaderBtn" onclick="openLoginModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface hover:bg-surfaceHover border border-borderSubtle text-xs text-light hover:text-light transition-colors">
             <svg class="w-3.5 h-3.5 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
@@ -272,14 +393,14 @@
             <span>تسجيل الدخول</span>
           </button>
           <div id="userProfileBadge" class="hidden relative">
-            <button onclick="toggleUserDropdown()" class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-white transition-all">
+            <button onclick="toggleUserDropdown()" class="flex items-center gap-2 px-2.5 py-1 rounded-full bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light transition-all">
               <span id="userBadgeAvatar" class="w-5 h-5 rounded-full bg-limeAccent text-obsidian font-bold text-[10px] flex items-center justify-center">U</span>
               <span id="userBadgeName" class="font-medium max-w-[80px] sm:max-w-[110px] truncate">مستخدم</span>
               <svg class="w-3 h-3 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </button>
             <div id="userDropdownMenu" class="hidden absolute left-0 mt-2 w-48 rounded-xl bg-surface border border-borderSubtle shadow-2xl py-1.5 z-50 text-right">
               <div class="px-3 py-2 border-b border-borderSubtle text-[11px] text-muted truncate" id="userDropdownEmail">user@example.com</div>
-              <button id="dropdownProfileBtn" onclick="openProfileModal(); toggleUserDropdown();" class="w-full px-3 py-2 text-xs text-light hover:bg-obsidian hover:text-white flex items-center justify-between transition-colors border-b border-borderSubtle/50">
+              <button id="dropdownProfileBtn" onclick="openProfileModal(); toggleUserDropdown();" class="w-full px-3 py-2 text-xs text-light hover:bg-obsidian hover:text-light flex items-center justify-between transition-colors border-b border-borderSubtle/50">
                 <div class="flex items-center gap-2">
                   <svg class="w-3.5 h-3.5 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -309,13 +430,13 @@
           <div class="w-10 h-10 rounded-2xl bg-surface border border-borderSubtle flex items-center justify-center shadow-lg">
             <svg class="w-5 h-5 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"></polygon>
-              <circle cx="12" cy="12" r="2" fill="#e2ff44" stroke="none"></circle>
+              <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"></circle>
             </svg>
           </div>
           <div class="space-y-1.5">
-            <h2 class="text-xl md:text-2xl font-medium text-white tracking-tight">بماذا يمكنني مساعدتك اليوم؟</h2>
+            <h2 class="text-xl md:text-2xl font-medium text-light tracking-tight">بماذا يمكنني مساعدتك اليوم؟</h2>
             <p class="text-xs text-muted max-w-md mx-auto leading-relaxed">
-              تحاور معي كشات ذكاء اصطناعي عادي، أو استخدم زر <strong class="text-white font-mono">(+)</strong> بالأسفل لاختيار أدوات تحويل الكتب وتأليف السيناريو الدرامي.
+              تحاور معي كشات ذكاء اصطناعي عادي، أو استخدم زر <strong class="text-light font-mono">(+)</strong> بالأسفل لاختيار أدوات تحويل الكتب وتأليف السيناريو الدرامي.
             </p>
           </div>
         </div>
@@ -332,8 +453,8 @@
           </div>
           <div class="bg-surface border border-borderSubtle px-4 py-3 rounded-2xl rounded-tr-sm flex items-center gap-2">
             <span class="w-1.5 h-1.5 rounded-full bg-limeAccent animate-bounce"></span>
-            <span class="w-1.5 h-1.5 rounded-full bg-white animate-bounce [animation-delay:0.2s]"></span>
-            <span class="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-bounce [animation-delay:0.4s]"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-light animate-bounce [animation-delay:0.2s]"></span>
+            <span class="w-1.5 h-1.5 rounded-full bg-muted animate-bounce [animation-delay:0.4s]"></span>
             <span class="text-xs text-muted mr-2 font-normal" id="typingStatusText">المخرج الذكي يفكر ويولد المشاهد...</span>
           </div>
         </div>
@@ -348,10 +469,10 @@
         <!-- Active Pills container floating above the dock bar -->
         <div id="pillsBar" class="flex items-center gap-2 mb-2 px-1 overflow-x-auto no-scrollbar pointer-events-auto">
           <!-- Active Tool Pill (e.g. Story Authoring Mode) -->
-          <div id="activeToolPill" class="hidden items-center gap-1.5 bg-surface/95 border border-limeAccent/60 px-3 py-1 rounded-full text-xs text-white shrink-0 shadow-lg backdrop-blur-md">
+          <div id="activeToolPill" class="hidden items-center gap-1.5 bg-surface/95 border border-limeAccent/60 px-3 py-1 rounded-full text-xs text-light shrink-0 shadow-lg backdrop-blur-md">
             <span id="activeToolIcon">✍️</span>
             <span id="activeToolLabel" class="truncate max-w-[150px] sm:max-w-xs font-medium text-limeAccent">تأليف سيناريو درامي</span>
-            <button type="button" onclick="clearActiveTool()" title="إلغاء والعودة للشات العادي" class="text-muted hover:text-white mr-1 text-sm font-bold leading-none">×</button>
+            <button type="button" onclick="clearActiveTool()" title="إلغاء والعودة للشات العادي" class="text-muted hover:text-light mr-1 text-sm font-bold leading-none">×</button>
           </div>
 
           <!-- Active File Pill (if novel attached) -->
@@ -377,21 +498,21 @@
               </svg>
             </div>
             <div>
-              <div class="font-medium text-white group-hover:text-limeAccent transition">تحويل كتاب إلى دراما مسموعة</div>
+              <div class="font-medium text-light group-hover:text-limeAccent transition">تحويل كتاب إلى دراما مسموعة</div>
               <div class="text-[10px] text-muted">رفع ملف رواية (PDF, EPUB, TXT)</div>
             </div>
           </button>
 
           <!-- Tool 2: Story Idea / Scenario Generator -->
           <button onclick="activateStoryTool()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
-            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-white group-hover:text-limeAccent shrink-0">
+            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-light group-hover:text-limeAccent shrink-0">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M12 20h9"></path>
                 <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
               </svg>
             </div>
             <div>
-              <div class="font-medium text-white group-hover:text-limeAccent transition">تأليف وتطوير قصة وسيناريو</div>
+              <div class="font-medium text-light group-hover:text-limeAccent transition">تأليف وتطوير قصة وسيناريو</div>
               <div class="text-[10px] text-muted">كتابة وحوار مع المخرج turn-by-turn</div>
             </div>
           </button>
@@ -411,7 +532,7 @@
               </svg>
             </div>
             <div>
-              <div class="font-medium text-white group-hover:text-amber-300 transition">إنتاج فيلم وفيديو بالصور</div>
+              <div class="font-medium text-light group-hover:text-amber-400 transition">إنتاج فيلم وفيديو بالصور</div>
               <div class="text-[10px] text-muted">مشاهد مصورة (وثائقي، كرتون، مانجا) وريندر Remotion</div>
             </div>
           </button>
@@ -427,7 +548,7 @@
               </svg>
             </div>
             <div>
-              <div class="font-medium text-white group-hover:text-limeAccent transition">تحويل النص إلى صوت (TTS Studio)</div>
+              <div class="font-medium text-light group-hover:text-limeAccent transition">تحويل النص إلى صوت (TTS Studio)</div>
               <div class="text-[10px] text-muted">مكتبة الأصوات الرسمية (30 صوتاً)، لهجات عالمية، مشاعر، وأساليب إلقاء</div>
             </div>
           </button>
@@ -444,7 +565,7 @@
               </svg>
             </div>
             <div>
-              <div class="font-medium text-white group-hover:text-limeAccent transition">تفريغ الصوت والترجمة (STT Studio)</div>
+              <div class="font-medium text-light group-hover:text-limeAccent transition">تفريغ الصوت والترجمة (STT Studio)</div>
               <div class="text-[10px] text-muted">تحويل الصوت لنص، تمييز المتحدثين، وتصدير SRT / TXT بواسطة Gemini 3.5 Transcribe</div>
             </div>
           </button>
@@ -458,7 +579,7 @@
               </svg>
             </div>
             <div>
-              <div class="font-medium text-white group-hover:text-limeAccent transition">استنساخ الصوت (Clone Your Voice)</div>
+              <div class="font-medium text-light group-hover:text-limeAccent transition">استنساخ الصوت (Clone Your Voice)</div>
               <div class="text-[10px] text-muted">استنساخ بصمة صوتك ونبرتك الطبيعية باستخدام Gemini 3.8 Flash TTS</div>
             </div>
           </button>
@@ -468,7 +589,7 @@
         <div class="floating-dock border border-borderSubtle rounded-full p-1.5 sm:p-2 pl-2 sm:pl-3 pr-2 sm:pr-2.5 shadow-2xl flex items-center gap-1.5 sm:gap-2 bg-surface/90 backdrop-blur-xl">
           
           <!-- Plus (+) Button for Tools Menu (ChatGPT style) -->
-          <button id="toolsBtn" onclick="toggleToolsMenu()" title="الأدوات وإرفاق الملفات" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface hover:bg-white text-muted hover:text-obsidian border border-borderSubtle flex items-center justify-center shrink-0 transition-all active:scale-95">
+          <button id="toolsBtn" onclick="toggleToolsMenu()" title="الأدوات وإرفاق الملفات" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface hover:bg-surfaceHover text-muted hover:text-light border border-borderSubtle flex items-center justify-center shrink-0 transition-all active:scale-95">
             <svg id="toolsIcon" class="w-4 h-4 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -487,11 +608,11 @@
             type="text" 
             placeholder="اسأل أي شيء أو اكتب رسالتك... (اختر أداة من +)" 
             onkeydown="if(event.key === 'Enter') handleSendMessage()"
-            class="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder-muted focus:outline-none px-2 min-w-0"
+            class="flex-1 bg-transparent text-xs sm:text-sm text-light placeholder-muted focus:outline-none px-2 min-w-0"
           >
 
           <!-- Quick Voice Chat Microphone Button (Gemini 3.8 Flash) -->
-          <button id="voiceRecordBtn" onclick="toggleQuickVoiceRecord()" title="تحدث مع الوكيل بالصوت (Gemini 3.8 Flash)" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface hover:bg-surfaceHover text-muted hover:text-white border border-borderSubtle flex items-center justify-center shrink-0 transition-all active:scale-95 relative group">
+          <button id="voiceRecordBtn" onclick="toggleQuickVoiceRecord()" title="تحدث مع الوكيل بالصوت (Gemini 3.8 Flash)" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-surface hover:bg-surfaceHover text-muted hover:text-light border border-borderSubtle flex items-center justify-center shrink-0 transition-all active:scale-95 relative group">
             <svg id="voiceRecordMicIcon" class="w-3.5 h-3.5 transition group-hover:text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
               <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
@@ -502,7 +623,7 @@
           </button>
 
           <!-- Send / Generate Button -->
-          <button id="sendBtn" onclick="handleSendMessage()" title="إرسال" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-sm">
+          <button id="sendBtn" onclick="handleSendMessage()" title="إرسال" class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-limeAccent hover:opacity-90 text-obsidian flex items-center justify-center shrink-0 transition-all active:scale-95 shadow-sm">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="19" y1="12" x2="5" y2="12"></line>
               <polyline points="12 19 5 12 12 5"></polyline>
@@ -524,9 +645,9 @@
       <div class="flex items-center justify-between border-b border-borderSubtle pb-3">
         <div class="flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-limeAccent"></span>
-          <span class="text-xs font-medium text-white" id="modalCharName">تخصيص صوت الشخصية</span>
+          <span class="text-xs font-medium text-light" id="modalCharName">تخصيص صوت الشخصية</span>
         </div>
-        <button onclick="closeVoiceModal()" class="text-muted hover:text-white transition">
+        <button onclick="closeVoiceModal()" class="text-muted hover:text-light transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -542,8 +663,8 @@
       </div>
 
       <div class="pt-2 flex items-center justify-end gap-2 border-t border-borderSubtle">
-        <button onclick="closeVoiceModal()" class="px-3 py-1.5 rounded-lg text-xs text-muted hover:text-white hover:bg-obsidian transition">إلغاء</button>
-        <button onclick="saveVoiceAssignment()" class="px-4 py-1.5 rounded-lg bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition">حفظ التعيين</button>
+        <button onclick="closeVoiceModal()" class="px-3 py-1.5 rounded-lg text-xs text-muted hover:text-light hover:bg-obsidian transition">إلغاء</button>
+        <button onclick="saveVoiceAssignment()" class="px-4 py-1.5 rounded-lg bg-limeAccent hover:opacity-90 text-obsidian text-xs font-semibold transition">حفظ التعيين</button>
       </div>
     </div>
   </div>
@@ -560,9 +681,9 @@
               <line x1="15" y1="12" x2="3" y2="12"></line>
             </svg>
           </div>
-          <span class="text-sm font-medium text-white">تسجيل الدخول</span>
+          <span class="text-sm font-medium text-light">تسجيل الدخول</span>
         </div>
-        <button onclick="closeLoginModal()" class="text-muted hover:text-white transition">
+        <button onclick="closeLoginModal()" class="text-muted hover:text-light transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -573,14 +694,14 @@
       <form onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
         <div>
           <label class="block text-[11px] text-muted mb-1 font-normal">البريد الإلكتروني أو اسم المستخدم</label>
-          <input type="text" id="loginIdentifier" required placeholder="name@example.com" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none transition">
+          <input type="text" id="loginIdentifier" required placeholder="name@example.com" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-light placeholder-muted focus:outline-none transition">
         </div>
         <div>
           <label class="block text-[11px] text-muted mb-1 font-normal">كلمة المرور</label>
-          <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none transition">
+          <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-light placeholder-muted focus:outline-none transition">
         </div>
         <div id="loginError" class="hidden text-[11px] text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-lg"></div>
-        <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 rounded-xl bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition active:scale-[0.98] shadow-sm">
+        <button type="submit" id="loginSubmitBtn" class="w-full py-2.5 rounded-xl bg-limeAccent hover:opacity-90 text-obsidian text-xs font-semibold transition active:scale-[0.98] shadow-sm">
           دخول
         </button>
       </form>
@@ -605,9 +726,9 @@
               <line x1="23" y1="11" x2="17" y2="11"></line>
             </svg>
           </div>
-          <span class="text-sm font-medium text-white">إنشاء حساب جديد</span>
+          <span class="text-sm font-medium text-light">إنشاء حساب جديد</span>
         </div>
-        <button onclick="closeRegisterModal()" class="text-muted hover:text-white transition">
+        <button onclick="closeRegisterModal()" class="text-muted hover:text-light transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -618,18 +739,18 @@
       <form onsubmit="handleRegisterSubmit(event)" class="space-y-3.5">
         <div>
           <label class="block text-[11px] text-muted mb-1 font-normal">اسم المستخدم</label>
-          <input type="text" id="regUsername" required placeholder="username" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none transition">
+          <input type="text" id="regUsername" required placeholder="username" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-light placeholder-muted focus:outline-none transition">
         </div>
         <div>
           <label class="block text-[11px] text-muted mb-1 font-normal">البريد الإلكتروني</label>
-          <input type="email" id="regEmail" required placeholder="name@example.com" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none transition">
+          <input type="email" id="regEmail" required placeholder="name@example.com" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-light placeholder-muted focus:outline-none transition">
         </div>
         <div>
           <label class="block text-[11px] text-muted mb-1 font-normal">كلمة المرور (6 أحرف على الأقل)</label>
-          <input type="password" id="regPassword" required minlength="6" placeholder="••••••••" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-white placeholder-zinc-600 focus:outline-none transition">
+          <input type="password" id="regPassword" required minlength="6" placeholder="••••••••" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-light placeholder-muted focus:outline-none transition">
         </div>
         <div id="regError" class="hidden text-[11px] text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-lg"></div>
-        <button type="submit" id="regSubmitBtn" class="w-full py-2.5 rounded-xl bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition active:scale-[0.98] shadow-sm">
+        <button type="submit" id="regSubmitBtn" class="w-full py-2.5 rounded-xl bg-limeAccent hover:opacity-90 text-obsidian text-xs font-semibold transition active:scale-[0.98] shadow-sm">
           إنشاء الحساب والمتابعة
         </button>
       </form>
@@ -645,8 +766,8 @@
   <div id="renameModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden" onclick="closeRenameModal()">
     <div class="bg-surface border border-borderSubtle rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
-        <span class="text-xs font-medium text-white">تعديل عنوان المحادثة</span>
-        <button onclick="closeRenameModal()" class="text-muted hover:text-white transition">
+        <span class="text-xs font-medium text-light">تعديل عنوان المحادثة</span>
+        <button onclick="closeRenameModal()" class="text-muted hover:text-light transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -654,11 +775,11 @@
         </button>
       </div>
       <div>
-        <input type="text" id="renameInput" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none transition">
+        <input type="text" id="renameInput" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-light focus:outline-none transition">
       </div>
       <div class="flex items-center justify-end gap-2 pt-2 border-t border-borderSubtle">
-        <button onclick="closeRenameModal()" class="px-3 py-1.5 rounded-lg text-xs text-muted hover:text-white transition">إلغاء</button>
-        <button onclick="submitRenameThread()" class="px-4 py-1.5 rounded-lg bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition">حفظ</button>
+        <button onclick="closeRenameModal()" class="px-3 py-1.5 rounded-lg text-xs text-muted hover:text-light transition">إلغاء</button>
+        <button onclick="submitRenameThread()" class="px-4 py-1.5 rounded-lg bg-limeAccent hover:opacity-90 text-obsidian text-xs font-semibold transition">حفظ</button>
       </div>
     </div>
   </div>
@@ -667,8 +788,8 @@
   <div id="projectRenameModal" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden" onclick="closeProjectRenameModal()">
     <div class="bg-surface border border-borderSubtle rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between border-b border-borderSubtle pb-2.5">
-        <span class="text-xs font-medium text-white">تعديل عنوان المشروع</span>
-        <button onclick="closeProjectRenameModal()" class="text-muted hover:text-white transition">
+        <span class="text-xs font-medium text-light">تعديل عنوان المشروع</span>
+        <button onclick="closeProjectRenameModal()" class="text-muted hover:text-light transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -676,11 +797,11 @@
         </button>
       </div>
       <div>
-        <input type="text" id="projectRenameInput" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none transition">
+        <input type="text" id="projectRenameInput" class="w-full bg-obsidian border border-borderSubtle focus:border-limeAccent rounded-xl px-3.5 py-2 text-xs text-light focus:outline-none transition">
       </div>
       <div class="flex items-center justify-end gap-2 pt-2 border-t border-borderSubtle">
-        <button onclick="closeProjectRenameModal()" class="px-3 py-1.5 rounded-lg text-xs text-muted hover:text-white transition">إلغاء</button>
-        <button onclick="submitRenameProject()" class="px-4 py-1.5 rounded-lg bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition">حفظ</button>
+        <button onclick="closeProjectRenameModal()" class="px-3 py-1.5 rounded-lg text-xs text-muted hover:text-light transition">إلغاء</button>
+        <button onclick="submitRenameProject()" class="px-4 py-1.5 rounded-lg bg-limeAccent hover:opacity-90 text-obsidian text-xs font-semibold transition">حفظ</button>
       </div>
     </div>
   </div>
@@ -697,7 +818,7 @@
           </div>
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <h3 id="profileUserName" class="text-sm sm:text-base font-medium text-white truncate">المستخدم</h3>
+              <h3 id="profileUserName" class="text-sm sm:text-base font-medium text-light truncate">المستخدم</h3>
               <span id="profileUserRole" class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">حساب نشط</span>
             </div>
             <p id="profileUserEmail" class="text-xs text-muted truncate mt-0.5">user@example.com</p>
@@ -705,7 +826,7 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <button onclick="closeProfileModal()" class="p-2 rounded-xl text-muted hover:text-white hover:bg-obsidian border border-transparent hover:border-borderSubtle transition">
+          <button onclick="closeProfileModal()" class="p-2 rounded-xl text-muted hover:text-light hover:bg-obsidian border border-transparent hover:border-borderSubtle transition">
             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -718,7 +839,7 @@
       <div id="profileMetricsBar" class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 p-3 sm:p-4 bg-obsidian/30 border-b border-borderSubtle text-center text-xs">
         <div class="p-2 rounded-xl bg-surface/50 border border-borderSubtle">
           <span class="block text-[11px] text-muted">إجمالي المشاريع</span>
-          <span id="statProjectsCount" class="text-sm sm:text-base font-mono font-bold text-white">0</span>
+          <span id="statProjectsCount" class="text-sm sm:text-base font-mono font-bold text-light">0</span>
         </div>
         <div class="p-2 rounded-xl bg-surface/50 border border-borderSubtle">
           <span class="block text-[11px] text-muted">المقاطع الصوتية</span>
@@ -740,19 +861,19 @@
           <span>📁 مشاريعي</span>
           <span id="tabBadgeProjects" class="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-limeAccent/20 text-limeAccent">0</span>
         </button>
-        <button onclick="switchProfileTab('audio')" id="tabBtn_audio" class="profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-white">
+        <button onclick="switchProfileTab('audio')" id="tabBtn_audio" class="profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-light">
           <span>🎙️ المقاطع الصوتية</span>
           <span id="tabBadgeAudio" class="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-obsidian text-muted">0</span>
         </button>
-        <button onclick="switchProfileTab('video')" id="tabBtn_video" class="profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-white">
+        <button onclick="switchProfileTab('video')" id="tabBtn_video" class="profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-light">
           <span>🎬 المشاهد المصورة</span>
           <span id="tabBadgeVideo" class="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-obsidian text-muted">0</span>
         </button>
-        <button onclick="switchProfileTab('scripts')" id="tabBtn_scripts" class="profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-white">
+        <button onclick="switchProfileTab('scripts')" id="tabBtn_scripts" class="profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-light">
           <span>📝 السيناريوهات</span>
           <span id="tabBadgeScripts" class="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-obsidian text-muted">0</span>
         </button>
-        <button onclick="switchProfileTab('stats')" id="tabBtn_stats" class="profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-white">
+        <button onclick="switchProfileTab('stats')" id="tabBtn_stats" class="profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-light">
           <span>📊 تفاصيل الحساب</span>
         </button>
       </div>
@@ -808,18 +929,18 @@
         <div id="profileTabStats" class="hidden space-y-4">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="p-4 rounded-2xl bg-obsidian/50 border border-borderSubtle space-y-2">
-              <span class="text-xs font-medium text-white flex items-center gap-1.5">
+              <span class="text-xs font-medium text-light flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-limeAccent"></span>
                 <span>معلومات الحساب</span>
               </span>
               <div class="text-xs space-y-1.5 text-light pt-2">
                 <div class="flex justify-between border-b border-borderSubtle/40 pb-1">
                   <span class="text-muted">اسم المستخدم:</span>
-                  <span id="detailUsername" class="font-mono text-white">-</span>
+                  <span id="detailUsername" class="font-mono text-light">-</span>
                 </div>
                 <div class="flex justify-between border-b border-borderSubtle/40 pb-1">
                   <span class="text-muted">البريد الإلكتروني:</span>
-                  <span id="detailEmail" class="font-mono text-white">-</span>
+                  <span id="detailEmail" class="font-mono text-light">-</span>
                 </div>
                 <div class="flex justify-between border-b border-borderSubtle/40 pb-1">
                   <span class="text-muted">نوع الحساب:</span>
@@ -833,7 +954,7 @@
             </div>
 
             <div class="p-4 rounded-2xl bg-obsidian/50 border border-borderSubtle space-y-2">
-              <span class="text-xs font-medium text-white flex items-center gap-1.5">
+              <span class="text-xs font-medium text-light flex items-center gap-1.5">
                 <span class="w-2 h-2 rounded-full bg-sky-400"></span>
                 <span>محركات الذكاء الاصطناعي النشطة</span>
               </span>
@@ -863,8 +984,8 @@
 
       <!-- Modal Footer -->
       <div class="p-3 sm:p-4 border-t border-borderSubtle bg-obsidian/40 flex items-center justify-between text-xs text-muted shrink-0">
-        <span class="font-mono text-[11px] text-zinc-500">HexMedia Studio Platform v2.0</span>
-        <button onclick="closeProfileModal()" class="px-4 py-1.5 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-xs text-light hover:text-white transition">
+        <span class="font-mono text-[11px] text-muted">HexMedia Studio Platform v2.0</span>
+        <button onclick="closeProfileModal()" class="px-4 py-1.5 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-xs text-light hover:text-light transition">
           إغلاق
         </button>
       </div>
@@ -874,24 +995,24 @@
 
   <!-- TTS CONFIGURATION MODAL -->
   <!-- TTS CONFIGURATION MODAL -->
-  <div id="ttsConfigModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeTTSConfigModal()">
-    <div class="bg-[#0c0c10] border border-[#232330] ring-1 ring-white/5 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.95)] overflow-hidden" onclick="event.stopPropagation()">
+  <div id="ttsConfigModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeTTSConfigModal()">
+    <div class="bg-surface border border-borderSubtle ring-1 ring-borderSubtle/50 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.5)] overflow-hidden" onclick="event.stopPropagation()">
       
       <!-- Modal Header -->
-      <div class="p-4 sm:p-5 border-b border-[#1f1f2a] flex items-center justify-between shrink-0 bg-[#08080a]">
+      <div class="p-4 sm:p-5 border-b border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/40">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-2xl bg-surface border border-borderSubtle text-limeAccent font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
             TTS
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="text-sm sm:text-base font-semibold text-white tracking-tight">استوديو تحويل النص إلى صوت (TTS Studio)</h3>
+              <h3 class="text-sm sm:text-base font-semibold text-light tracking-tight">استوديو تحويل النص إلى صوت (TTS Studio)</h3>
               <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">Gemini 3.8</span>
             </div>
             <p class="text-[11px] text-muted mt-0.5">30 صوتاً رسمياً، أكثر من 130 لغة مع اللهجات الإقليمية، 32 حالة شعورية، و25 أسلوب إلقاء</p>
           </div>
         </div>
-        <button onclick="closeTTSConfigModal()" class="p-2 rounded-xl text-muted hover:text-white hover:bg-surface border border-transparent hover:border-borderSubtle transition">
+        <button onclick="closeTTSConfigModal()" class="p-2 rounded-xl text-muted hover:text-light hover:bg-surface border border-transparent hover:border-borderSubtle transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -900,7 +1021,7 @@
       </div>
 
       <!-- Modal Body (Scrollable) -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs bg-[#0c0c10]">
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs bg-surface">
         
         <!-- Row 1: Language and Regional Dialect Selection -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 bg-surface/60 p-3.5 rounded-2xl border border-borderSubtle/60">
@@ -909,7 +1030,7 @@
               <label class="font-medium text-light">اللغة الأساسية</label>
               <span class="text-[10px] font-mono text-muted">130+ لغة عالمية</span>
             </div>
-            <select id="ttsLanguageSelect" onchange="handleTTSLanguageChange()" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+            <select id="ttsLanguageSelect" onchange="handleTTSLanguageChange()" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-light focus:outline-none focus:border-limeAccent text-xs transition">
               <!-- Dynamically populated or fallback -->
               <option value="ar" selected>العربية (Arabic - 19 لهجة إقليمية)</option>
               <option value="en">English (الإنجليزية - 11 لهجة)</option>
@@ -932,7 +1053,7 @@
               <option value="sv">Svenska (السويدية)</option>
               <option value="pl">Polski (البولندية)</option>
               <option value="el">Ελληνικά (اليونانية)</option>
-              <option value="he">עברית (العبرية)</option>
+              <option value="he">עבריت (العبرية)</option>
               <option value="vi">Tiếng Việt (الفيتنامية)</option>
               <option value="th">ไทย (التايلاندية)</option>
               <option value="sw">Kiswahili (السواحلية)</option>
@@ -944,7 +1065,7 @@
               <label class="font-medium text-light">اللهجة / الطابع اللغوي الإقليمي</label>
               <span id="ttsDialectCountBadge" class="text-[10px] font-mono text-limeAccent">19 لهجة عربية</span>
             </div>
-            <select id="ttsDialectSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+            <select id="ttsDialectSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-light focus:outline-none focus:border-limeAccent text-xs transition">
               <option value="msa" selected>فصحى معيارية سينمائية (Modern Standard Arabic)</option>
               <option value="egyptian">لهجة مصرية عفوية (Egyptian Arabic)</option>
               <option value="saudi">لهجة سعودية نجدية وحجازية (Saudi Arabic)</option>
@@ -975,10 +1096,10 @@
           <div class="mb-4 pb-3 border-b border-borderSubtle/60">
             <div class="flex items-center justify-between gap-2 mb-2">
               <div class="flex items-center gap-2">
-                <span class="font-medium text-white text-xs">أصواتي المستنسخة (My Voices)</span>
+                <span class="font-medium text-light text-xs">أصواتي المستنسخة (My Voices)</span>
                 <span id="ttsClonedVoiceCountBadge" class="text-[9px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">0 أصوات</span>
               </div>
-              <button type="button" onclick="closeTTSConfigModal(); openVoiceCloneModal();" class="text-[10px] font-medium text-limeAccent hover:text-white flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface border border-borderSubtle hover:border-limeAccent/40 transition">
+              <button type="button" onclick="closeTTSConfigModal(); openVoiceCloneModal();" class="text-[10px] font-medium text-limeAccent hover:text-light flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface border border-borderSubtle hover:border-limeAccent/40 transition">
                 <svg class="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -1004,12 +1125,12 @@
                 id="ttsVoiceSearchInput" 
                 oninput="filterTTSVoiceCards()" 
                 placeholder="بحث في الأصوات والنبرات..." 
-                class="bg-obsidian border border-borderSubtle rounded-lg px-2.5 py-1 text-[11px] text-white placeholder-muted focus:outline-none focus:border-limeAccent w-36 sm:w-48"
+                class="bg-obsidian border border-borderSubtle rounded-lg px-2.5 py-1 text-[11px] text-light placeholder-muted focus:outline-none focus:border-limeAccent w-36 sm:w-48"
               >
               <div class="flex items-center bg-obsidian border border-borderSubtle rounded-lg p-0.5 text-[10px]">
-                <button type="button" onclick="setTTSVoiceGenderFilter('all')" id="voiceFilter_all" class="px-2 py-0.5 rounded text-white bg-surface font-medium">الكل</button>
-                <button type="button" onclick="setTTSVoiceGenderFilter('male')" id="voiceFilter_male" class="px-2 py-0.5 rounded text-muted hover:text-white">ذكور</button>
-                <button type="button" onclick="setTTSVoiceGenderFilter('female')" id="voiceFilter_female" class="px-2 py-0.5 rounded text-muted hover:text-white">إناث</button>
+                <button type="button" onclick="setTTSVoiceGenderFilter('all')" id="voiceFilter_all" class="px-2 py-0.5 rounded text-light bg-surface font-medium">الكل</button>
+                <button type="button" onclick="setTTSVoiceGenderFilter('male')" id="voiceFilter_male" class="px-2 py-0.5 rounded text-muted hover:text-light">ذكور</button>
+                <button type="button" onclick="setTTSVoiceGenderFilter('female')" id="voiceFilter_female" class="px-2 py-0.5 rounded text-muted hover:text-light">إناث</button>
               </div>
             </div>
           </div>
@@ -1027,7 +1148,7 @@
               id="ttsCustomVoiceInput" 
               oninput="handleCustomVoiceInput()" 
               placeholder="معرف الصوت (مثال: voice_...) - اختياري" 
-              class="bg-obsidian border border-borderSubtle rounded-lg px-2.5 py-1 text-white placeholder-muted focus:outline-none focus:border-limeAccent sm:w-64"
+              class="bg-obsidian border border-borderSubtle rounded-lg px-2.5 py-1 text-light placeholder-muted focus:outline-none focus:border-limeAccent sm:w-64"
             >
           </div>
         </div>
@@ -1039,7 +1160,7 @@
               <label class="font-medium text-light">الحالة الشعورية (Emotion Spectrum)</label>
               <span class="text-[10px] font-mono text-muted">32 حالة نفسية ودرامية</span>
             </div>
-            <select id="ttsEmotionSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+            <select id="ttsEmotionSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-light focus:outline-none focus:border-limeAccent text-xs transition">
               <!-- Dynamically populated or fallback -->
               <option value="neutral" selected>طبيعي ورصين (Neutral & Balanced)</option>
               <option value="calm">هادئ ومريح وسكينة (Calm & Serene)</option>
@@ -1080,7 +1201,7 @@
               <label class="font-medium text-light">أسلوب الإلقاء والأداء (Delivery Style)</label>
               <span class="text-[10px] font-mono text-muted">25 أسلوب أداء</span>
             </div>
-            <select id="ttsDeliveryStyleSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+            <select id="ttsDeliveryStyleSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-light focus:outline-none focus:border-limeAccent text-xs transition">
               <!-- Dynamically populated or fallback -->
               <option value="documentary" selected>تعليق وثائقي فخم واستقصائي (Documentary Narration)</option>
               <option value="commercial">إعلان تجاري وترويجي تسويقي (Commercial & Promo)</option>
@@ -1118,18 +1239,18 @@
             type="text" 
             id="ttsCustomDirectivesInput" 
             placeholder="مثال: نبرة غامضة وبطيئة، توقف ثانية عند الفواصل، تركيز على مخارج الحروف..." 
-            class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white placeholder-muted focus:outline-none focus:border-limeAccent text-xs transition"
+            class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-light placeholder-muted focus:outline-none focus:border-limeAccent text-xs transition"
           >
         </div>
 
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-3.5 sm:p-4 border-t border-[#1f1f2a] bg-[#08080a] flex items-center justify-between text-xs shrink-0">
-        <button onclick="closeTTSConfigModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition">
+      <div class="p-3.5 sm:p-4 border-t border-borderSubtle bg-obsidian/40 flex items-center justify-between text-xs shrink-0">
+        <button onclick="closeTTSConfigModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-light transition">
           إلغاء
         </button>
-        <button onclick="confirmTTSConfig()" class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2">
+        <button onclick="confirmTTSConfig()" class="px-5 py-2.5 rounded-xl bg-limeAccent hover:opacity-90 text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2">
           <span>تفعيل أداة الصوت وكتابة النص</span>
           <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
             <polyline points="20 6 9 17 4 12"></polyline>
@@ -1143,24 +1264,24 @@
   <!-- ========================================================================= -->
   <!-- CLONE YOUR VOICE MODAL (Gemini 3.8 Flash TTS Voice Replication) -->
   <!-- ========================================================================= -->
-  <div id="voiceCloneModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeVoiceCloneModal()">
-    <div class="bg-[#0c0c10] border border-[#232330] ring-1 ring-white/5 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.95)] overflow-hidden" onclick="event.stopPropagation()">
+  <div id="voiceCloneModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeVoiceCloneModal()">
+    <div class="bg-surface border border-borderSubtle ring-1 ring-borderSubtle/50 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.5)] overflow-hidden" onclick="event.stopPropagation()">
       
       <!-- Modal Header -->
-      <div class="p-4 sm:p-5 border-b border-[#1f1f2a] flex items-center justify-between shrink-0 bg-[#08080a]">
+      <div class="p-4 sm:p-5 border-b border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/40">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-2xl bg-surface border border-borderSubtle text-limeAccent font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
             VC
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="text-sm sm:text-base font-semibold text-white tracking-tight">استنساخ الصوت (Clone Your Voice)</h3>
+              <h3 class="text-sm sm:text-base font-semibold text-light tracking-tight">استنساخ الصوت (Clone Your Voice)</h3>
               <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">Gemini 3.8 Flash TTS</span>
             </div>
             <p class="text-[11px] text-muted mt-0.5">استنساخ بصمة صوتك الطبيعية واستخدامها في تحويل النص إلى كلام وسرد القصص</p>
           </div>
         </div>
-        <button onclick="closeVoiceCloneModal()" class="p-2 rounded-xl text-muted hover:text-white hover:bg-surface border border-transparent hover:border-borderSubtle transition">
+        <button onclick="closeVoiceCloneModal()" class="p-2 rounded-xl text-muted hover:text-light hover:bg-surface border border-transparent hover:border-borderSubtle transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1172,7 +1293,7 @@
       <div class="px-5 py-3 border-b border-borderSubtle/60 bg-surface/30 flex items-center justify-between text-xs shrink-0">
         <div class="flex items-center gap-2" id="vcStepPill1">
           <span class="w-5 h-5 rounded-full bg-limeAccent text-obsidian font-mono font-bold text-[10px] flex items-center justify-center shrink-0">1</span>
-          <span class="font-medium text-white text-[11px] hidden sm:inline">الصوت المرجعي</span>
+          <span class="font-medium text-light text-[11px] hidden sm:inline">الصوت المرجعي</span>
         </div>
         <div class="h-0.5 w-6 sm:w-10 bg-borderSubtle" id="vcStepLine1"></div>
         <div class="flex items-center gap-2" id="vcStepPill2">
@@ -1192,7 +1313,7 @@
       </div>
 
       <!-- Modal Body (Scrollable) -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs bg-[#0c0c10]">
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs bg-surface">
 
         <!-- STEP 1: REFERENCE AUDIO -->
         <div id="vcStepContainer1" class="space-y-4">
@@ -1203,7 +1324,7 @@
               id="vcVoiceNameInput" 
               value="صوتي المستنسخ" 
               placeholder="مثال: صوتي الطبيعي، نبرة السرد الإخباري..." 
-              class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white placeholder-muted focus:outline-none focus:border-limeAccent text-xs transition"
+              class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-light placeholder-muted focus:outline-none focus:border-limeAccent text-xs transition"
             >
           </div>
 
@@ -1218,7 +1339,7 @@
               </svg>
               <span>تسجيل مباشر بالميكروفون</span>
             </button>
-            <button id="vcTabUploadBtn" type="button" onclick="switchVoiceCloneSourceTab('upload')" class="flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white">
+            <button id="vcTabUploadBtn" type="button" onclick="switchVoiceCloneSourceTab('upload')" class="flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-light">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
@@ -1245,10 +1366,10 @@
               <div class="relative">
                 <div id="vcSourcePulse" class="absolute -inset-2 rounded-full bg-red-500/20 animate-ping hidden"></div>
                 <button 
-                  type="button"
+                  type="button" 
                   id="vcSourceRecordBtn" 
                   onclick="toggleVoiceCloneSourceRecording()" 
-                  class="relative w-14 h-14 rounded-full bg-obsidian border-2 border-borderSubtle hover:border-limeAccent text-white flex items-center justify-center transition active:scale-95 shadow-lg group"
+                  class="relative w-14 h-14 rounded-full bg-obsidian border-2 border-borderSubtle hover:border-limeAccent text-light flex items-center justify-center transition active:scale-95 shadow-lg group"
                 >
                   <svg id="vcSourceMicIcon" class="w-6 h-6 text-limeAccent group-hover:scale-110 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
@@ -1261,7 +1382,7 @@
               </div>
 
               <div>
-                <p id="vcSourceStatusText" class="font-medium text-white text-xs">اضغط على الميكروفون لبدء التسجيل (الحد الأدنى 10 ثوانٍ)</p>
+                <p id="vcSourceStatusText" class="font-medium text-light text-xs">اضغط على الميكروفون لبدء التسجيل (الحد الأدنى 10 ثوانٍ)</p>
                 <div class="flex items-center justify-center gap-2 mt-1.5">
                   <span id="vcSourceTimer" class="font-mono text-xs font-semibold text-limeAccent bg-obsidian px-2.5 py-0.5 rounded-full border border-borderSubtle">00:00 / 01:00</span>
                   <span id="vcSourceMinBadge" class="text-[10px] font-mono text-muted bg-surface px-2 py-0.5 rounded-full border border-borderSubtle/60">متبقي للحد الأدنى: 10 ثوانٍ</span>
@@ -1288,13 +1409,13 @@
                 </svg>
               </div>
               <div>
-                <p class="font-medium text-white group-hover:text-limeAccent transition text-xs">اسحب وأفلت ملف الصوت هنا أو اضغط للتصفح</p>
+                <p class="font-medium text-light group-hover:text-limeAccent transition text-xs">اسحب وأفلت ملف الصوت هنا أو اضغط للتصفح</p>
                 <p class="text-[11px] text-muted mt-1">يدعم WAV, MP3, M4A, OGG, WEBM (مدة 10 إلى 60 ثانية بنبرة واضحة)</p>
               </div>
               <input type="file" id="vcSourceFileInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.webm" class="hidden" onchange="handleVoiceCloneFileSelected(event)">
             </div>
             <div id="vcSourceFileInfo" class="hidden p-3 rounded-xl bg-obsidian border border-borderSubtle flex items-center justify-between">
-              <span id="vcSourceFileName" class="text-xs text-white truncate max-w-xs font-mono">audio.wav</span>
+              <span id="vcSourceFileName" class="text-xs text-light truncate max-w-xs font-mono">audio.wav</span>
               <audio id="vcSourceUploadAudioPreview" controls class="h-8 max-w-[200px]"></audio>
             </div>
           </div>
@@ -1304,7 +1425,7 @@
         <div id="vcStepContainer2" class="hidden space-y-4">
           <div class="bg-surface/50 border border-borderSubtle rounded-2xl p-4 text-right space-y-2">
             <div class="flex items-center justify-between">
-              <span class="text-xs font-semibold text-white">إقرار الموافقة البيومترية الإلزامي (Biometric Consent)</span>
+              <span class="text-xs font-semibold text-light">إقرار الموافقة البيومترية الإلزامي (Biometric Consent)</span>
               <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">Gemini Policy</span>
             </div>
             <p class="text-[11px] text-muted leading-relaxed">
@@ -1335,10 +1456,10 @@
             <div class="relative">
               <div id="vcConsentPulse" class="absolute -inset-2 rounded-full bg-red-500/20 animate-ping hidden"></div>
               <button 
-                type="button"
+                type="button" 
                 id="vcConsentRecordBtn" 
                 onclick="toggleVoiceCloneConsentRecording()" 
-                class="relative w-14 h-14 rounded-full bg-obsidian border-2 border-borderSubtle hover:border-limeAccent text-white flex items-center justify-center transition active:scale-95 shadow-lg group"
+                class="relative w-14 h-14 rounded-full bg-obsidian border-2 border-borderSubtle hover:border-limeAccent text-light flex items-center justify-center transition active:scale-95 shadow-lg group"
               >
                 <svg id="vcConsentMicIcon" class="w-6 h-6 text-limeAccent group-hover:scale-110 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
@@ -1351,7 +1472,7 @@
             </div>
 
             <div>
-              <p id="vcConsentStatusText" class="font-medium text-white text-xs">اضغط على الميكروفون واقرأ عبارة الموافقة بصوتك</p>
+              <p id="vcConsentStatusText" class="font-medium text-light text-xs">اضغط على الميكروفون واقرأ عبارة الموافقة بصوتك</p>
               <span id="vcConsentTimer" class="font-mono text-xs font-semibold text-limeAccent bg-obsidian px-2.5 py-0.5 rounded-full border border-borderSubtle mt-1.5 inline-block">00:00</span>
             </div>
 
@@ -1369,7 +1490,7 @@
             </div>
           </div>
           <div>
-            <h4 class="text-sm font-semibold text-white">جاري استنساخ ومطابقة الصوت...</h4>
+            <h4 class="text-sm font-semibold text-light">جاري استنساخ ومطابقة الصوت...</h4>
             <p id="vcProcessingStatusMsg" class="text-xs text-muted mt-1">تحويل التسجيلات إلى 24kHz Mono 16-bit WAV ومطابقة البصمة عبر Gemini Voices API</p>
           </div>
 
@@ -1390,7 +1511,7 @@
 
           <div id="vcProcessingError" class="hidden p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs max-w-md">
             <p id="vcProcessingErrorMsg">حدث خطأ أثناء عملية الاستنساخ.</p>
-            <button type="button" onclick="setVoiceCloneStep(2)" class="mt-2 px-3 py-1 bg-surface rounded-lg text-white hover:bg-surfaceHover text-[11px] border border-borderSubtle">
+            <button type="button" onclick="setVoiceCloneStep(2)" class="mt-2 px-3 py-1 bg-surface rounded-lg text-light hover:bg-surfaceHover text-[11px] border border-borderSubtle">
               الرجوع والمحاولة مجدداً
             </button>
           </div>
@@ -1408,7 +1529,7 @@
               </div>
               <div class="text-right">
                 <div class="flex items-center gap-2">
-                  <span id="vcResultVoiceName" class="font-semibold text-white text-xs sm:text-sm">صوتي المستنسخ</span>
+                  <span id="vcResultVoiceName" class="font-semibold text-light text-xs sm:text-sm">صوتي المستنسخ</span>
                   <span class="text-[9px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">جاهز للاستخدام</span>
                 </div>
                 <div class="flex items-center gap-1.5 mt-0.5">
@@ -1422,13 +1543,13 @@
           <!-- Audition Test Box -->
           <div class="bg-surface/40 border border-borderSubtle rounded-2xl p-4 text-right space-y-2.5">
             <div class="flex items-center justify-between">
-              <label class="font-medium text-white text-xs">تجربة ونطق عينة بصوتك المستنسخ</label>
+              <label class="font-medium text-light text-xs">تجربة ونطق عينة بصوتك المستنسخ</label>
               <span class="text-[10px] font-mono text-muted">Gemini 3.8 Flash TTS</span>
             </div>
             <textarea 
               id="vcTestSentenceInput" 
               rows="2" 
-              class="w-full bg-obsidian border border-borderSubtle rounded-xl p-3 text-white placeholder-muted focus:outline-none focus:border-limeAccent text-xs transition leading-relaxed resize-none"
+              class="w-full bg-obsidian border border-borderSubtle rounded-xl p-3 text-light placeholder-muted focus:outline-none focus:border-limeAccent text-xs transition leading-relaxed resize-none"
             >أهلاً بك! هذا اختباري الأول بصوتي المستنسخ الجديد عبر تقنية جيميناي 3.8 فلاش في استوديو هيكس ميديا.</textarea>
 
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1">
@@ -1451,18 +1572,18 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-3.5 sm:p-4 border-t border-[#1f1f2a] bg-[#08080a] flex items-center justify-between text-xs shrink-0">
+      <div class="p-3.5 sm:p-4 border-t border-borderSubtle bg-obsidian/40 flex items-center justify-between text-xs shrink-0">
         <!-- Step 1 Footer -->
         <div id="vcFooterStep1" class="w-full flex items-center justify-between">
-          <button type="button" onclick="closeVoiceCloneModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition">
+          <button type="button" onclick="closeVoiceCloneModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-light transition">
             إلغاء
           </button>
           <button 
             type="button" 
             id="vcStep1NextBtn" 
             onclick="setVoiceCloneStep(2)" 
-            disabled
-            class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] disabled:opacity-40 disabled:cursor-not-allowed text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2"
+            disabled 
+            class="px-5 py-2.5 rounded-xl bg-limeAccent hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2"
           >
             <span>التالي: إقرار الموافقة البيومترية</span>
             <svg class="w-3.5 h-3.5 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
@@ -1473,7 +1594,7 @@
 
         <!-- Step 2 Footer -->
         <div id="vcFooterStep2" class="w-full hidden items-center justify-between">
-          <button type="button" onclick="setVoiceCloneStep(1)" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition flex items-center gap-1.5">
+          <button type="button" onclick="setVoiceCloneStep(1)" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-light transition flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
@@ -1483,8 +1604,8 @@
             type="button" 
             id="vcStep2NextBtn" 
             onclick="submitVoiceClone()" 
-            disabled
-            class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] disabled:opacity-40 disabled:cursor-not-allowed text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2"
+            disabled 
+            class="px-5 py-2.5 rounded-xl bg-limeAccent hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2"
           >
             <span>بدء الاستنساخ عبر Gemini 3.8</span>
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
@@ -1500,14 +1621,14 @@
 
         <!-- Step 4 Footer -->
         <div id="vcFooterStep4" class="w-full hidden items-center justify-between">
-          <button type="button" onclick="closeVoiceCloneModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition">
-            إغلاق
+          <button type="button" onclick="closeVoiceCloneModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-light transition">
+            إلغاء
           </button>
           <button 
             type="button" 
             id="vcUseInTTSBtn" 
             onclick="useClonedVoiceInTTS()" 
-            class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2"
+            class="px-5 py-2.5 rounded-xl bg-limeAccent hover:opacity-90 text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2"
           >
             <span>اختيار هذا الصوت في TTS Studio</span>
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
@@ -1523,24 +1644,24 @@
   <!-- ========================================================================= -->
   <!-- SPEECH-TO-TEXT STUDIO (STT CONFIG MODAL) (Gemini 3.5 Transcribe) -->
   <!-- ========================================================================= -->
-  <div id="sttConfigModal" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeSTTConfigModal()">
-    <div class="bg-[#0c0c10] border border-[#232330] ring-1 ring-white/5 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.95)] overflow-hidden" onclick="event.stopPropagation()">
+  <div id="sttConfigModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 hidden" onclick="closeSTTConfigModal()">
+    <div class="bg-surface border border-borderSubtle ring-1 ring-borderSubtle/50 rounded-3xl w-full max-w-2xl max-h-[92vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.5)] overflow-hidden" onclick="event.stopPropagation()">
       
       <!-- Modal Header -->
-      <div class="p-4 sm:p-5 border-b border-[#1f1f2a] flex items-center justify-between shrink-0 bg-[#08080a]">
+      <div class="p-4 sm:p-5 border-b border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/40">
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-2xl bg-surface border border-borderSubtle text-limeAccent font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
             STT
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h3 class="text-sm sm:text-base font-semibold text-white tracking-tight">استوديو تفريغ الصوت والترجمة (STT Studio)</h3>
+              <h3 class="text-sm sm:text-base font-semibold text-light tracking-tight">استوديو تفريغ الصوت والترجمة (STT Studio)</h3>
               <span class="text-[10px] font-mono text-limeAccent bg-limeAccent/10 px-2 py-0.5 rounded-full border border-limeAccent/20">Gemini 3.5 Transcribe</span>
             </div>
             <p class="text-[11px] text-muted mt-0.5">تحويل التسجيلات الصوتية إلى نصوص دقيقة، تمييز المتحدثين، وتصدير SRT / TXT</p>
           </div>
         </div>
-        <button onclick="closeSTTConfigModal()" class="p-2 rounded-xl text-muted hover:text-white hover:bg-surface border border-transparent hover:border-borderSubtle transition">
+        <button onclick="closeSTTConfigModal()" class="p-2 rounded-xl text-muted hover:text-light hover:bg-surface border border-transparent hover:border-borderSubtle transition">
           <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
             <line x1="18" y1="6" x2="6" y2="18"></line>
             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -1549,7 +1670,7 @@
       </div>
 
       <!-- Modal Body (Scrollable) -->
-      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs bg-[#0c0c10]">
+      <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs bg-surface">
 
         <!-- Input Source Tabs (Upload File vs Live Mic Record) -->
         <div class="flex items-center gap-2 p-1 bg-surface/70 rounded-xl border border-borderSubtle/60">
@@ -1561,7 +1682,7 @@
             </svg>
             <span>رفع ملف صوتي</span>
           </button>
-          <button id="sttTabRecordBtn" onclick="switchSTTInputTab('record')" class="flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white">
+          <button id="sttTabRecordBtn" onclick="switchSTTInputTab('record')" class="flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-light">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
               <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
@@ -1580,7 +1701,7 @@
             ondragover="handleSTTDragOver(event)"
             ondragleave="handleSTTDragLeave(event)"
             ondrop="handleSTTDrop(event)"
-            class="border-2 border-dashed border-[#2b2b3b] hover:border-limeAccent/60 bg-surface/40 hover:bg-surface/80 rounded-2xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2 group"
+            class="border-2 border-dashed border-borderSubtle hover:border-limeAccent/60 bg-surface/40 hover:bg-surface/80 rounded-2xl p-6 text-center cursor-pointer transition flex flex-col items-center justify-center gap-2 group"
           >
             <div class="w-12 h-12 rounded-2xl bg-obsidian border border-borderSubtle flex items-center justify-center text-muted group-hover:text-limeAccent group-hover:border-limeAccent/30 transition">
               <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
@@ -1590,7 +1711,7 @@
               </svg>
             </div>
             <div>
-              <p class="font-medium text-white group-hover:text-limeAccent transition text-xs sm:text-sm">اسحب وأفلت الملف الصوتي هنا أو اضغط للتصفح</p>
+              <p class="font-medium text-light group-hover:text-limeAccent transition text-xs sm:text-sm">اسحب وأفلت الملف الصوتي هنا أو اضغط للتصفح</p>
               <p class="text-[11px] text-muted mt-1">يدعم MP3, WAV, M4A, AAC, OGG, WEBM</p>
             </div>
             <input type="file" id="sttFileInput" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.webm" class="hidden" onchange="handleSTTFileSelected(event)">
@@ -1599,7 +1720,7 @@
           <div id="sttSelectedFilePill" class="hidden flex items-center justify-between p-3 bg-surface border border-limeAccent/30 rounded-xl">
             <div class="flex items-center gap-2.5 min-w-0">
               <span class="w-2 h-2 rounded-full bg-limeAccent shrink-0"></span>
-              <span id="sttSelectedFileName" class="font-mono text-xs text-white truncate">audio.mp3</span>
+              <span id="sttSelectedFileName" class="font-mono text-xs text-light truncate">audio.mp3</span>
               <span id="sttSelectedFileSize" class="text-[10px] text-muted shrink-0">2.4 MB</span>
             </div>
             <button onclick="clearSTTFile(event)" class="text-muted hover:text-red-400 p-1 transition" title="إزالة الملف">
@@ -1636,22 +1757,22 @@
               <label class="font-medium text-light">لغة الصوت الأصلية</label>
               <span class="text-[10px] font-mono text-limeAccent">اكتشاف تلقائي ذكي</span>
             </div>
-            <select id="sttSourceLanguageSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+            <select id="sttSourceLanguageSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-light focus:outline-none focus:border-limeAccent text-xs transition">
               <option value="auto" selected>تلقائي (اكتشاف ذكي للغة الصوت)</option>
               <option value="ar">العربية (Arabic)</option>
               <option value="en">الإنجليزية (English)</option>
-              <option value="fr">الفرنسية (Français)</option>
-              <option value="es">الإسبانية (Español)</option>
-              <option value="de">الألمانية (Deutsch)</option>
-              <option value="tr">التركية (Türkçe)</option>
-              <option value="it">الإيطالية (Italiano)</option>
-              <option value="ru">الروسية (Русский)</option>
-              <option value="zh">الصينية (Chinese)</option>
-              <option value="ja">اليابانية (Japanese)</option>
-              <option value="ko">الكورية (Korean)</option>
-              <option value="hi">الهندية (Hindi)</option>
-              <option value="ur">الأردية (Urdu)</option>
-              <option value="fa">الفارسية (Persian)</option>
+              <option value="fr">Français (الفرنسية)</option>
+              <option value="es">Español (الإسبانية)</option>
+              <option value="de">Deutsch (الألمانية)</option>
+              <option value="tr">Türkçe (التركية)</option>
+              <option value="it">Italiano (الإيطالية)</option>
+              <option value="ru">Русский (الروسية)</option>
+              <option value="zh">中文 (الصينية)</option>
+              <option value="ja">日本語 (اليابانية)</option>
+              <option value="ko">한국어 (الكورية)</option>
+              <option value="hi">हिन्दी (الهندية)</option>
+              <option value="ur">اردو (الأردية)</option>
+              <option value="fa">فارسی (الفارسية)</option>
             </select>
           </div>
           <div>
@@ -1659,7 +1780,7 @@
               <label class="font-medium text-light">ترجمة النص إلى لغة أخرى</label>
               <span class="text-[10px] font-mono text-muted">اختياري</span>
             </div>
-            <select id="sttTargetLanguageSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-limeAccent text-xs transition">
+            <select id="sttTargetLanguageSelect" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3.5 py-2.5 text-light focus:outline-none focus:border-limeAccent text-xs transition">
               <option value="" selected>نفس لغة الصوت الأصلية (بدون ترجمة)</option>
               <option value="ar">ترجمة إلى: العربية (Arabic)</option>
               <option value="en">ترجمة إلى: الإنجليزية (English)</option>
@@ -1679,7 +1800,7 @@
           <!-- Toggle 1: Speaker Diarization -->
           <label class="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-surface transition">
             <div>
-              <div class="font-medium text-white">تمييز المتحدثين (Diarization)</div>
+              <div class="font-medium text-light">تمييز المتحدثين (Diarization)</div>
               <div class="text-[10px] text-muted">فصل أقوال كل شخص (متحدث 1، متحدث 2)</div>
             </div>
             <div class="relative inline-flex items-center cursor-pointer shrink-0">
@@ -1691,7 +1812,7 @@
           <!-- Toggle 2: Timestamps -->
           <label class="flex items-center justify-between cursor-pointer p-2 rounded-xl hover:bg-surface transition">
             <div>
-              <div class="font-medium text-white">التوقيت الزمني (Timestamps)</div>
+              <div class="font-medium text-light">التوقيت الزمني (Timestamps)</div>
               <div class="text-[10px] text-muted">تضمين توقيت بداية ونهاية كل فقرة لتوليد SRT</div>
             </div>
             <div class="relative inline-flex items-center cursor-pointer shrink-0">
@@ -1704,11 +1825,11 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-3.5 sm:p-4 border-t border-[#1f1f2a] bg-[#08080a] flex items-center justify-between text-xs shrink-0">
-        <button onclick="closeSTTConfigModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-white transition">
+      <div class="p-3.5 sm:p-4 border-t border-borderSubtle bg-obsidian/40 flex items-center justify-between text-xs shrink-0">
+        <button onclick="closeSTTConfigModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-light transition">
           إلغاء
         </button>
-        <button id="sttSubmitBtn" onclick="confirmSTTTranscription()" class="px-5 py-2.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2">
+        <button id="sttSubmitBtn" onclick="confirmSTTTranscription()" class="px-5 py-2.5 rounded-xl bg-limeAccent hover:opacity-90 text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(226,255,68,0.25)] flex items-center gap-2">
           <span id="sttSubmitBtnText">بدء تفريغ الصوت</span>
           <svg id="sttSubmitBtnIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
             <polyline points="20 6 9 17 4 12"></polyline>
@@ -1756,9 +1877,61 @@
     let renameTargetThreadId = null;
 
     // =========================================================================
+    // THEME MANAGEMENT (Dark ⇄ Light Theme Switching)
+    // =========================================================================
+    function syncThemeToggleUI() {
+      const isDark = document.documentElement.classList.contains('dark');
+      const sunIcon = document.getElementById('themeIconSun');
+      const moonIcon = document.getElementById('themeIconMoon');
+      const toggleBtn = document.getElementById('themeToggleBtn');
+      if (isDark) {
+        if (sunIcon) {
+          sunIcon.classList.remove('rotate-90', 'scale-0', 'opacity-0', 'pointer-events-none', 'hidden');
+          sunIcon.classList.add('rotate-0', 'scale-100', 'opacity-100');
+        }
+        if (moonIcon) {
+          moonIcon.classList.remove('rotate-0', 'scale-100', 'opacity-100');
+          moonIcon.classList.add('-rotate-90', 'scale-0', 'opacity-0', 'pointer-events-none');
+        }
+        if (toggleBtn) {
+          toggleBtn.setAttribute('title', 'تبديل إلى الوضع الفاتح (Light Mode)');
+          toggleBtn.setAttribute('aria-label', 'تبديل إلى الوضع الفاتح');
+        }
+      } else {
+        if (sunIcon) {
+          sunIcon.classList.remove('rotate-0', 'scale-100', 'opacity-100');
+          sunIcon.classList.add('rotate-90', 'scale-0', 'opacity-0', 'pointer-events-none');
+        }
+        if (moonIcon) {
+          moonIcon.classList.remove('-rotate-90', 'scale-0', 'opacity-0', 'pointer-events-none', 'hidden');
+          moonIcon.classList.add('rotate-0', 'scale-100', 'opacity-100');
+        }
+        if (toggleBtn) {
+          toggleBtn.setAttribute('title', 'تبديل إلى الوضع الداكن (Dark Mode)');
+          toggleBtn.setAttribute('aria-label', 'تبديل إلى الوضع الداكن');
+        }
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.contains('dark');
+      if (isDark) {
+        document.documentElement.classList.remove('dark');
+        try { localStorage.setItem('hexmedia_theme', 'light'); } catch (e) {}
+      } else {
+        document.documentElement.classList.add('dark');
+        try { localStorage.setItem('hexmedia_theme', 'dark'); } catch (e) {}
+      }
+      syncThemeToggleUI();
+    }
+
+    // =========================================================================
     // BOOTSTRAP
     // =========================================================================
     window.addEventListener('DOMContentLoaded', () => {
+      // Sync theme button icon state with current DOM class
+      syncThemeToggleUI();
+
       // Immediate visitor check to prevent any UI flash
       if (!localStorage.getItem('access_token')) {
         updateAuthUI(null);
@@ -2160,7 +2333,7 @@
       grid.innerHTML = filtered.map(v => {
         const isSelected = v.name === currentTTSConfig.voice_profile;
         const selectedClasses = isSelected
-          ? 'border-2 border-limeAccent bg-[#181822] shadow-sm ring-1 ring-limeAccent/30'
+          ? 'border-2 border-limeAccent bg-limeAccent/15 shadow-sm ring-1 ring-limeAccent/30'
           : 'border border-borderSubtle bg-obsidian/50 hover:border-limeAccent/50 hover:bg-obsidian/80';
         const genderLabel = v.gender === 'female' ? 'أنثى' : (v.gender === 'male' ? 'ذكر' : 'محايد');
         const descText = v.desc || v.description || '';
@@ -2177,7 +2350,7 @@
             </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center justify-between gap-1">
-                <span class="font-semibold text-white text-xs">${v.name}</span>
+                <span class="font-semibold text-light text-xs">${v.name}</span>
                 <span class="text-[9px] font-mono text-muted bg-surface px-1.5 py-0.2 rounded border border-borderSubtle/60">${genderLabel}</span>
               </div>
               <div class="text-[10px] font-mono text-limeAccent mt-0.5 line-clamp-1">${v.tag || ''}</div>
@@ -2194,9 +2367,9 @@
         const btn = document.getElementById(`voiceFilter_${g}`);
         if (!btn) return;
         if (g === gender) {
-          btn.className = 'px-2 py-0.5 rounded text-white bg-surface font-medium';
+          btn.className = 'px-2 py-0.5 rounded text-light bg-surface font-medium';
         } else {
-          btn.className = 'px-2 py-0.5 rounded text-muted hover:text-white';
+          btn.className = 'px-2 py-0.5 rounded text-muted hover:text-light';
         }
       });
       const q = document.getElementById('ttsVoiceSearchInput')?.value || '';
@@ -2214,11 +2387,11 @@
         currentTTSConfig.voice_profile = val;
         currentTTSConfig.voice_display_name = val;
         document.querySelectorAll('.tts-voice-card').forEach(card => {
-          card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+          card.classList.remove('border-2', 'border-limeAccent', 'bg-limeAccent/15', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
           card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
         });
         document.querySelectorAll('.tts-cloned-card').forEach(card => {
-          card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+          card.classList.remove('border-2', 'border-limeAccent', 'bg-limeAccent/15', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
           card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
         });
       }
@@ -2288,7 +2461,7 @@
           container.innerHTML = list.map(cv => {
             const isSelected = (currentTTSConfig.voice_profile === cv.gemini_voice_id) || (currentTTSConfig.voice_profile === cv.id);
             const selectedClasses = isSelected
-              ? 'border-2 border-limeAccent bg-[#181822] shadow-sm ring-1 ring-limeAccent/30'
+              ? 'border-2 border-limeAccent bg-limeAccent/15 shadow-sm ring-1 ring-limeAccent/30'
               : 'border border-borderSubtle bg-obsidian/50 hover:border-limeAccent/50 hover:bg-obsidian/80';
             const initial = cv.name ? cv.name.charAt(0).toUpperCase() : 'C';
 
@@ -2303,7 +2476,7 @@
                 </div>
                 <div class="min-w-0 flex-1">
                   <div class="flex items-center justify-between gap-1">
-                    <span class="font-semibold text-white text-xs truncate">${escapeHtml(cv.name)}</span>
+                    <span class="font-semibold text-light text-xs truncate">${escapeHtml(cv.name)}</span>
                     <div class="flex items-center gap-1">
                       <span class="text-[9px] font-mono text-limeAccent bg-limeAccent/10 px-1.5 py-0.5 rounded border border-limeAccent/20">مستنسخ</span>
                       <button type="button" onclick="deleteTTSClonedVoice('${cv.id}', event)" title="حذف الصوت" class="text-muted hover:text-red-400 p-0.5 rounded hover:bg-surface transition">
@@ -2317,7 +2490,7 @@
                   <div class="text-[10px] font-mono text-muted mt-0.5 truncate">${escapeHtml(cv.gemini_voice_id || 'voice_...')}</div>
                   ${cv.sample_audio_url ? `
                     <div class="mt-1.5 flex items-center gap-1.5" onclick="event.stopPropagation()">
-                      <button type="button" onclick="playClonedVoiceAudioPreview('${cv.sample_audio_url}')" class="text-[10px] text-limeAccent hover:text-white flex items-center gap-1">
+                      <button type="button" onclick="playClonedVoiceAudioPreview('${cv.sample_audio_url}')" class="text-[10px] text-limeAccent hover:text-light flex items-center gap-1">
                         <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                         <span>سماع العينة</span>
                       </button>
@@ -2344,12 +2517,12 @@
       if (customInput) customInput.value = targetId;
 
       document.querySelectorAll('.tts-voice-card').forEach(card => {
-        card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+        card.classList.remove('border-2', 'border-limeAccent', 'bg-limeAccent/15', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
         card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
       });
 
       document.querySelectorAll('.tts-cloned-card').forEach(card => {
-        card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+        card.classList.remove('border-2', 'border-limeAccent', 'bg-limeAccent/15', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
         card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
       });
 
@@ -2357,7 +2530,7 @@
       const selectedCard = document.getElementById(cardId);
       if (selectedCard) {
         selectedCard.classList.remove('border-borderSubtle', 'bg-obsidian/50');
-        selectedCard.classList.add('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+        selectedCard.classList.add('border-2', 'border-limeAccent', 'bg-limeAccent/15', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
       }
     }
 
@@ -2436,19 +2609,19 @@
       if (customInput) customInput.value = '';
 
       document.querySelectorAll('.tts-voice-card').forEach(card => {
-        card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+        card.classList.remove('border-2', 'border-limeAccent', 'bg-limeAccent/15', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
         card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
       });
 
       document.querySelectorAll('.tts-cloned-card').forEach(card => {
-        card.classList.remove('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+        card.classList.remove('border-2', 'border-limeAccent', 'bg-limeAccent/15', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
         card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/50');
       });
 
       const selectedCard = document.getElementById(`voiceCard_${voiceName}`);
       if (selectedCard) {
         selectedCard.classList.remove('border-borderSubtle', 'bg-obsidian/50');
-        selectedCard.classList.add('border-2', 'border-limeAccent', 'bg-[#181822]', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
+        selectedCard.classList.add('border-2', 'border-limeAccent', 'bg-limeAccent/15', 'shadow-sm', 'ring-1', 'ring-limeAccent/30');
       }
     }
 
@@ -2845,7 +3018,7 @@
       if (!list) return;
 
       if (!threads || !threads.length) {
-        list.innerHTML = `<div class="text-[11px] text-zinc-600 px-3 py-4 text-center">لا توجد محادثات سابقة.<br>ابدأ أول محادثة الآن!</div>`;
+        list.innerHTML = `<div class="text-[11px] text-muted px-3 py-4 text-center">لا توجد محادثات سابقة.<br>ابدأ أول محادثة الآن!</div>`;
         return;
       }
 
@@ -2862,15 +3035,15 @@
       groupDefs.forEach(g => {
         const items = groups[g.key];
         if (items && items.length) {
-          html += `<div class="text-[10px] text-zinc-500 font-medium px-2.5 pt-3 pb-1 tracking-wider uppercase">${g.label}</div>`;
+          html += `<div class="text-[10px] text-muted font-medium px-2.5 pt-3 pb-1 tracking-wider uppercase">${g.label}</div>`;
           items.forEach(t => {
             const isActive = t.id === currentThreadId;
             html += `
               <div 
                 class="group relative flex items-center justify-between rounded-xl px-3 py-2 text-xs transition-all cursor-pointer ${
                   isActive 
-                    ? 'bg-obsidian text-white border border-borderSubtle shadow-sm' 
-                    : 'text-muted hover:text-white hover:bg-obsidian/40 border border-transparent'
+                    ? 'bg-obsidian text-light border border-borderSubtle shadow-sm font-medium' 
+                    : 'text-muted hover:text-light hover:bg-obsidian/40 border border-transparent'
                 }" 
                 onclick="switchThread('${t.id}')"
               >
@@ -2881,13 +3054,13 @@
                   <span class="truncate text-xs font-normal">${escapeHtml(t.title)}</span>
                 </div>
                 <div class="opacity-0 group-hover:opacity-100 flex items-center gap-1 shrink-0 transition-opacity" onclick="event.stopPropagation()">
-                  <button onclick="openRenameModal('${t.id}', '${escapeHtml(t.title)}')" title="تعديل العنوان" class="p-1 hover:text-limeAccent text-zinc-500 rounded transition">
+                  <button onclick="openRenameModal('${t.id}', '${escapeHtml(t.title)}')" title="تعديل العنوان" class="p-1 hover:text-limeAccent text-muted rounded transition">
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                       <path d="M12 20h9"></path>
                       <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                     </svg>
                   </button>
-                  <button onclick="deleteThread('${t.id}', event)" title="حذف" class="p-1 hover:text-rose-400 text-zinc-500 rounded transition">
+                  <button onclick="deleteThread('${t.id}', event)" title="حذف" class="p-1 hover:text-rose-400 text-muted rounded transition">
                     <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                       <polyline points="3 6 5 6 21 6"></polyline>
                       <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -3072,7 +3245,7 @@
             btn.className = 'profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-limeAccent text-limeAccent bg-surface/60';
             pane.classList.remove('hidden');
           } else {
-            btn.className = 'profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-white';
+            btn.className = 'profile-tab-btn flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-t-xl transition-all border-b-2 border-transparent text-muted hover:text-light';
             pane.classList.add('hidden');
           }
         }
@@ -3134,15 +3307,15 @@
             <div class="space-y-2">
               <div class="flex items-center justify-between gap-2">
                 ${typeBadge}
-                <span class="text-[10px] font-mono text-zinc-500">${p.created_at ? p.created_at.slice(0, 10) : ''}</span>
+                <span class="text-[10px] font-mono text-muted">${p.created_at ? p.created_at.slice(0, 10) : ''}</span>
               </div>
-              <h4 class="text-xs sm:text-sm font-medium text-white group-hover:text-limeAccent transition-colors truncate" title="${escapeHtml(p.title)}">
+              <h4 class="text-xs sm:text-sm font-medium text-light group-hover:text-limeAccent transition-colors truncate" title="${escapeHtml(p.title)}">
                 ${escapeHtml(p.title)}
               </h4>
               <div class="flex items-center gap-3 text-[11px] text-muted">
                 <span>المشاهد: <strong class="text-light font-mono">${p.scenes_count || 0}</strong></span>
                 <span>المدة: <strong class="text-light font-mono">${Math.round(p.total_duration_seconds || 0)}s</strong></span>
-                <span class="text-zinc-500">${escapeHtml(statusText)}</span>
+                <span class="text-muted">${escapeHtml(statusText)}</span>
               </div>
             </div>
 
@@ -3155,7 +3328,7 @@
               </button>
 
               <div class="flex items-center gap-1">
-                <button onclick="openProjectRenameModal('${p.id}', '${escapeHtml(p.title)}')" title="تعديل العنوان" class="p-1.5 rounded-lg text-muted hover:text-white hover:bg-surface transition">
+                <button onclick="openProjectRenameModal('${p.id}', '${escapeHtml(p.title)}')" title="تعديل العنوان" class="p-1.5 rounded-lg text-muted hover:text-light hover:bg-surface transition">
                   <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <path d="M12 20h9"></path>
                     <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
@@ -3192,7 +3365,7 @@
             <div class="flex items-center gap-2.5 min-w-0">
               <span class="w-8 h-8 rounded-xl bg-surface border border-borderSubtle text-limeAccent flex items-center justify-center shrink-0 text-sm">🎙️</span>
               <div class="min-w-0">
-                <div class="text-xs font-medium text-white truncate flex items-center gap-1.5">
+                <div class="text-xs font-medium text-light truncate flex items-center gap-1.5">
                   <span class="px-1.5 py-0.2 rounded bg-surface text-limeAccent font-mono text-[10px]">${escapeHtml(t.speaker || 'الراوي')}</span>
                   <span class="text-[11px] text-muted font-mono">${t.duration ? t.duration.toFixed(1) + 's' : ''}</span>
                 </div>
@@ -3201,7 +3374,7 @@
 
             <div class="flex items-center gap-2 shrink-0">
               <audio controls src="${t.audio_url}" class="h-8 max-w-[200px] sm:max-w-[240px]"></audio>
-              <a href="${t.audio_url}" download target="_blank" class="px-2.5 py-1.5 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-[11px] text-light hover:text-white transition active:scale-95 flex items-center gap-1">
+              <a href="${t.audio_url}" download target="_blank" class="px-2.5 py-1.5 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-[11px] text-light hover:text-light transition active:scale-95 flex items-center gap-1">
                 <svg class="w-3 h-3 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                   <polyline points="7 10 12 15 17 10"></polyline>
@@ -3262,8 +3435,8 @@
         return `
           <div class="p-3.5 rounded-2xl bg-obsidian/50 border border-borderSubtle space-y-2">
             <div class="flex items-center justify-between">
-              <h5 class="text-xs font-medium text-white truncate">${escapeHtml(s.title || 'سيناريو')}</h5>
-              <button onclick="copyScriptText('${escapeHtml(s.preview || '')}')" class="px-2 py-1 rounded-lg bg-surface hover:bg-surfaceHover border border-borderSubtle text-[11px] text-light hover:text-white transition flex items-center gap-1">
+              <h5 class="text-xs font-medium text-light truncate">${escapeHtml(s.title || 'سيناريو')}</h5>
+              <button onclick="copyScriptText('${escapeHtml(s.preview || '')}')" class="px-2 py-1 rounded-lg bg-surface hover:bg-surfaceHover border border-borderSubtle text-[11px] text-light hover:text-light transition flex items-center gap-1">
                 <span>نسخ</span>
               </button>
             </div>
@@ -3375,7 +3548,7 @@
       }
 
       if (!projectsList.length) {
-        list.innerHTML = `<div class="text-[11px] text-zinc-600 px-3 py-4 text-center">لا توجد محادثات سابقة.<br>ابدأ أول محادثة الآن!</div>`;
+        list.innerHTML = `<div class="text-[11px] text-muted px-3 py-4 text-center">لا توجد محادثات سابقة.<br>ابدأ أول محادثة الآن!</div>`;
         return;
       }
 
@@ -3383,12 +3556,12 @@
         const isActive = proj.id === activeProjectId;
         const isChat = proj.status === 'CHAT';
         const dotColor = isChat 
-          ? 'bg-zinc-600'
+          ? 'bg-muted'
           : proj.status === 'READY' 
             ? 'bg-limeAccent' 
             : proj.status === 'GENERATING_AUDIO' || proj.status === 'CONTINUOUS_GENERATING'
               ? 'bg-amber-400 pulse-live' 
-              : 'bg-zinc-600';
+              : 'bg-muted';
 
         const iconSvg = isChat 
           ? `<svg class="w-3.5 h-3.5 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`
@@ -3399,7 +3572,7 @@
             onclick="selectProject('${proj.id}')" 
             class="w-full px-3 py-2.5 rounded-xl flex items-center justify-between text-right transition-all group ${
               isActive 
-                ? 'bg-obsidian text-white border border-borderSubtle' 
+                ? 'bg-obsidian text-light border border-borderSubtle font-medium' 
                 : 'text-muted hover:text-light hover:bg-obsidian/40 border border-transparent'
             }"
           >
@@ -3427,9 +3600,9 @@
         const btn = document.getElementById(`mode-${m}`);
         if (!btn) return;
         if (m === mode) {
-          btn.className = 'px-3.5 py-1 rounded-full text-xs font-medium bg-obsidian text-white border border-borderSubtle transition-all';
+          btn.className = 'px-3.5 py-1 rounded-full text-xs font-medium bg-obsidian text-light border border-borderSubtle transition-all';
         } else {
-          btn.className = 'px-3.5 py-1 rounded-full text-xs font-medium text-muted hover:text-white border border-transparent transition-all';
+          btn.className = 'px-3.5 py-1 rounded-full text-xs font-medium text-muted hover:text-light border border-transparent transition-all';
         }
       });
 
@@ -3504,11 +3677,11 @@
         cardHtml += `
           <div class="mt-4 p-3.5 sm:p-4 rounded-2xl bg-surface border border-limeAccent/50 space-y-3 shadow-xl">
             <div class="flex items-center justify-between flex-wrap gap-2">
-              <div class="text-xs font-medium text-white flex items-center gap-2">
+              <div class="text-xs font-medium text-light flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-limeAccent pulse-live"></span>
                 <span>الفيلم الكامل جاهز للعرض والمونتاج (Remotion Render)</span>
               </div>
-              <a href="${metadata.video_url}" target="_blank" download class="px-3 py-1 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold font-mono transition active:scale-95">⬇️ تحميل MP4</a>
+              <a href="${metadata.video_url}" target="_blank" download class="px-3 py-1 rounded-full bg-limeAccent hover:opacity-90 text-obsidian text-xs font-semibold font-mono transition active:scale-95">⬇️ تحميل MP4</a>
             </div>
             <div class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-borderSubtle shadow-2xl">
               <video src="${metadata.video_url}" controls class="w-full h-full object-contain"></video>
@@ -3526,7 +3699,7 @@
         <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center shrink-0 mt-0.5">
           <svg class="w-3.5 h-3.5 text-limeAccent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <polygon points="12 2 21 7 21 17 12 22 3 17 3 7 12 2"></polygon>
-            <circle cx="12" cy="12" r="2" fill="#e2ff44" stroke="none"></circle>
+            <circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"></circle>
           </svg>
         </div>
         <div class="flex-1 space-y-2 min-w-0">
@@ -3590,7 +3763,7 @@
                   </svg>
                   <span>${durationStr}</span>
                 </span>
-                <span class="text-zinc-600">•</span>
+                <span class="text-muted">•</span>
                 <span class="text-muted">${chunksStr}</span>
               </div>
             </div>
@@ -3616,13 +3789,13 @@
                 <span>تم الحفظ تلقائياً في مكتبة ملفك الشخصي</span>
               </div>
               <div class="flex items-center gap-2">
-                <button onclick="openProfileModal('audio')" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-white transition flex items-center gap-1.5">
+                <button onclick="openProfileModal('audio')" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-light transition flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                   </svg>
                   <span>مكتبة الوسائط</span>
                 </button>
-                <a href="${jobData.audio_url}" download="tts_${jobData.id || Date.now()}.wav" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow flex items-center gap-1.5">
+                <a href="${jobData.audio_url}" download="tts_${jobData.id || Date.now()}.wav" target="_blank" class="px-3.5 py-1.5 rounded-xl bg-limeAccent hover:opacity-90 text-obsidian font-semibold transition active:scale-95 shadow flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -3726,7 +3899,7 @@
             <span class="text-muted">${durStr}</span>
           </div>
           <audio controls src="${audioUrl}" class="w-full h-8 outline-none rounded"></audio>
-          ${transcript ? `<p class="text-[11px] text-zinc-300 italic pt-1 border-t border-borderSubtle/60 leading-normal">"${escapeHtml(transcript)}"</p>` : ''}
+          ${transcript ? `<p class="text-[11px] text-muted italic pt-1 border-t border-borderSubtle/60 leading-normal">"${escapeHtml(transcript)}"</p>` : ''}
         </div>
         <div class="w-7 h-7 rounded-full bg-obsidian border border-borderSubtle flex items-center justify-center text-[10px] text-muted font-mono shrink-0">أنت</div>
       `;
@@ -3816,14 +3989,14 @@
                 <span>تم الحفظ تلقائياً في مكتبة ملفك الشخصي</span>
               </div>
               <div class="flex flex-wrap items-center gap-2">
-                <button onclick="copySTTTranscript('${jobData.id}')" id="copyBtn_${jobData.id}" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-white transition flex items-center gap-1.5">
+                <button onclick="copySTTTranscript('${jobData.id}')" id="copyBtn_${jobData.id}" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-light transition flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                   </svg>
                   <span>نسخ النص</span>
                 </button>
-                <button onclick="downloadSTTFile('${jobData.id}', 'txt')" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-white transition flex items-center gap-1.5">
+                <button onclick="downloadSTTFile('${jobData.id}', 'txt')" class="px-3 py-1.5 rounded-xl bg-obsidian hover:bg-surface border border-borderSubtle text-xs text-light hover:text-light transition flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -3831,7 +4004,7 @@
                   </svg>
                   <span>تحميل TXT</span>
                 </button>
-                <button onclick="downloadSTTFile('${jobData.id}', 'srt')" class="px-3.5 py-1.5 rounded-xl bg-limeAccent hover:bg-[#d4f235] text-obsidian font-semibold transition active:scale-95 shadow flex items-center gap-1.5">
+                <button onclick="downloadSTTFile('${jobData.id}', 'srt')" class="px-3.5 py-1.5 rounded-xl bg-limeAccent hover:opacity-90 text-obsidian font-semibold transition active:scale-95 shadow flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="7 10 12 15 17 10"></polyline>
@@ -3897,7 +4070,7 @@
           tabUpBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle';
         }
         if (tabRecBtn) {
-          tabRecBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white';
+          tabRecBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-light';
         }
       } else {
         if (upContainer) upContainer.classList.add('hidden');
@@ -3906,7 +4079,7 @@
           tabRecBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle';
         }
         if (tabUpBtn) {
-          tabUpBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white';
+          tabUpBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-light';
         }
       }
     }
@@ -4201,7 +4374,7 @@
           const textSpan = pill.querySelector('span:last-child');
           if (s === step) {
             if (numSpan) numSpan.className = 'w-5 h-5 rounded-full bg-limeAccent text-obsidian font-mono font-bold text-[10px] flex items-center justify-center shrink-0';
-            if (textSpan) textSpan.className = 'font-medium text-white text-[11px] hidden sm:inline';
+            if (textSpan) textSpan.className = 'font-medium text-light text-[11px] hidden sm:inline';
           } else if (s < step) {
             if (numSpan) numSpan.className = 'w-5 h-5 rounded-full bg-limeAccent/30 text-limeAccent font-mono font-bold text-[10px] flex items-center justify-center shrink-0';
             if (textSpan) textSpan.className = 'font-medium text-light text-[11px] hidden sm:inline';
@@ -4226,14 +4399,14 @@
 
       if (tab === 'mic') {
         if (micBtn) micBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle';
-        if (uploadBtn) uploadBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white';
+        if (uploadBtn) uploadBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-light';
         if (micContainer) micContainer.classList.remove('hidden');
         if (uploadContainer) uploadContainer.classList.add('hidden');
         const nextBtn = document.getElementById('vcStep1NextBtn');
         if (nextBtn) nextBtn.disabled = !(vcSourceRecordedBlob && vcSourceSeconds >= 10);
       } else {
         if (uploadBtn) uploadBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 bg-obsidian text-limeAccent border border-borderSubtle';
-        if (micBtn) micBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-white';
+        if (micBtn) micBtn.className = 'flex-1 py-2 px-3 rounded-lg font-medium transition text-center flex items-center justify-center gap-2 text-muted hover:text-light';
         if (uploadContainer) uploadContainer.classList.remove('hidden');
         if (micContainer) micContainer.classList.add('hidden');
         const nextBtn = document.getElementById('vcStep1NextBtn');
@@ -4645,7 +4818,7 @@
             <path d="M2 12h3l2-6 4 12 4-9 2 3h5"></path>
           </svg>
           <span class="font-normal text-[11px]">${escapeHtml(c.name)}</span>
-          <span class="text-[9px] font-mono text-zinc-500">(${c.assigned_voice || 'Puck'})</span>
+          <span class="text-[9px] font-mono text-muted">(${c.assigned_voice || 'Puck'})</span>
         </button>
       `).join('');
 
@@ -4665,14 +4838,14 @@
               <span class="w-5 h-5 rounded-md bg-surface text-limeAccent font-mono text-[10px] flex items-center justify-center font-bold shrink-0">
                 ${ch.number}
               </span>
-              <span class="font-medium text-white text-xs truncate max-w-[200px] sm:max-w-none">${escapeHtml(ch.title)}</span>
+              <span class="font-medium text-light text-xs truncate max-w-[200px] sm:max-w-none">${escapeHtml(ch.title)}</span>
               <span class="text-[9px] font-mono px-2 py-0.5 rounded-full ${ch.status === 'READY' ? 'bg-limeAccent/10 text-limeAccent border border-limeAccent/20' : 'bg-surface text-muted'}">
                 ${ch.status === 'READY' ? 'جاهز' : 'لم ينفذ بعد'}
               </span>
             </div>
             ${ch.summary ? `<p class="text-[10px] text-muted leading-relaxed line-clamp-1 pr-6 sm:pr-7">${escapeHtml(ch.summary)}</p>` : ''}
           </div>
-          <button onclick="executeChapterFromCard('${projectId}', ${ch.number})" class="self-end sm:self-auto px-3 py-1 rounded-full bg-surface hover:bg-white text-light hover:text-obsidian border border-borderSubtle text-[10px] sm:text-[11px] font-medium transition active:scale-95 shrink-0">
+          <button onclick="executeChapterFromCard('${projectId}', ${ch.number})" class="self-end sm:self-auto px-3 py-1 rounded-full bg-surface hover:bg-limeAccent text-light hover:text-obsidian border border-borderSubtle text-[10px] sm:text-[11px] font-medium transition active:scale-95 shrink-0">
             🎙️ تنفيذ الصوت
           </button>
         </div>
@@ -4701,7 +4874,7 @@
         let bars = '';
         for (let i = 0; i < 20; i++) {
           const h = 25 + ((i * 17 + idx * 11) % 70);
-          bars += `<span class="wave-bar w-[2px] rounded-full bg-zinc-700" data-base="${h}" style="height: ${h}%" id="wave_bar_${block.id}_${i}"></span>`;
+          bars += `<span class="wave-bar w-[2px] rounded-full bg-muted/40" data-base="${h}" style="height: ${h}%" id="wave_bar_${block.id}_${i}"></span>`;
         }
 
         return `
@@ -4736,7 +4909,7 @@
             <!-- Waveform & Actions -->
             <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
               <div class="flex items-center gap-1 opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                <button type="button" onclick="regenerateBlock('${block.id}')" title="إعادة توليد صوت المقطع" class="p-1 sm:p-1.5 rounded-lg text-muted hover:text-white transition active:scale-90">
+                <button type="button" onclick="regenerateBlock('${block.id}')" title="إعادة توليد صوت المقطع" class="p-1 sm:p-1.5 rounded-lg text-muted hover:text-light transition active:scale-90">
                   <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <polyline points="23 4 23 10 17 10"></polyline>
                     <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
@@ -4758,7 +4931,7 @@
       return `
         <div class="space-y-2 pt-2 border-t border-borderSubtle/60">
           <div class="flex items-center justify-between pb-1 gap-2">
-            <span class="text-xs font-medium text-white flex items-center gap-1.5 sm:gap-2 truncate">
+            <span class="text-xs font-medium text-light flex items-center gap-1.5 sm:gap-2 truncate">
               <span class="w-1.5 h-1.5 rounded-full bg-limeAccent shrink-0"></span>
               <span class="truncate">${headerTitle}</span>
             </span>
@@ -4857,7 +5030,7 @@
                   <span>تجديد الصوت</span>
                 </button>
               </div>
-              <span class="text-[10px] font-mono text-zinc-500">مشهد ${block.order}</span>
+              <span class="text-[10px] font-mono text-muted">مشهد ${block.order}</span>
             </div>
           </div>
 
@@ -4883,12 +5056,12 @@
             <div class="flex items-center justify-between flex-wrap gap-2 text-xs">
               <div class="flex items-center gap-2">
                 <span class="w-2 h-2 rounded-full bg-limeAccent pulse-live shrink-0"></span>
-                <span id="video_scenes_header_title_${pid}" class="font-medium text-white text-xs sm:text-sm">
+                <span id="video_scenes_header_title_${pid}" class="font-medium text-light text-xs sm:text-sm">
                   ${headerTitle}
                 </span>
               </div>
               <div class="flex items-center gap-2 font-mono text-[11px] text-muted">
-                <span id="unified_video_progress_stats_${pid}" class="text-white font-medium">
+                <span id="unified_video_progress_stats_${pid}" class="text-light font-medium">
                   ⏱️ ${formatDurationMinSec(totalSecs)} / ${targetStr}
                 </span>
               </div>
@@ -4905,7 +5078,7 @@
             <div class="flex items-center gap-2 flex-wrap">
               <button 
                 onclick="renderFullFilmWithRemotion('${pid}')" 
-                class="px-3.5 py-1.5 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm"
+                class="px-3.5 py-1.5 rounded-full bg-limeAccent hover:opacity-90 text-obsidian text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 shadow-sm"
               >
                 <span>🎬 تجميع وريندر الفيلم الكامل</span>
               </button>
@@ -4920,14 +5093,14 @@
               <button 
                 id="pause_btn_${pid}"
                 onclick="pauseContinuousGeneration('${pid}')" 
-                class="px-3 py-1.5 rounded-full bg-obsidian hover:bg-surface text-muted hover:text-white border border-borderSubtle text-xs transition active:scale-95"
+                class="px-3 py-1.5 rounded-full bg-obsidian hover:bg-surface text-muted hover:text-light border border-borderSubtle text-xs transition active:scale-95"
               >
                 ⏸️ إيقاف مؤقت للتوليد
               </button>
               <button 
                 id="resume_btn_${pid}"
                 onclick="resumeContinuousGeneration('${pid}')" 
-                class="hidden px-3 py-1.5 rounded-full bg-limeAccent hover:bg-[#d5f533] text-obsidian text-xs font-semibold transition active:scale-95"
+                class="hidden px-3 py-1.5 rounded-full bg-limeAccent hover:opacity-90 text-obsidian text-xs font-semibold transition active:scale-95"
               >
                 ▶️ استئناف التوليد
               </button>
@@ -4951,8 +5124,8 @@
             onclick="sendActionChip('${escapeHtml(chip)}')" 
             class="px-3 py-1 rounded-full text-xs font-medium transition active:scale-95 ${
               isExec 
-                ? 'bg-limeAccent text-obsidian hover:bg-[#d5f533]' 
-                : 'bg-obsidian hover:bg-surfaceHover text-muted hover:text-white border border-borderSubtle'
+                ? 'bg-limeAccent text-obsidian hover:opacity-90' 
+                : 'bg-obsidian hover:bg-surfaceHover text-muted hover:text-light border border-borderSubtle'
             }"
           >
             ${escapeHtml(chip)}
@@ -5016,7 +5189,7 @@
           const randHeight = 20 + Math.floor(Math.random() * 78);
           bar.style.height = `${randHeight}%`;
           bar.classList.add('bg-limeAccent');
-          bar.classList.remove('bg-zinc-700');
+          bar.classList.remove('bg-muted/40');
         });
       }, 140);
     }
@@ -5033,7 +5206,7 @@
         if (row) {
           row.querySelectorAll('.wave-bar').forEach(b => {
             b.classList.remove('bg-limeAccent');
-            b.classList.add('bg-zinc-700');
+            b.classList.add('bg-muted/40');
             b.style.height = `${b.dataset.base}%`;
           });
         }
@@ -5554,15 +5727,15 @@
         return `
           <div 
             onclick="selectModalVoice('${v.name}')" 
-            id="vopt-${v.name}"
-            class="p-2.5 rounded-xl border ${isSelected ? 'border-limeAccent bg-obsidian text-white' : 'border-borderSubtle bg-surface text-muted hover:text-white'} flex items-center justify-between cursor-pointer transition"
+            id="vopt-${v.name}" 
+            class="p-2.5 rounded-xl border ${isSelected ? 'border-limeAccent bg-limeAccent/15 text-light' : 'border-borderSubtle bg-surface text-muted hover:text-light'} flex items-center justify-between cursor-pointer transition"
           >
             <div>
-              <div class="text-xs font-medium text-white flex items-center gap-1.5">
+              <div class="text-xs font-medium text-light flex items-center gap-1.5">
                 <span>${v.name}</span>
-                <span class="text-[10px] font-mono text-zinc-500">(${v.gender})</span>
+                <span class="text-[10px] font-mono text-muted">(${v.gender})</span>
               </div>
-              <p class="text-[10px] text-zinc-400 mt-0.5">${v.description}</p>
+              <p class="text-[10px] text-muted mt-0.5">${v.description}</p>
             </div>
             <button type="button" onclick="event.stopPropagation(); previewVoiceSample('${v.name}')" class="p-1 rounded-lg hover:bg-surfaceHover text-limeAccent" title="معاينة الصوت">
               <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
@@ -5580,9 +5753,9 @@
         const el = document.getElementById(`vopt-${v.name}`);
         if (!el) return;
         if (v.name === voiceName) {
-          el.className = 'p-2.5 rounded-xl border border-limeAccent bg-obsidian text-white flex items-center justify-between cursor-pointer transition';
+          el.className = 'p-2.5 rounded-xl border border-limeAccent bg-limeAccent/15 text-light flex items-center justify-between cursor-pointer transition';
         } else {
-          el.className = 'p-2.5 rounded-xl border border-borderSubtle bg-surface text-muted hover:text-white flex items-center justify-between cursor-pointer transition';
+          el.className = 'p-2.5 rounded-xl border border-borderSubtle bg-surface text-muted hover:text-light flex items-center justify-between cursor-pointer transition';
         }
       });
     }
@@ -5671,7 +5844,7 @@
         }
       }
       let s = escapeHtml(text);
-      s = s.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
+      s = s.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-light">$1</strong>');
       s = s.replace(/\*(.*?)\*/g, '<em class="text-limeAccent">$1</em>');
       s = s.replace(/`(.*?)`/g, '<code class="bg-obsidian text-limeAccent border border-borderSubtle px-1.5 py-0.5 rounded font-mono text-[11px]">$1</code>');
       return s;
