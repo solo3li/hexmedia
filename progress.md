@@ -196,6 +196,29 @@
     - Export MP4 button with loading spinner, rendering progress banner, embedded `<video>` player, download link, and "إرسال للمحادثة" (Send to Chat) action.
     - Added `MOTION_STUDIO_CARD` handling in chat message renderer.
 - **Automated Verification**:
-  - Created `backend/ai_studio/tests_motion.py` with 13 comprehensive unit tests covering timestamp generation, props construction, CLI rendering, API endpoints, error handling, and UI template presence.
-  - `./init.sh` ran completely: 227/227 tests pass, python compileall syntax check clean.
+  - Created `backend/ai_studio/tests_motion.py` with 15 comprehensive unit tests covering timestamp generation, props construction, CLI rendering, API endpoints, error handling, and UI template presence.
+  - `./init.sh` ran completely: 229/229 tests pass, python compileall syntax check clean.
+
+---
+
+## Session 10 — 2026-11-13: Motion Studio Review, Boundary Hardening & Standalone Compositions
+
+### Completed ✅
+- **Word Timestamp Boundary Hardening**:
+  - Fixed timestamp inversion edge case in `generate_word_timestamps` when `duration_seconds < 0.6s`.
+  - Enforced `max(start + 0.05, ...)` and clamped minimum duration to 1.0s, preventing any `start > end` calculation errors.
+- **Props Normalization in Video Rendering**:
+  - In `backend/ai_studio/services/motion_service.py`, normalized `props` in `render_motion_video` to accept both snake_case and camelCase parameters (`aspect_ratio`, `template_id`, `duration_seconds`), and auto-generate word timestamps if missing.
+- **Remotion Dynamic Scaling & Standalone Component Preview**:
+  - Added `calculateMetadata={calculateDynamicMetadata}` across all individual compositions in `remotion/src/Root.tsx`.
+  - Added standalone preview compositions for `AudioWaveform` and `KaraokeCaptions` (9:16 and 16:9).
+  - Fixed `remotion/tsconfig.json` `moduleResolution: "bundler"` for TypeScript 7 compatibility.
+- **UI Interaction Polish**:
+  - In `backend/templates/chat/index.html`, reset `toolsIcon` rotation (`rotate-45`) upon opening `motionStudioModal`.
+  - In `exportMotionVideoMP4`, synchronized latest DOM input values immediately prior to request payload construction, avoiding stale props during rapid export actions.
+- **Automated Verification**:
+  - Added 2 new unit tests in `backend/ai_studio/tests_motion.py` (boundary duration test and snake_case props normalization test).
+  - All 15 motion unit tests pass.
+  - Full `./init.sh` test suite passes (229/229 tests, syntax check clean).
+
 

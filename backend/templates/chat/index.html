@@ -6249,8 +6249,10 @@
 
     function openMotionStudioModal() {
       const menu = document.getElementById('toolsMenu');
+      const icon = document.getElementById('toolsIcon');
       if (menu && !menu.classList.contains('hidden')) {
         menu.classList.add('hidden');
+        if (icon) icon.classList.remove('rotate-45');
       }
       const modal = document.getElementById('motionStudioModal');
       if (modal) {
@@ -6581,17 +6583,22 @@
       const speakerName = (document.getElementById('motionSpeakerInput')?.value || 'الراوي الذكي').trim();
       const audioUrl = (document.getElementById('motionAudioUrlInput')?.value || '').trim();
 
+      // Ensure props always reflects the current form inputs even if debounce is pending
+      const exportProps = motionCurrentProps ? { ...motionCurrentProps } : {};
+      exportProps.text = text;
+      exportProps.title = title;
+      exportProps.subtitle = subtitle;
+      exportProps.speakerName = speakerName;
+      exportProps.audioUrl = audioUrl;
+      exportProps.templateId = motionCurrentTemplate;
+      exportProps.aspectRatio = motionCurrentAspectRatio;
+      exportProps.durationInSeconds = motionCurrentDuration;
+      if (motionCurrentWords && motionCurrentWords.length) {
+        exportProps.words = motionCurrentWords;
+      }
+
       const payload = {
-        props: motionCurrentProps || {
-          text: text,
-          title: title,
-          subtitle: subtitle,
-          speaker_name: speakerName,
-          template_id: motionCurrentTemplate,
-          aspect_ratio: motionCurrentAspectRatio,
-          duration_seconds: motionCurrentDuration,
-          audio_url: audioUrl,
-        },
+        props: exportProps,
         template_id: motionCurrentTemplate,
         aspect_ratio: motionCurrentAspectRatio,
         duration_seconds: motionCurrentDuration,

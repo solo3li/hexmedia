@@ -89,6 +89,42 @@ class MotionServiceTestCase(TestCase):
             self.assertEqual(result["download_url"], "https://hexmedia-assets.test/motion/test.mp4")
             self.assertIn("motion_", result["s3_key"])
 
+    def test_generate_word_timestamps_edge_case_durations(self):
+        """Verifies no inverted start/end timestamps even for tiny or boundary durations."""
+        test_durations = [0.1, 0.3, 0.5, 0.8, 1.0, 15.0]
+        for dur in test_durations:
+            words = generate_word_timestamps("كلمة واحدة كلمة ثانية اختبار", duration_seconds=dur)
+            self.assertGreater(len(words), 0)
+            for w in words:
+                self.assertGreaterEqual(
+                    w["end"],
+                    w["start"],
+                    f"Timestamp inversion detected at dur={dur}: {w}"
+                )
+
+    @patch("ai_studio.services.motion_service.subprocess.run")
+    @patch("ai_studio.services.motion_service.upload_bytes")
+    def test_render_motion_video_snake_case_normalization(self, mock_upload, mock_run):
+        """Verifies props with snake_case keys are normalized and properly passed to Remotion."""
+        mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
+        mock_upload.return_value = "https://hexmedia-assets.test/motion/test_snake.mp4"
+
+        with patch("os.path.exists", return_value=True), \
+             patch("os.path.getsize", return_value=2048), \
+             patch("builtins.open", unittest.mock.mock_open(read_data=b"fake-bytes")):
+            props = {
+                "text": "فيديو تجريبي بتنسيق سنيك كيس",
+                "aspect_ratio": "16:9",
+                "template_id": "clean_corporate",
+                "duration_seconds": 3.5,
+            }
+            result = render_motion_video(props)
+            self.assertTrue(result["success"])
+            self.assertEqual(result["aspect_ratio"], "16:9")
+            self.assertEqual(result["template_id"], "clean_corporate")
+            self.assertEqual(result["duration_seconds"], 3.5)
+            self.assertEqual(result["composition_id"], "MotionStudio-Dynamic-16-9")
+
     @patch("ai_studio.services.motion_service.subprocess.run")
     def test_render_motion_video_cli_failure(self, mock_run):
         mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="Node syntax error")

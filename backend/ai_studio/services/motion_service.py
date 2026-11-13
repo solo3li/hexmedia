@@ -82,15 +82,18 @@ def generate_word_timestamps(
         # Standard speech rate: ~0.42s per word + 0.8s padding
         duration_seconds = max(2.5, round(num_words * 0.42 + 0.8, 1))
 
+    # Clamp duration to a sensible minimum to prevent timestamp inversion
+    duration_seconds = max(1.0, float(duration_seconds))
+
     lead_in = 0.15
-    trail_out = 0.35
-    usable_duration = max(0.5, duration_seconds - lead_in - trail_out)
+    trail_out = 0.25
+    usable_duration = max(0.4, duration_seconds - lead_in - trail_out)
     word_slot = usable_duration / num_words
 
     words: List[Dict[str, Any]] = []
     for i, token in enumerate(tokens):
         start = round(lead_in + (i * word_slot), 2)
-        end = round(min(duration_seconds - 0.05, start + (word_slot * 0.88)), 2)
+        end = round(max(start + 0.05, min(duration_seconds - 0.02, start + (word_slot * 0.88))), 2)
         words.append({
             "word": token,
             "start": start,
@@ -176,14 +179,41 @@ def render_motion_video(
             "error": f"مجلد Remotion غير موجود في: {remotion_dir}",
         }
 
-    aspect_ratio = props.get("aspectRatio", "9:16")
+    # Normalize props to handle both camelCase and snake_case keys robustly
+    norm_text = props.get("text")
+    norm_words = props.get("words")
+    norm_tpl = props.get("templateId") or props.get("template_id") or "dark_neon"
+    norm_aspect = props.get("aspectRatio") or props.get("aspect_ratio") or "9:16"
+    norm_dur = props.get("durationInSeconds") or props.get("duration_seconds")
+    norm_fps = props.get("fps") or 30
+
+    normalized_props = build_motion_props(
+        text=norm_text,
+        title=props.get("title"),
+        subtitle=props.get("subtitle"),
+        speaker_name=props.get("speakerName") or props.get("speaker_name"),
+        words=norm_words,
+        template_id=norm_tpl,
+        aspect_ratio=norm_aspect,
+        audio_url=props.get("audioUrl") or props.get("audio_url"),
+        background_url=props.get("backgroundUrl") or props.get("background_url"),
+        background_type=props.get("backgroundType") or props.get("background_type"),
+        background_color=props.get("backgroundColor") or props.get("background_color"),
+        accent_color=props.get("accentColor") or props.get("accent_color"),
+        duration_seconds=float(norm_dur) if norm_dur else None,
+        fps=int(norm_fps),
+    )
+    # Merge with original props so any custom metadata is preserved
+    merged_props = {**props, **normalized_props}
+
+    aspect_ratio = merged_props.get("aspectRatio", "9:16")
     suffix = "9-16" if aspect_ratio == "9:16" else "16-9"
 
     if not composition_id:
         composition_id = f"MotionStudio-Dynamic-{suffix}"
 
-    duration_seconds = float(props.get("durationInSeconds", 5.0))
-    fps = int(props.get("fps", 30))
+    duration_seconds = float(merged_props.get("durationInSeconds", 5.0))
+    fps = int(merged_props.get("fps", 30))
     total_frames = max(30, int(round(duration_seconds * fps)))
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -191,7 +221,7 @@ def render_motion_video(
         out_mp4 = os.path.join(tmpdir, "rendered.mp4")
 
         with open(props_file, "w", encoding="utf-8") as pf:
-            json.dump(props, pf, ensure_ascii=False)
+            json.dump(merged_props, pf, ensure_ascii=False)
 
         cmd = [
             "npx",
@@ -245,7 +275,7 @@ def render_motion_video(
             "duration_seconds": duration_seconds,
             "total_frames": total_frames,
             "aspect_ratio": aspect_ratio,
-            "template_id": props.get("templateId"),
+            "template_id": merged_props.get("templateId"),
             "file_size": file_size,
             "message": "تم ريندر وتصدير فيديو الموشن جرافيكس بنجاح 🎬!",
         }
