@@ -583,6 +583,19 @@
               <div class="text-[10px] text-muted">استنساخ بصمة صوتك ونبرتك الطبيعية باستخدام Gemini 3.8 Flash TTS</div>
             </div>
           </button>
+
+          <!-- Tool 7: Motion Graphics Studio (Remotion) -->
+          <button onclick="openMotionStudioModal()" class="w-full p-2.5 rounded-xl hover:bg-surfaceHover text-right flex items-center gap-3 text-xs text-light transition group">
+            <div class="w-7 h-7 rounded-lg bg-obsidian border border-borderSubtle flex items-center justify-center text-cyan-400 group-hover:border-cyan-400/40 shrink-0">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+            </div>
+            <div>
+              <div class="font-medium text-light group-hover:text-cyan-400 transition">أستوديو الموشن جرافيكس (Motion Studio)</div>
+              <div class="text-[10px] text-muted">إنتاج موشن جرافيكس كينيتك وتزامن كلمات بقوالب Remotion 4.0</div>
+            </div>
+          </button>
         </div>
 
         <!-- The Floating Dock Body -->
@@ -1835,6 +1848,319 @@
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MOTION GRAPHICS STUDIO MODAL (REMOTION ENGINE) -->
+  <!-- ========================================================================= -->
+  <div id="motionStudioModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 hidden" onclick="closeMotionStudioModal()">
+    <div class="bg-surface border border-borderSubtle ring-1 ring-borderSubtle/50 rounded-3xl w-full max-w-5xl max-h-[94vh] flex flex-col shadow-[0_25px_80px_rgba(0,0,0,0.5)] overflow-hidden" onclick="event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="p-3.5 sm:p-4 border-b border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/40">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-2xl bg-surface border border-borderSubtle text-cyan-400 font-mono font-bold text-xs flex items-center justify-center shrink-0 shadow-inner">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-sm sm:text-base font-semibold text-light tracking-tight">أستوديو الموشن جرافيكس البرمجي (Motion Graphics Studio)</h3>
+              <span class="text-[10px] font-mono text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full border border-cyan-400/20">Remotion 4.0</span>
+            </div>
+            <p class="text-[11px] text-muted mt-0.5">كينيتك تايبوغرافي، قوالب حركية احترافية، ومزامنة ذكية للكلمات مع ريندر MP4 1080p</p>
+          </div>
+        </div>
+        <button onclick="closeMotionStudioModal()" class="p-2 rounded-xl text-muted hover:text-light hover:bg-surface border border-transparent hover:border-borderSubtle transition">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-3.5 sm:p-6 space-y-5 text-xs bg-surface">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          
+          <!-- Column 1: Controls & Configuration (7 cols) -->
+          <div class="lg:col-span-7 space-y-4">
+            
+            <!-- Script / Textarea Input -->
+            <div class="bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle space-y-2">
+              <div class="flex items-center justify-between">
+                <label class="font-medium text-light flex items-center gap-2">
+                  <span>العبارة أو النص المراد تحريكه</span>
+                  <span id="motionWordCountBadge" class="text-[10px] font-mono text-cyan-400 bg-cyan-400/10 px-1.5 py-0.2 rounded border border-cyan-400/20">8 كلمات</span>
+                </label>
+                <div class="flex items-center gap-1.5">
+                  <button type="button" onclick="loadMotionPresetText(1)" class="text-[10px] text-muted hover:text-cyan-400 hover:underline">نموذج 1</button>
+                  <span class="text-muted/40">•</span>
+                  <button type="button" onclick="loadMotionPresetText(2)" class="text-[10px] text-muted hover:text-cyan-400 hover:underline">سوشيال كينيتك</button>
+                  <span class="text-muted/40">•</span>
+                  <button type="button" onclick="loadMotionPresetText(3)" class="text-[10px] text-muted hover:text-cyan-400 hover:underline">رواية سينمائية</button>
+                </div>
+              </div>
+              <textarea id="motionTextInput" rows="3" oninput="handleMotionTextInput()" placeholder="اكتب أو الصق العبارة أو السيناريو لتحريكه وتزامن الكلمات..." class="w-full bg-obsidian border border-borderSubtle rounded-xl p-3 text-light focus:outline-none focus:border-cyan-400 text-xs leading-relaxed transition resize-none">أهلاً بكم في أستوديو HexMedia للموشن جرافيكس البرمجي وحركات النصوص التفاعلية</textarea>
+            </div>
+
+            <!-- Titles & Speaker Inputs -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle">
+              <div>
+                <label class="font-medium text-light block mb-1">العنوان الرئيسي</label>
+                <input id="motionTitleInput" type="text" value="HexMedia Motion Studio" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs transition">
+              </div>
+              <div>
+                <label class="font-medium text-light block mb-1">العنوان الفرعي</label>
+                <input id="motionSubtitleInput" type="text" value="Code-to-Video Engine" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs transition">
+              </div>
+              <div>
+                <label class="font-medium text-light block mb-1">اسم الراوي / المتحدث</label>
+                <input id="motionSpeakerInput" type="text" value="الراوي الذكي" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs transition">
+              </div>
+            </div>
+
+            <!-- Template Selector (4 Cards) -->
+            <div class="space-y-2">
+              <label class="font-medium text-light block">اختر قالب الموشن الحركي (Motion Template)</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="motionTemplatesGrid">
+                
+                <!-- Dark Neon -->
+                <div id="tplCard_dark_neon" onclick="selectMotionTemplate('dark_neon')" class="motion-tpl-card cursor-pointer p-3 rounded-2xl border-2 border-cyan-400 bg-cyan-400/10 transition group relative overflow-hidden">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-semibold text-light flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#00F0FF]"></span>
+                      Dark Neon
+                    </span>
+                    <span class="text-[9px] font-mono text-cyan-400 bg-cyan-400/10 px-1.5 py-0.5 rounded border border-cyan-400/30">نيون فضائي</span>
+                  </div>
+                  <p class="text-[10px] text-muted leading-tight">تدرجات زرقاء متوهجة، شبكة رقمية HUD، ونصوص نيون مضيئة</p>
+                </div>
+
+                <!-- TikTok Kinetic -->
+                <div id="tplCard_tiktok_kinetic" onclick="selectMotionTemplate('tiktok_kinetic')" class="motion-tpl-card cursor-pointer p-3 rounded-2xl border border-borderSubtle bg-obsidian/40 hover:border-yellow-400/50 transition group relative overflow-hidden">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-semibold text-light flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-yellow-400 shadow-[0_0_8px_#FFE600]"></span>
+                      TikTok Kinetic
+                    </span>
+                    <span class="text-[9px] font-mono text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded border border-yellow-400/30">سوشيال كينيتك</span>
+                  </div>
+                  <p class="text-[10px] text-muted leading-tight">نصوص متحركة نابضة وسريعة بتباين أصفر قوي لريلز وتيك توك</p>
+                </div>
+
+                <!-- Cinematic Narrative -->
+                <div id="tplCard_cinematic_narrative" onclick="selectMotionTemplate('cinematic_narrative')" class="motion-tpl-card cursor-pointer p-3 rounded-2xl border border-borderSubtle bg-obsidian/40 hover:border-amber-400/50 transition group relative overflow-hidden">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-semibold text-light flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#F59E0B]"></span>
+                      Cinematic Narrative
+                    </span>
+                    <span class="text-[9px] font-mono text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/30">سينمائي ذهبي</span>
+                  </div>
+                  <p class="text-[10px] text-muted leading-tight">توهج دافئ، خطوط عربية فخمة، وأجواء وثائقية وروايات هادئة</p>
+                </div>
+
+                <!-- Clean Corporate -->
+                <div id="tplCard_clean_corporate" onclick="selectMotionTemplate('clean_corporate')" class="motion-tpl-card cursor-pointer p-3 rounded-2xl border border-borderSubtle bg-obsidian/40 hover:border-blue-400/50 transition group relative overflow-hidden">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-semibold text-light flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_#2563EB]"></span>
+                      Clean Corporate
+                    </span>
+                    <span class="text-[9px] font-mono text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded border border-blue-400/30">أعمال معاصر</span>
+                  </div>
+                  <p class="text-[10px] text-muted leading-tight">تصميم راقي بخلفية هادئة وألوان أعمال احترافية للمؤسسات</p>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Aspect Ratio & Duration Row -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle">
+              <div>
+                <label class="font-medium text-light block mb-1.5">المقاس والأبعاد (Aspect Ratio)</label>
+                <div class="flex gap-2">
+                  <button type="button" id="aspectBtn_9_16" onclick="selectMotionAspectRatio('9:16')" class="flex-1 py-2 px-3 rounded-xl border-2 border-cyan-400 bg-cyan-400/10 text-light font-medium text-xs flex items-center justify-center gap-2 transition">
+                    <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="5" y="2" width="14" height="20" rx="2"></rect>
+                    </svg>
+                    <span>9:16 (ريلز / Shorts)</span>
+                  </button>
+                  <button type="button" id="aspectBtn_16_9" onclick="selectMotionAspectRatio('16:9')" class="flex-1 py-2 px-3 rounded-xl border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-xs flex items-center justify-center gap-2 transition">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                    </svg>
+                    <span>16:9 (يوتيوب / عريض)</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label class="font-medium text-light">مدة الفيديو (ثواني)</label>
+                  <span id="motionDurationLabel" class="text-[10px] font-mono text-cyan-400">5.0 ث</span>
+                </div>
+                <input id="motionDurationInput" type="range" min="2.0" max="20.0" step="0.5" value="5.0" oninput="handleMotionDurationChange(this.value)" class="w-full accent-cyan-400">
+              </div>
+            </div>
+
+            <!-- Optional Audio URL -->
+            <div class="bg-obsidian/40 p-3 rounded-2xl border border-borderSubtle">
+              <label class="font-medium text-light block mb-1">رابط الصوت الخلفي / التعليق (اختياري)</label>
+              <input id="motionAudioUrlInput" type="url" placeholder="https://... رابط ملف صوتي MP3 اختياري للدمج والمزامنة" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs transition">
+            </div>
+
+          </div>
+
+          <!-- Column 2: Live Interactive Preview & Export (5 cols) -->
+          <div class="lg:col-span-5 flex flex-col space-y-4">
+            
+            <!-- Live Preview Card -->
+            <div class="bg-obsidian/60 p-3.5 rounded-2xl border border-borderSubtle flex flex-col space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 font-medium text-light">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400 pulse-live"></span>
+                  <span>معاينة حية تفاعلية</span>
+                </div>
+                <span id="motionPreviewBadge" class="text-[10px] font-mono text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full border border-cyan-400/20">Dark Neon (9:16)</span>
+              </div>
+
+              <!-- Animated Motion Viewport -->
+              <div id="motionPreviewContainer" class="w-full flex items-center justify-center bg-black/80 rounded-2xl p-2 border border-borderSubtle min-h-[320px] max-h-[400px] overflow-hidden relative">
+                
+                <!-- Dynamic Stage (Matches selected aspect ratio) -->
+                <div id="motionPreviewStage" class="w-[200px] h-[340px] rounded-xl relative overflow-hidden flex flex-col justify-between p-4 shadow-2xl transition-all duration-300 border border-cyan-400/30 bg-gradient-to-b from-[#08080a] via-[#050b14] to-[#010204]">
+                  
+                  <!-- Glowing Ambient Backdrop -->
+                  <div id="motionStageGlow" class="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(0,240,255,0.25),transparent_70%)] pointer-events-none"></div>
+
+                  <!-- Header Tech HUD -->
+                  <div class="relative z-10 flex items-center justify-between border-b border-cyan-400/20 pb-2">
+                    <span id="stageTitle" class="text-[9px] font-mono font-bold text-cyan-400 truncate max-w-[110px]">HexMedia Motion</span>
+                    <span id="stageSpeaker" class="text-[8px] font-mono px-1.5 py-0.5 rounded bg-cyan-400/15 text-cyan-300 border border-cyan-400/30">الراوي</span>
+                  </div>
+
+                  <!-- Karaoke Captions Live Word Box -->
+                  <div class="relative z-10 flex-1 flex items-center justify-center px-1 my-2">
+                    <div id="motionWordsBox" class="flex flex-wrap items-center justify-center gap-1.5 text-center leading-relaxed">
+                      <!-- Rendered dynamically -->
+                    </div>
+                  </div>
+
+                  <!-- Footer Waveform & Time Indicator -->
+                  <div class="relative z-10 pt-2 border-t border-cyan-400/20 flex items-center justify-between">
+                    <div id="stageWaveform" class="flex items-center gap-0.5 h-3.5">
+                      <span class="w-1 bg-cyan-400 rounded-full h-2 wave-bar"></span>
+                      <span class="w-1 bg-cyan-400 rounded-full h-3.5 wave-bar"></span>
+                      <span class="w-1 bg-cyan-400 rounded-full h-1.5 wave-bar"></span>
+                      <span class="w-1 bg-cyan-400 rounded-full h-3 wave-bar"></span>
+                      <span class="w-1 bg-cyan-400 rounded-full h-2.5 wave-bar"></span>
+                    </div>
+                    <span id="stageTimer" class="text-[9px] font-mono text-cyan-400">0.00s</span>
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- Preview Player Controls -->
+              <div class="flex items-center gap-2 pt-1">
+                <button type="button" id="motionPlayPauseBtn" onclick="toggleMotionPlay()" class="p-2 rounded-xl bg-cyan-400/20 hover:bg-cyan-400/30 text-cyan-300 font-medium transition active:scale-95">
+                  <svg id="motionPlayIcon" class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  <svg id="motionPauseIcon" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16"></rect>
+                    <rect x="14" y="4" width="4" height="16"></rect>
+                  </svg>
+                </button>
+
+                <div class="flex-1 flex items-center gap-2">
+                  <input id="motionScrubber" type="range" min="0" max="100" value="0" oninput="handleMotionScrub(this.value)" class="w-full accent-cyan-400">
+                </div>
+
+                <button type="button" onclick="restartMotionPreview()" title="إعادة التشغيل" class="p-2 rounded-xl text-muted hover:text-light hover:bg-surface border border-transparent hover:border-borderSubtle transition">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                  </svg>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Export Progress / Spinner Box -->
+            <div id="motionRenderProgressBox" class="hidden p-4 rounded-2xl bg-cyan-400/10 border border-cyan-400/30 space-y-2">
+              <div class="flex items-center gap-3">
+                <svg class="animate-spin w-5 h-5 text-cyan-400 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <div>
+                  <div class="font-medium text-light">جاري تنفيذ ريندر Remotion CLI واستخراج MP4...</div>
+                  <div class="text-[10px] text-muted">تجميع الإطارات بدقة 1080p وتشفير H.264 والرفع السحابي إلى MinIO</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Export Success Result Box -->
+            <div id="motionResultBox" class="hidden p-3.5 rounded-2xl bg-surface border border-cyan-400/40 space-y-3 shadow-xl">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-light flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-cyan-400 pulse-live"></span>
+                  فيديو الموشن جرافيكس جاهز!
+                </span>
+                <span id="motionResultMetaBadge" class="text-[9px] font-mono text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded border border-cyan-400/20">1080p MP4</span>
+              </div>
+
+              <div class="w-full rounded-xl overflow-hidden bg-black border border-borderSubtle shadow-inner">
+                <video id="motionResultVideo" controls playsinline class="w-full max-h-[220px] object-contain"></video>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <a id="motionDownloadLink" href="#" target="_blank" download class="flex-1 py-2 px-3 rounded-xl bg-cyan-400 hover:opacity-90 text-obsidian text-center font-semibold text-xs transition active:scale-95 flex items-center justify-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  <span>تحميل الفيديو MP4</span>
+                </a>
+                <button type="button" onclick="sendMotionVideoToChat()" class="py-2 px-3 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-light text-xs font-medium transition active:scale-95 flex items-center gap-1.5">
+                  <span>إرسال للمحادثة</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 sm:p-4 border-t border-borderSubtle flex items-center justify-between shrink-0 bg-obsidian/40">
+        <button onclick="closeMotionStudioModal()" class="px-4 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-muted hover:text-light transition">
+          إغلاق
+        </button>
+        <div class="flex items-center gap-2.5">
+          <button type="button" onclick="syncMotionConfigFromInputs()" class="px-3.5 py-2 rounded-xl bg-surface hover:bg-surfaceHover border border-borderSubtle text-light font-medium transition active:scale-95 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+            </svg>
+            <span>تحديث التزامن</span>
+          </button>
+          <button id="motionExportMP4Btn" onclick="exportMotionVideoMP4()" class="px-5 py-2 rounded-xl bg-cyan-400 hover:opacity-90 text-obsidian font-semibold transition active:scale-95 shadow-[0_0_20px_rgba(0,240,255,0.25)] flex items-center gap-2">
+            <span id="motionExportBtnText">تصدير فيديو MP4</span>
+            <svg id="motionExportBtnIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+          </button>
+        </div>
       </div>
 
     </div>
@@ -3672,19 +3998,26 @@
         }
       }
 
-      // 3.5 Full Film Rendered Player (Remotion Video Output)
-      if (msgType === 'FULL_FILM_RENDERED' && metadata && metadata.video_url) {
+      // 3.5 Full Film Rendered Player / Motion Graphics Video Output (Remotion Video Output)
+      if ((msgType === 'FULL_FILM_RENDERED' || msgType === 'MOTION_STUDIO_CARD') && metadata && metadata.video_url) {
+        const isMotion = msgType === 'MOTION_STUDIO_CARD';
+        const cardTitle = isMotion ? (metadata.title || `فيديو موشن جرافيكس (${metadata.template_name || 'Remotion 4.0'})`) : 'الفيلم الكامل جاهز للعرض والمونتاج (Remotion Render)';
+        const accentClass = isMotion ? 'border-cyan-400/50' : 'border-limeAccent/50';
+        const badgeClass = isMotion ? 'bg-cyan-400 text-obsidian' : 'bg-limeAccent text-obsidian';
+        const pulseClass = isMotion ? 'bg-cyan-400' : 'bg-limeAccent';
+        const aspectClass = (metadata.aspect_ratio === '9:16' || metadata.aspectRatio === '9:16') ? 'aspect-[9/16] max-w-xs mx-auto' : 'aspect-video w-full';
+
         cardHtml += `
-          <div class="mt-4 p-3.5 sm:p-4 rounded-2xl bg-surface border border-limeAccent/50 space-y-3 shadow-xl">
+          <div class="mt-4 p-3.5 sm:p-4 rounded-2xl bg-surface border ${accentClass} space-y-3 shadow-xl">
             <div class="flex items-center justify-between flex-wrap gap-2">
               <div class="text-xs font-medium text-light flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-limeAccent pulse-live"></span>
-                <span>الفيلم الكامل جاهز للعرض والمونتاج (Remotion Render)</span>
+                <span class="w-2 h-2 rounded-full ${pulseClass} pulse-live"></span>
+                <span>${escapeHtml(cardTitle)}</span>
               </div>
-              <a href="${metadata.video_url}" target="_blank" download class="px-3 py-1 rounded-full bg-limeAccent hover:opacity-90 text-obsidian text-xs font-semibold font-mono transition active:scale-95">⬇️ تحميل MP4</a>
+              <a href="${metadata.video_url}" target="_blank" download class="px-3 py-1 rounded-full ${badgeClass} hover:opacity-90 text-xs font-semibold font-mono transition active:scale-95">⬇️ تحميل MP4</a>
             </div>
-            <div class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-borderSubtle shadow-2xl">
-              <video src="${metadata.video_url}" controls class="w-full h-full object-contain"></video>
+            <div class="${aspectClass} rounded-xl overflow-hidden bg-black border border-borderSubtle shadow-2xl">
+              <video src="${metadata.video_url}" controls playsinline class="w-full h-full object-contain"></video>
             </div>
           </div>
         `;
@@ -5848,6 +6181,494 @@
       s = s.replace(/\*(.*?)\*/g, '<em class="text-limeAccent">$1</em>');
       s = s.replace(/`(.*?)`/g, '<code class="bg-obsidian text-limeAccent border border-borderSubtle px-1.5 py-0.5 rounded font-mono text-[11px]">$1</code>');
       return s;
+    }
+
+    // =========================================================================
+    // MOTION GRAPHICS STUDIO CONTROLLER (REMOTION 4.0)
+    // =========================================================================
+    let motionCurrentTemplate = 'dark_neon';
+    let motionCurrentAspectRatio = '9:16';
+    let motionCurrentDuration = 5.0;
+    let motionCurrentWords = [];
+    let motionCurrentProps = null;
+    let motionIsPlaying = false;
+    let motionCurrentTime = 0.0;
+    let motionAnimFrameId = null;
+    let motionLastTimestamp = null;
+    let motionLastExportResult = null;
+    let motionDebounceTimer = null;
+
+    const MOTION_TEMPLATE_META = {
+      'dark_neon': {
+        name: 'Dark Neon',
+        accent: '#00F0FF',
+        glow: 'rgba(0, 240, 255, 0.4)',
+        bg: 'radial-gradient(circle at 50% 30%, rgba(0,240,255,0.22), transparent 70%), linear-gradient(180deg, #08080a 0%, #030712 100%)',
+        border: 'border-cyan-400',
+        activeClass: 'text-cyan-400 drop-shadow-[0_0_12px_rgba(0,240,255,0.9)] scale-110 font-bold',
+        inactiveClass: 'text-white/40',
+        barColor: '#00F0FF',
+      },
+      'tiktok_kinetic': {
+        name: 'TikTok Kinetic',
+        accent: '#FFE600',
+        glow: 'rgba(255, 230, 0, 0.4)',
+        bg: 'radial-gradient(circle at 50% 50%, rgba(255,230,0,0.18), transparent 70%), linear-gradient(180deg, #0a0a0e 0%, #171720 100%)',
+        border: 'border-yellow-400',
+        activeClass: 'bg-yellow-400 text-obsidian px-2 py-0.5 rounded shadow-[0_0_16px_rgba(255,230,0,0.8)] scale-115 font-extrabold -rotate-1',
+        inactiveClass: 'text-white/35',
+        barColor: '#FFE600',
+      },
+      'cinematic_narrative': {
+        name: 'Cinematic Narrative',
+        accent: '#F59E0B',
+        glow: 'rgba(245, 158, 11, 0.4)',
+        bg: 'radial-gradient(circle at 50% 40%, rgba(245,158,11,0.2), transparent 70%), linear-gradient(180deg, #0b0c10 0%, #050608 100%)',
+        border: 'border-amber-400',
+        activeClass: 'text-amber-400 drop-shadow-[0_0_14px_rgba(245,158,11,0.85)] scale-110 font-bold',
+        inactiveClass: 'text-white/40',
+        barColor: '#F59E0B',
+      },
+      'clean_corporate': {
+        name: 'Clean Corporate',
+        accent: '#2563EB',
+        glow: 'rgba(37, 99, 235, 0.25)',
+        bg: 'radial-gradient(circle at 50% 30%, rgba(37,99,235,0.12), transparent 70%), linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)',
+        border: 'border-blue-500',
+        activeClass: 'bg-blue-600/10 text-blue-700 px-2 py-0.5 rounded border border-blue-600/30 scale-105 font-bold',
+        inactiveClass: 'text-slate-400',
+        barColor: '#2563EB',
+      },
+    };
+
+    const MOTION_PRESETS = {
+      1: "أهلاً بكم في أستوديو HexMedia للموشن جرافيكس البرمجي وحركات النصوص التفاعلية",
+      2: "اصنع فيديوهاتك بضغطة زر واحدة مع أقوى محرك ريندر سحابي",
+      3: "في أعماق الليل الساكن، تلتقي الكلمات لتنسج قصة لا تُنسى",
+    };
+
+    function openMotionStudioModal() {
+      const menu = document.getElementById('toolsMenu');
+      if (menu && !menu.classList.contains('hidden')) {
+        menu.classList.add('hidden');
+      }
+      const modal = document.getElementById('motionStudioModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+      syncMotionConfigFromInputs();
+    }
+
+    function closeMotionStudioModal() {
+      const modal = document.getElementById('motionStudioModal');
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+      pauseMotionPreview();
+    }
+
+    function selectMotionTemplate(tplId) {
+      if (!MOTION_TEMPLATE_META[tplId]) return;
+      motionCurrentTemplate = tplId;
+
+      document.querySelectorAll('.motion-tpl-card').forEach(card => {
+        card.classList.remove('border-2', 'border-cyan-400', 'border-yellow-400', 'border-amber-400', 'border-blue-500', 'bg-cyan-400/10', 'bg-yellow-400/10', 'bg-amber-400/10', 'bg-blue-400/10');
+        card.classList.add('border', 'border-borderSubtle', 'bg-obsidian/40');
+      });
+
+      const activeCard = document.getElementById('tplCard_' + tplId);
+      if (activeCard) {
+        activeCard.classList.remove('border-borderSubtle', 'bg-obsidian/40');
+        const meta = MOTION_TEMPLATE_META[tplId];
+        activeCard.classList.add('border-2', meta.border, `bg-${tplId === 'dark_neon' ? 'cyan-400' : tplId === 'tiktok_kinetic' ? 'yellow-400' : tplId === 'cinematic_narrative' ? 'amber-400' : 'blue-400'}/10`);
+      }
+
+      updateMotionStageVisuals();
+      syncMotionConfigFromInputs();
+    }
+
+    function selectMotionAspectRatio(ratio) {
+      motionCurrentAspectRatio = ratio;
+      const btn916 = document.getElementById('aspectBtn_9_16');
+      const btn169 = document.getElementById('aspectBtn_16_9');
+
+      if (ratio === '9:16') {
+        if (btn916) {
+          btn916.className = 'flex-1 py-2 px-3 rounded-xl border-2 border-cyan-400 bg-cyan-400/10 text-light font-medium text-xs flex items-center justify-center gap-2 transition';
+        }
+        if (btn169) {
+          btn169.className = 'flex-1 py-2 px-3 rounded-xl border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-xs flex items-center justify-center gap-2 transition';
+        }
+      } else {
+        if (btn169) {
+          btn169.className = 'flex-1 py-2 px-3 rounded-xl border-2 border-cyan-400 bg-cyan-400/10 text-light font-medium text-xs flex items-center justify-center gap-2 transition';
+        }
+        if (btn916) {
+          btn916.className = 'flex-1 py-2 px-3 rounded-xl border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-xs flex items-center justify-center gap-2 transition';
+        }
+      }
+
+      updateMotionStageVisuals();
+      syncMotionConfigFromInputs();
+    }
+
+    function loadMotionPresetText(presetId) {
+      const text = MOTION_PRESETS[presetId] || MOTION_PRESETS[1];
+      const input = document.getElementById('motionTextInput');
+      if (input) {
+        input.value = text;
+        handleMotionTextInput();
+        syncMotionConfigFromInputs();
+      }
+    }
+
+    function handleMotionTextInput() {
+      const text = (document.getElementById('motionTextInput')?.value || '').trim();
+      const count = text ? text.split(/\s+/).length : 0;
+      const badge = document.getElementById('motionWordCountBadge');
+      if (badge) {
+        badge.textContent = `${count} كلمات`;
+      }
+      clearTimeout(motionDebounceTimer);
+      motionDebounceTimer = setTimeout(() => {
+        syncMotionConfigFromInputs();
+      }, 400);
+    }
+
+    function handleMotionDurationChange(val) {
+      motionCurrentDuration = parseFloat(val) || 5.0;
+      const lbl = document.getElementById('motionDurationLabel');
+      if (lbl) {
+        lbl.textContent = `${motionCurrentDuration.toFixed(1)} ث`;
+      }
+      clearTimeout(motionDebounceTimer);
+      motionDebounceTimer = setTimeout(() => {
+        syncMotionConfigFromInputs();
+      }, 300);
+    }
+
+    function updateMotionStageVisuals() {
+      const stage = document.getElementById('motionPreviewStage');
+      const glow = document.getElementById('motionStageGlow');
+      const badge = document.getElementById('motionPreviewBadge');
+      const meta = MOTION_TEMPLATE_META[motionCurrentTemplate] || MOTION_TEMPLATE_META['dark_neon'];
+
+      if (!stage) return;
+
+      if (badge) {
+        badge.textContent = `${meta.name} (${motionCurrentAspectRatio})`;
+        badge.style.color = meta.accent;
+        badge.style.borderColor = meta.accent + '40';
+      }
+
+      // Aspect ratio dimensions
+      if (motionCurrentAspectRatio === '9:16') {
+        stage.style.width = '190px';
+        stage.style.height = '340px';
+      } else {
+        stage.style.width = '320px';
+        stage.style.height = '180px';
+      }
+
+      stage.style.background = meta.bg;
+      stage.style.borderColor = meta.accent + '50';
+
+      if (glow) {
+        glow.style.background = `radial-gradient(circle at 50% 30%, ${meta.glow}, transparent 70%)`;
+      }
+
+      // Update Waveform bars color
+      document.querySelectorAll('#stageWaveform .wave-bar').forEach(bar => {
+        bar.style.backgroundColor = meta.accent;
+      });
+
+      // Update speaker & title
+      const stTitle = document.getElementById('stageTitle');
+      if (stTitle) {
+        const sttVal = document.getElementById('motionTitleInput')?.value || 'HexMedia Motion';
+        stTitle.textContent = sttVal;
+        stTitle.style.color = meta.accent;
+      }
+      const stSpk = document.getElementById('stageSpeaker');
+      if (stSpk) {
+        const spkVal = document.getElementById('motionSpeakerInput')?.value || 'الراوي';
+        stSpk.textContent = spkVal;
+        stSpk.style.color = meta.accent;
+        stSpk.style.borderColor = meta.accent + '40';
+      }
+    }
+
+    async function syncMotionConfigFromInputs() {
+      const text = (document.getElementById('motionTextInput')?.value || '').trim();
+      const title = (document.getElementById('motionTitleInput')?.value || 'HexMedia Motion Studio').trim();
+      const subtitle = (document.getElementById('motionSubtitleInput')?.value || 'Code-to-Video Engine').trim();
+      const speakerName = (document.getElementById('motionSpeakerInput')?.value || 'الراوي الذكي').trim();
+      const audioUrl = (document.getElementById('motionAudioUrlInput')?.value || '').trim();
+
+      updateMotionStageVisuals();
+
+      try {
+        const res = await fetch('/api/motion/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: text,
+            title: title,
+            subtitle: subtitle,
+            speaker_name: speakerName,
+            template_id: motionCurrentTemplate,
+            aspect_ratio: motionCurrentAspectRatio,
+            duration_seconds: motionCurrentDuration,
+            audio_url: audioUrl,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          motionCurrentProps = data.props;
+          motionCurrentWords = data.props.words || [];
+          motionCurrentDuration = data.props.durationInSeconds || motionCurrentDuration;
+        } else {
+          fallbackMotionWordsComputation(text);
+        }
+      } catch (err) {
+        console.warn('Motion config fetch fallback:', err);
+        fallbackMotionWordsComputation(text);
+      }
+
+      renderMotionWordsToStage();
+      restartMotionPreview();
+    }
+
+    function fallbackMotionWordsComputation(text) {
+      const tokens = text ? text.split(/\s+/).filter(Boolean) : ["أهلاً", "بكم", "في", "HexMedia", "Motion", "Studio"];
+      const slot = Math.max(0.2, (motionCurrentDuration - 0.4) / tokens.length);
+      motionCurrentWords = tokens.map((w, idx) => ({
+        word: w,
+        start: +(0.15 + idx * slot).toFixed(2),
+        end: +(0.15 + (idx + 1) * slot * 0.9).toFixed(2),
+      }));
+    }
+
+    function renderMotionWordsToStage() {
+      const box = document.getElementById('motionWordsBox');
+      if (!box) return;
+      box.innerHTML = '';
+
+      motionCurrentWords.forEach((item, idx) => {
+        const span = document.createElement('span');
+        span.id = `motion_word_${idx}`;
+        span.className = 'transition-all duration-150 inline-block px-1 py-0.5 text-xs text-white/40 cursor-default';
+        span.textContent = item.word;
+        box.appendChild(span);
+      });
+    }
+
+    function toggleMotionPlay() {
+      if (motionIsPlaying) {
+        pauseMotionPreview();
+      } else {
+        startMotionPreview();
+      }
+    }
+
+    function startMotionPreview() {
+      motionIsPlaying = true;
+      motionLastTimestamp = performance.now();
+      const playIcon = document.getElementById('motionPlayIcon');
+      const pauseIcon = document.getElementById('motionPauseIcon');
+      if (playIcon) playIcon.classList.add('hidden');
+      if (pauseIcon) pauseIcon.classList.remove('hidden');
+
+      if (motionCurrentTime >= motionCurrentDuration) {
+        motionCurrentTime = 0.0;
+      }
+
+      cancelAnimationFrame(motionAnimFrameId);
+      motionAnimFrameId = requestAnimationFrame(motionAnimationStep);
+    }
+
+    function pauseMotionPreview() {
+      motionIsPlaying = false;
+      const playIcon = document.getElementById('motionPlayIcon');
+      const pauseIcon = document.getElementById('motionPauseIcon');
+      if (playIcon) playIcon.classList.remove('hidden');
+      if (pauseIcon) pauseIcon.classList.add('hidden');
+      cancelAnimationFrame(motionAnimFrameId);
+    }
+
+    function restartMotionPreview() {
+      motionCurrentTime = 0.0;
+      updateMotionStageFrame(0.0);
+      startMotionPreview();
+    }
+
+    function handleMotionScrub(val) {
+      const pct = Math.max(0, Math.min(100, parseFloat(val) || 0));
+      motionCurrentTime = (pct / 100) * motionCurrentDuration;
+      updateMotionStageFrame(motionCurrentTime);
+    }
+
+    function motionAnimationStep(now) {
+      if (!motionIsPlaying) return;
+      const dt = (now - motionLastTimestamp) / 1000;
+      motionLastTimestamp = now;
+
+      motionCurrentTime += dt;
+      if (motionCurrentTime >= motionCurrentDuration) {
+        motionCurrentTime = 0.0; // Loop seamlessly
+      }
+
+      updateMotionStageFrame(motionCurrentTime);
+      motionAnimFrameId = requestAnimationFrame(motionAnimationStep);
+    }
+
+    function updateMotionStageFrame(timeSec) {
+      const timer = document.getElementById('stageTimer');
+      if (timer) {
+        timer.textContent = `${timeSec.toFixed(2)}s`;
+      }
+
+      const scrubber = document.getElementById('motionScrubber');
+      if (scrubber && motionCurrentDuration > 0) {
+        scrubber.value = (timeSec / motionCurrentDuration) * 100;
+      }
+
+      const meta = MOTION_TEMPLATE_META[motionCurrentTemplate] || MOTION_TEMPLATE_META['dark_neon'];
+
+      // Synchronize Word Highlights
+      motionCurrentWords.forEach((item, idx) => {
+        const el = document.getElementById(`motion_word_${idx}`);
+        if (!el) return;
+
+        const isActive = timeSec >= item.start && timeSec <= item.end;
+        if (isActive) {
+          el.className = `transition-all duration-150 inline-block text-xs ${meta.activeClass}`;
+        } else {
+          el.className = `transition-all duration-150 inline-block text-xs ${meta.inactiveClass}`;
+        }
+      });
+
+      // Animate Waveform Bars
+      const bars = document.querySelectorAll('#stageWaveform .wave-bar');
+      bars.forEach((bar, idx) => {
+        const freq = (idx + 1) * 3.5;
+        const h = Math.abs(Math.sin(timeSec * freq)) * 10 + 3;
+        bar.style.height = `${h}px`;
+      });
+    }
+
+    async function exportMotionVideoMP4() {
+      const btn = document.getElementById('motionExportMP4Btn');
+      const btnText = document.getElementById('motionExportBtnText');
+      const btnIcon = document.getElementById('motionExportBtnIcon');
+      const progressBox = document.getElementById('motionRenderProgressBox');
+      const resultBox = document.getElementById('motionResultBox');
+
+      if (!btn) return;
+
+      btn.disabled = true;
+      btn.classList.add('opacity-70', 'cursor-not-allowed');
+      if (btnText) btnText.textContent = 'جاري الريندر...';
+      if (progressBox) progressBox.classList.remove('hidden');
+      if (resultBox) resultBox.classList.add('hidden');
+
+      showToast('بدأ ريندر فيديو الموشن جرافيكس عبر Remotion CLI...');
+
+      const text = (document.getElementById('motionTextInput')?.value || '').trim();
+      const title = (document.getElementById('motionTitleInput')?.value || 'HexMedia Motion Studio').trim();
+      const subtitle = (document.getElementById('motionSubtitleInput')?.value || 'Code-to-Video Engine').trim();
+      const speakerName = (document.getElementById('motionSpeakerInput')?.value || 'الراوي الذكي').trim();
+      const audioUrl = (document.getElementById('motionAudioUrlInput')?.value || '').trim();
+
+      const payload = {
+        props: motionCurrentProps || {
+          text: text,
+          title: title,
+          subtitle: subtitle,
+          speaker_name: speakerName,
+          template_id: motionCurrentTemplate,
+          aspect_ratio: motionCurrentAspectRatio,
+          duration_seconds: motionCurrentDuration,
+          audio_url: audioUrl,
+        },
+        template_id: motionCurrentTemplate,
+        aspect_ratio: motionCurrentAspectRatio,
+        duration_seconds: motionCurrentDuration,
+      };
+
+      try {
+        const res = await (typeof authFetch === 'function' ? authFetch('/api/motion/render', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }) : fetch('/api/motion/render', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }));
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.error || 'فشل ريندر الفيديو');
+        }
+
+        const data = await res.json();
+        motionLastExportResult = data;
+
+        if (progressBox) progressBox.classList.add('hidden');
+        if (resultBox) resultBox.classList.remove('hidden');
+
+        const videoEl = document.getElementById('motionResultVideo');
+        if (videoEl) {
+          videoEl.src = data.video_url;
+          videoEl.load();
+        }
+
+        const dlLink = document.getElementById('motionDownloadLink');
+        if (dlLink) {
+          dlLink.href = data.download_url || data.video_url;
+        }
+
+        const metaBadge = document.getElementById('motionResultMetaBadge');
+        if (metaBadge) {
+          const dur = (data.duration_seconds || motionCurrentDuration).toFixed(1);
+          const sizeKb = data.file_size ? (data.file_size / 1024).toFixed(0) + ' KB' : '';
+          metaBadge.textContent = `${data.aspect_ratio || motionCurrentAspectRatio} • ${dur}ث • ${sizeKb}`;
+        }
+
+        showToast('تم ريندر وتصدير فيديو الموشن جرافيكس بنجاح 🎬!');
+
+      } catch (err) {
+        if (progressBox) progressBox.classList.add('hidden');
+        showToast('خطأ في ريندر الفيديو: ' + err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove('opacity-70', 'cursor-not-allowed');
+        if (btnText) btnText.textContent = 'تصدير فيديو MP4';
+      }
+    }
+
+    function sendMotionVideoToChat() {
+      if (!motionLastExportResult || !motionLastExportResult.video_url) {
+        showToast('يرجى تصدير الفيديو أولاً');
+        return;
+      }
+
+      const meta = MOTION_TEMPLATE_META[motionCurrentTemplate] || MOTION_TEMPLATE_META['dark_neon'];
+      const metadata = {
+        video_url: motionLastExportResult.video_url,
+        title: (document.getElementById('motionTitleInput')?.value || 'HexMedia Motion Studio') + ` - ${meta.name}`,
+        template_name: meta.name,
+        template_id: motionCurrentTemplate,
+        aspect_ratio: motionCurrentAspectRatio,
+        duration_seconds: motionLastExportResult.duration_seconds || motionCurrentDuration,
+      };
+
+      renderAssistantMessage('تم إنتاج وتصدير فيديو الموشن جرافيكس عبر Remotion بنجاح!', 'MOTION_STUDIO_CARD', metadata);
+      closeMotionStudioModal();
+      showToast('تم إرسال كرت الفيديو للمحادثة');
+      scrollToBottom();
     }
   </script>
 </body>

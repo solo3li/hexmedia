@@ -1252,6 +1252,115 @@ from stt.api import router as stt_router
 api.add_router("/stt", stt_router)
 
 
+# =============================================================================
+# MOTION GRAPHICS STUDIO SCHEMAS & ENDPOINTS (REMOTION)
+# =============================================================================
+class MotionGenerateConfigRequest(Schema):
+    text: Optional[str] = None
+    title: Optional[str] = "HexMedia Motion Studio"
+    subtitle: Optional[str] = "Code-to-Video Engine"
+    speaker_name: Optional[str] = "الراوي الذكي"
+    template_id: Optional[str] = "dark_neon"
+    aspect_ratio: Optional[str] = "9:16"
+    audio_url: Optional[str] = None
+    background_url: Optional[str] = None
+    background_type: Optional[str] = None
+    background_color: Optional[str] = None
+    accent_color: Optional[str] = None
+    duration_seconds: Optional[float] = None
+    fps: Optional[int] = 30
+
+
+class MotionRenderRequest(Schema):
+    props: Optional[Dict[str, Any]] = None
+    text: Optional[str] = None
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    speaker_name: Optional[str] = None
+    words: Optional[List[Dict[str, Any]]] = None
+    template_id: Optional[str] = "dark_neon"
+    aspect_ratio: Optional[str] = "9:16"
+    audio_url: Optional[str] = None
+    background_url: Optional[str] = None
+    background_type: Optional[str] = None
+    background_color: Optional[str] = None
+    accent_color: Optional[str] = None
+    duration_seconds: Optional[float] = None
+    fps: Optional[int] = 30
+    composition_id: Optional[str] = None
+
+
+@api.get("/motion/templates", auth=None)
+def get_motion_templates(request):
+    """Returns available motion templates, aspect ratios, and default sample words."""
+    from .services.motion_service import SUPPORTED_TEMPLATES, SUPPORTED_ASPECT_RATIOS, DEFAULT_SAMPLE_WORDS
+    return {
+        "templates": SUPPORTED_TEMPLATES,
+        "aspect_ratios": SUPPORTED_ASPECT_RATIOS,
+        "default_sample_words": DEFAULT_SAMPLE_WORDS,
+    }
+
+
+@api.post("/motion/config", auth=None)
+def generate_motion_config(request, data: MotionGenerateConfigRequest):
+    """Calculates synchronized word timestamps and builds Remotion composition props."""
+    from .services.motion_service import build_motion_props
+    props = build_motion_props(
+        text=data.text,
+        title=data.title,
+        subtitle=data.subtitle,
+        speaker_name=data.speaker_name,
+        template_id=data.template_id or "dark_neon",
+        aspect_ratio=data.aspect_ratio or "9:16",
+        audio_url=data.audio_url,
+        background_url=data.background_url,
+        background_type=data.background_type,
+        background_color=data.background_color,
+        accent_color=data.accent_color,
+        duration_seconds=data.duration_seconds,
+        fps=data.fps or 30,
+    )
+    return {
+        "success": True,
+        "props": props,
+        "word_count": len(props.get("words", [])),
+        "duration_seconds": props.get("durationInSeconds"),
+        "aspect_ratio": props.get("aspectRatio"),
+        "template_id": props.get("templateId"),
+    }
+
+
+@api.post("/motion/render", auth=None)
+def render_motion_endpoint(request, data: MotionRenderRequest):
+    """Renders video via Remotion CLI, uploads MP4 to MinIO, and returns download URL."""
+    from .services.motion_service import build_motion_props, render_motion_video
+    if data.props:
+        props = data.props
+    else:
+        props = build_motion_props(
+            text=data.text,
+            title=data.title,
+            subtitle=data.subtitle,
+            speaker_name=data.speaker_name,
+            words=data.words,
+            template_id=data.template_id or "dark_neon",
+            aspect_ratio=data.aspect_ratio or "9:16",
+            audio_url=data.audio_url,
+            background_url=data.background_url,
+            background_type=data.background_type,
+            background_color=data.background_color,
+            accent_color=data.accent_color,
+            duration_seconds=data.duration_seconds,
+            fps=data.fps or 30,
+        )
+
+    result = render_motion_video(props, composition_id=data.composition_id)
+    if not result.get("success"):
+        raise HttpError(500, result.get("error", "فشل ريندر فيديو الموشن"))
+    return result
+
+
+
 
 
 

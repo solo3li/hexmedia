@@ -79,6 +79,14 @@
       "dependencies": ["feat-001"],
       "status": "completed",
       "evidence": "Tailwind CSS variable tokens defined for :root and html.dark with space-separated RGB values for full opacity modifier support; Zero-FOUC script in <head>; Sun/Moon themeToggleBtn added to header with smooth 300ms rotate/scale morphing transitions; all modals (ttsConfigModal, voiceCloneModal, sttConfigModal, voiceModal, loginModal, registerModal, profileModal) audited and converted from hardcoded dark hex/white to semantic theme variables; eliminated residual low-contrast zinc classes across transcripts, modals, and thread lists; 9/9 theme tests pass in backend/ai_studio/tests_theme.py; full 213 test suite passes cleanly in ./init.sh."
+    },
+    {
+      "id": "feat-019",
+      "name": "Motion Graphics Studio & Remotion 4.0 Kinetic Video Engine",
+      "description": "Code-to-video motion graphics studio featuring 4 animated templates (DarkNeon, TikTokKinetic, CinematicNarrative, CleanCorporate), synchronized word timestamps, Remotion CLI 1080p MP4 rendering pipeline with MinIO upload, interactive live preview player, toolsMenu trigger, motionStudioModal, and chat video card integration.",
+      "dependencies": ["feat-001", "feat-003"],
+      "status": "completed",
+      "evidence": "Remotion 4.0 root & compositions in remotion/src; dynamic metadata duration scaling; backend/ai_studio/services/motion_service.py with word timestamp synchronization & Remotion CLI render to MinIO; NinjaAPI endpoints /api/motion/templates, /api/motion/config, /api/motion/render; motionStudioModal with interactive live canvas preview, word highlight sync, audio waveforms, and 1080p MP4 export player; toolsMenu button; MOTION_STUDIO_CARD in chat feed; 13/13 motion tests pass, 227/227 total tests pass in ./init.sh."
     }
   ]
 }

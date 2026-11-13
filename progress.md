@@ -165,3 +165,37 @@
 - **Verification**:
   - 9/9 theme unit tests pass (`backend/ai_studio/tests_theme.py`).
   - `./init.sh` passes cleanly (213/213 tests, syntax check clean).
+
+---
+
+## Session 9 — 2026-11-13: Remotion 4.0 Motion Graphics Studio & Kinetic Video Engine
+
+### Completed ✅
+- **Remotion Dynamic Scaling & Root Setup**:
+  - Configured `calculateDynamicMetadata` in `remotion/src/Root.tsx` to dynamically set `durationInFrames` based on `props.durationInSeconds` and `fps`.
+  - Registered dynamic compositions (`MotionStudio-Dynamic-9-16` and `MotionStudio-Dynamic-16-9`) alongside the 4 templates (`DarkNeon`, `TikTokKinetic`, `CinematicNarrative`, `CleanCorporate`).
+- **Backend Motion Service & Timestamp Engine**:
+  - Created `backend/ai_studio/services/motion_service.py`:
+    - `generate_word_timestamps`: segmenting text into words with synchronized sequential timestamps and natural pacing.
+    - `build_motion_props`: constructing validated Remotion configuration with template metadata, color schemes, and aspect ratios.
+    - `render_motion_video`: executing Remotion CLI (`npx remotion render`) with JSON props, frame range limiting, MinIO upload (`upload_bytes`), and returning public playback & download URLs.
+- **Backend NinjaAPI Endpoints**:
+  - Added endpoints in `backend/ai_studio/api.py`:
+    - `GET /api/motion/templates`: lists available templates, aspect ratios, and sample words.
+    - `POST /api/motion/config`: computes word timestamps and composition properties.
+    - `POST /api/motion/render`: triggers Remotion CLI render, uploads MP4 to MinIO, and returns video download metadata.
+- **Interactive UI & Motion Studio Modal**:
+  - Added Tool 7: "أستوديو الموشن جرافيكس (Motion Studio)" in `toolsMenu` in `backend/templates/chat/index.html`.
+  - Added `#motionStudioModal`:
+    - Textarea for custom script / scenario with word counter and preset buttons.
+    - Title, subtitle, and speaker name inputs.
+    - 4 selectable template cards (DarkNeon, TikTokKinetic, CinematicNarrative, CleanCorporate) with visual indicators.
+    - Aspect ratio selector (9:16 vertical Reels/TikTok vs 16:9 widescreen YouTube).
+    - Duration slider (2s to 20s) and optional audio URL input.
+    - Live interactive preview stage `#motionPreviewStage` with real-time synchronized karaoke word highlighting, animated waveform equalizer, and elapsed timer scrubber.
+    - Export MP4 button with loading spinner, rendering progress banner, embedded `<video>` player, download link, and "إرسال للمحادثة" (Send to Chat) action.
+    - Added `MOTION_STUDIO_CARD` handling in chat message renderer.
+- **Automated Verification**:
+  - Created `backend/ai_studio/tests_motion.py` with 13 comprehensive unit tests covering timestamp generation, props construction, CLI rendering, API endpoints, error handling, and UI template presence.
+  - `./init.sh` ran completely: 227/227 tests pass, python compileall syntax check clean.
+
