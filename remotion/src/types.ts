@@ -18,6 +18,10 @@ export interface MotionCompositionProps {
   templateId?: 'dark_neon' | 'cinematic_narrative' | 'tiktok_kinetic' | 'clean_corporate';
   durationInSeconds?: number;
   fps?: number;
+  videoStartOffset?: number;
+  videoMuted?: boolean;
+  videoVolume?: number;
+  transitionEffect?: 'whip_pan' | 'zoom_in' | 'glitch' | 'dissolve' | 'none';
 }
 
 export const sampleArabicWords: WordTimestamp[] = [

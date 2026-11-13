@@ -14,6 +14,10 @@ export const CinematicNarrative: React.FC<MotionCompositionProps> = ({
   backgroundType = "gradient",
   accentColor = "#F59E0B",
   aspectRatio = "9:16",
+  videoStartOffset = 0,
+  videoMuted = false,
+  videoVolume = 0.15,
+  transitionEffect = "zoom_in",
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -27,7 +31,11 @@ export const CinematicNarrative: React.FC<MotionCompositionProps> = ({
         type={backgroundType}
         src={backgroundUrl}
         templateId="cinematic_narrative"
-        overlayOpacity={0.72}
+        overlayOpacity={0.68}
+        videoStartOffset={videoStartOffset}
+        videoMuted={videoMuted}
+        videoVolume={videoVolume}
+        transitionEffect={transitionEffect}
       />
 
       {/* Cinematic Letterbox effect in 16:9 */}
@@ -131,6 +139,7 @@ export const CinematicNarrative: React.FC<MotionCompositionProps> = ({
             styleType="cinematic"
             aspectRatio={aspectRatio}
             accentColor={accentColor}
+            transitionEffect={transitionEffect}
           />
 
           <div

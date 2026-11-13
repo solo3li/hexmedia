@@ -3,12 +3,191 @@ import logging
 import os
 import subprocess
 import tempfile
+import urllib.parse
 import uuid
 from typing import Dict, Any, List, Optional
 from django.conf import settings
 from .minio_service import upload_bytes
 
 logger = logging.getLogger(__name__)
+
+ALLOWED_VIDEO_EXTS = {".mp4", ".mov", ".webm", ".mkv", ".avi"}
+MAX_VIDEO_SIZE = 100 * 1024 * 1024  # 100MB
+
+
+def probe_video_metadata(file_path: str) -> Dict[str, Any]:
+    """
+    Extracts duration, dimensions, framerate, and audio presence from video file.
+    """
+    try:
+        cmd = [
+            "ffprobe",
+            "-v", "quiet",
+            "-print_format", "json",
+            "-show_format",
+            "-show_streams",
+            file_path,
+        ]
+        res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        if res.returncode != 0:
+            return {"duration": 5.0, "width": 1080, "height": 1920, "has_audio": False}
+
+        data = json.loads(res.stdout)
+        format_info = data.get("format", {})
+        duration = float(format_info.get("duration", 5.0))
+
+        width = 1080
+        height = 1920
+        has_audio = False
+
+        for stream in data.get("streams", []):
+            codec_type = stream.get("codec_type")
+            if codec_type == "video" and not (width and height and width != 1080):
+                width = int(stream.get("width", 1080))
+                height = int(stream.get("height", 1920))
+            elif codec_type == "audio":
+                has_audio = True
+
+        return {
+            "duration": round(duration, 2),
+            "width": width,
+            "height": height,
+            "has_audio": has_audio,
+        }
+    except Exception as e:
+        logger.warning(f"Failed to probe video {file_path}: {e}")
+        return {"duration": 5.0, "width": 1080, "height": 1920, "has_audio": False}
+
+
+def save_uploaded_video(file_obj, filename: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Validates uploaded video file, saves to MinIO and returns metadata.
+    """
+    name = filename or getattr(file_obj, "name", "video.mp4")
+    ext = os.path.splitext(name)[1].lower()
+    if ext not in ALLOWED_VIDEO_EXTS:
+        return {
+            "success": False,
+            "error": f"صيغة الفيديو غير مدعومة ({ext}). الصيغ المدعومة: MP4, MOV, WebM, MKV",
+        }
+
+    video_bytes = file_obj.read() if hasattr(file_obj, "read") else bytes(file_obj)
+    if len(video_bytes) > MAX_VIDEO_SIZE:
+        return {
+            "success": False,
+            "error": "حجم الفيديو يتجاوز الحد المسموح به (100 ميجابايت).",
+        }
+
+    with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+        tmp.write(video_bytes)
+        tmp_path = tmp.name
+
+    try:
+        meta = probe_video_metadata(tmp_path)
+        clean_ext = ".mp4" if ext != ".webm" else ".webm"
+        s3_key = f"motion/videos/{uuid.uuid4().hex[:12]}_{os.path.basename(name).replace(' ', '_')}"
+        if not s3_key.endswith(clean_ext):
+            s3_key += clean_ext
+
+        content_type = "video/mp4" if clean_ext == ".mp4" else "video/webm"
+        public_url = upload_bytes(video_bytes, s3_key, content_type)
+
+        return {
+            "success": True,
+            "url": public_url,
+            "s3_key": s3_key,
+            "filename": name,
+            "duration": meta["duration"],
+            "width": meta["width"],
+            "height": meta["height"],
+            "has_audio": meta["has_audio"],
+        }
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except OSError:
+                pass
+
+
+def ingest_video_url(url: str) -> Dict[str, Any]:
+    """
+    Downloads or ingests a video from an external URL (YouTube or direct video link),
+    stores it in MinIO, and returns metadata.
+    """
+    url = (url or "").strip()
+    if not url.startswith("http://") and not url.startswith("https://"):
+        return {"success": False, "error": "رابط الفيديو غير صالح. يجب أن يبدأ بـ http:// أو https://"}
+
+    parsed = urllib.parse.urlparse(url)
+    path_lower = parsed.path.lower()
+    is_direct_video = any(path_lower.endswith(ext) for ext in ALLOWED_VIDEO_EXTS)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_file = os.path.join(tmpdir, f"ingest_{uuid.uuid4().hex[:8]}.mp4")
+        video_title = "فيديو خارجي"
+
+        if is_direct_video:
+            try:
+                import requests
+                with requests.get(url, stream=True, timeout=30) as r:
+                    r.raise_for_status()
+                    total_downloaded = 0
+                    with open(tmp_file, "wb") as f:
+                        for chunk in r.iter_content(chunk_size=65536):
+                            total_downloaded += len(chunk)
+                            if total_downloaded > MAX_VIDEO_SIZE:
+                                return {"success": False, "error": "حجم الفيديو في الرابط يتجاوز الحد المسموح (100 ميجابايت)"}
+                            f.write(chunk)
+                video_title = os.path.basename(parsed.path) or "direct_video"
+            except Exception as e:
+                logger.error(f"Failed to download direct video URL {url}: {e}")
+                return {"success": False, "error": f"فشل تحميل الفيديو من الرابط المباشر: {str(e)}"}
+        else:
+            try:
+                import yt_dlp
+                out_template = os.path.join(tmpdir, "%(id)s.%(ext)s")
+                ydl_opts = {
+                    "format": "bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
+                    "outtmpl": out_template,
+                    "max_filesize": MAX_VIDEO_SIZE,
+                    "quiet": True,
+                    "no_warnings": True,
+                    "merge_output_format": "mp4",
+                }
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(url, download=True)
+                    video_title = info.get("title", "فيديو يوتيوب")
+                    downloaded_filename = ydl.prepare_filename(info)
+                    if not os.path.exists(downloaded_filename):
+                        base, _ = os.path.splitext(downloaded_filename)
+                        if os.path.exists(f"{base}.mp4"):
+                            downloaded_filename = f"{base}.mp4"
+                    tmp_file = downloaded_filename
+            except Exception as e:
+                logger.error(f"yt-dlp failed for URL {url}: {e}")
+                return {"success": False, "error": f"تعذر استخراج الفيديو من الرابط: {str(e)}"}
+
+        if not os.path.exists(tmp_file) or os.path.getsize(tmp_file) == 0:
+            return {"success": False, "error": "لم يتم العثور على ملف الفيديو بعد التحميل"}
+
+        meta = probe_video_metadata(tmp_file)
+        with open(tmp_file, "rb") as vf:
+            video_bytes = vf.read()
+
+        s3_key = f"motion/videos/{uuid.uuid4().hex[:12]}_web.mp4"
+        public_url = upload_bytes(video_bytes, s3_key, "video/mp4")
+
+        return {
+            "success": True,
+            "url": public_url,
+            "s3_key": s3_key,
+            "title": video_title,
+            "duration": meta["duration"],
+            "width": meta["width"],
+            "height": meta["height"],
+            "has_audio": meta["has_audio"],
+        }
 
 SUPPORTED_TEMPLATES = [
     {
@@ -118,6 +297,10 @@ def build_motion_props(
     accent_color: Optional[str] = None,
     duration_seconds: Optional[float] = None,
     fps: int = 30,
+    video_start_offset: Optional[float] = 0.0,
+    video_volume: Optional[float] = 0.15,
+    video_muted: Optional[bool] = False,
+    transition_effect: Optional[str] = "zoom_in",
 ) -> Dict[str, Any]:
     """
     Constructs a validated Remotion MotionCompositionProps dictionary.
@@ -144,6 +327,13 @@ def build_motion_props(
     duration_seconds = min(60.0, max(1.5, float(duration_seconds)))
     fps = max(15, min(60, int(fps or 30)))
 
+    # Determine background type: if background_url looks like a video or background_type is video
+    resolved_bg_type = background_type
+    if not resolved_bg_type and background_url:
+        bg_lower = background_url.lower()
+        if any(bg_lower.endswith(ext) for ext in [".mp4", ".mov", ".webm", ".mkv"]) or "/videos/" in bg_lower:
+            resolved_bg_type = "video"
+
     return {
         "title": (title or "HexMedia Motion Studio").strip(),
         "subtitle": (subtitle or "Code-to-Video Engine").strip(),
@@ -155,9 +345,13 @@ def build_motion_props(
         "fps": fps,
         "audioUrl": audio_url or "",
         "backgroundUrl": background_url or "",
-        "backgroundType": background_type or tpl_meta.get("backgroundType", "gradient"),
+        "backgroundType": resolved_bg_type or tpl_meta.get("backgroundType", "gradient"),
         "backgroundColor": background_color or tpl_meta.get("backgroundColor", "#08080a"),
         "accentColor": accent_color or tpl_meta.get("accentColor", "#00F0FF"),
+        "videoStartOffset": float(video_start_offset or 0.0),
+        "videoVolume": float(video_volume if video_volume is not None else 0.15),
+        "videoMuted": bool(video_muted),
+        "transitionEffect": str(transition_effect or "zoom_in"),
     }
 
 
@@ -187,6 +381,11 @@ def render_motion_video(
     norm_dur = props.get("durationInSeconds") or props.get("duration_seconds")
     norm_fps = props.get("fps") or 30
 
+    norm_v_offset = props.get("videoStartOffset") or props.get("video_start_offset") or 0.0
+    norm_v_vol = props.get("videoVolume") if props.get("videoVolume") is not None else props.get("video_volume", 0.15)
+    norm_v_muted = props.get("videoMuted") if props.get("videoMuted") is not None else props.get("video_muted", False)
+    norm_trans = props.get("transitionEffect") or props.get("transition_effect") or "zoom_in"
+
     normalized_props = build_motion_props(
         text=norm_text,
         title=props.get("title"),
@@ -202,6 +401,10 @@ def render_motion_video(
         accent_color=props.get("accentColor") or props.get("accent_color"),
         duration_seconds=float(norm_dur) if norm_dur else None,
         fps=int(norm_fps),
+        video_start_offset=float(norm_v_offset),
+        video_volume=float(norm_v_vol),
+        video_muted=bool(norm_v_muted),
+        transition_effect=str(norm_trans),
     )
     # Merge with original props so any custom metadata is preserved
     merged_props = {**props, **normalized_props}

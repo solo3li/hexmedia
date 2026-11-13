@@ -14,6 +14,10 @@ export const CleanCorporate: React.FC<MotionCompositionProps> = ({
   backgroundType = "gradient",
   accentColor = "#38BDF8",
   aspectRatio = "9:16",
+  videoStartOffset = 0,
+  videoMuted = false,
+  videoVolume = 0.15,
+  transitionEffect = "dissolve",
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -27,7 +31,11 @@ export const CleanCorporate: React.FC<MotionCompositionProps> = ({
         type={backgroundType}
         src={backgroundUrl}
         templateId="clean_corporate"
-        overlayOpacity={0.75}
+        overlayOpacity={0.70}
+        videoStartOffset={videoStartOffset}
+        videoMuted={videoMuted}
+        videoVolume={videoVolume}
+        transitionEffect={transitionEffect}
       />
 
       {/* Main Layout */}
@@ -121,6 +129,7 @@ export const CleanCorporate: React.FC<MotionCompositionProps> = ({
             styleType="corporate"
             aspectRatio={aspectRatio}
             accentColor={accentColor}
+            transitionEffect={transitionEffect}
           />
         </div>
 

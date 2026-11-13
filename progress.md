@@ -1,5 +1,25 @@
 # HexMedia Studio — Session Progress
 
+## Session 8 — 2026-11-13: Advanced Video Montage & Ingestion Studio (Upload, URL & Motion FX)
+
+### Completed ✅
+- **Dual Video Ingestion Pipeline**:
+  - Direct File Upload (`POST /api/motion/upload-video`): Accepts MP4, MOV, WebM files up to 100MB, validates format, extracts duration/dimensions via `ffprobe`, and uploads to MinIO.
+  - Video URL Ingestion (`POST /api/motion/fetch-video-url`): Ingests direct video streams or YouTube links via `yt-dlp` at 1080p, extracts metadata, and uploads to MinIO.
+- **Remotion Video Background Engine**:
+  - Upgraded `BackgroundMotion.tsx` to conditionally render Remotion `<OffthreadVideo>` when video background is active, supporting start-time trimming (`videoStartOffset`), audio muting (`videoMuted`), and ducking (`videoVolume`).
+  - Added kinetic chunk transitions (Zoom In, Whip Pan, Glitch chromatic split, Dissolve) in `KaraokeCaptions.tsx`.
+- **Motion Studio UI Enhancements**:
+  - Added video source tabs (Procedural / Upload / URL) in `motionStudioModal`.
+  - Added drag-and-drop file upload zone, URL fetch input with spinner, attached video info card with duration badge and removal option.
+  - Added video montage controls: Trim offset slider, background audio ducking/muting selector, and transition FX buttons.
+  - Added real-time `<video>` preview layer on the live preview stage, scrubbing and playing in sync with karaoke word highlights.
+- **Verification**:
+  - 22/22 motion tests pass in `backend/ai_studio/tests_motion.py`.
+  - Full test suite verified via `./init.sh`.
+
+---
+
 ## Session 6 — 2026-11-05: TTS Audio Output Format Conversion to MP3
 
 ### Completed ✅

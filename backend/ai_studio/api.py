@@ -1269,6 +1269,10 @@ class MotionGenerateConfigRequest(Schema):
     accent_color: Optional[str] = None
     duration_seconds: Optional[float] = None
     fps: Optional[int] = 30
+    video_start_offset: Optional[float] = 0.0
+    video_volume: Optional[float] = 0.15
+    video_muted: Optional[bool] = False
+    transition_effect: Optional[str] = "zoom_in"
 
 
 class MotionRenderRequest(Schema):
@@ -1287,7 +1291,15 @@ class MotionRenderRequest(Schema):
     accent_color: Optional[str] = None
     duration_seconds: Optional[float] = None
     fps: Optional[int] = 30
+    video_start_offset: Optional[float] = 0.0
+    video_volume: Optional[float] = 0.15
+    video_muted: Optional[bool] = False
+    transition_effect: Optional[str] = "zoom_in"
     composition_id: Optional[str] = None
+
+
+class MotionFetchUrlRequest(Schema):
+    url: str
 
 
 @api.get("/motion/templates", auth=None)
@@ -1299,6 +1311,26 @@ def get_motion_templates(request):
         "aspect_ratios": SUPPORTED_ASPECT_RATIOS,
         "default_sample_words": DEFAULT_SAMPLE_WORDS,
     }
+
+
+@api.post("/motion/upload-video", auth=None)
+def upload_motion_video(request, file: UploadedFile = File(...)):
+    """Uploads user video file (MP4, MOV, WebM), validates size/format, probes duration and uploads to MinIO."""
+    from .services.motion_service import save_uploaded_video
+    result = save_uploaded_video(file)
+    if not result.get("success"):
+        raise HttpError(400, result.get("error", "فشل رفع ملف الفيديو"))
+    return result
+
+
+@api.post("/motion/fetch-video-url", auth=None)
+def fetch_motion_video_url(request, data: MotionFetchUrlRequest):
+    """Ingests video from YouTube or direct URL, validates and uploads to MinIO."""
+    from .services.motion_service import ingest_video_url
+    result = ingest_video_url(data.url)
+    if not result.get("success"):
+        raise HttpError(400, result.get("error", "فشل جلب الفيديو من الرابط"))
+    return result
 
 
 @api.post("/motion/config", auth=None)
@@ -1319,6 +1351,10 @@ def generate_motion_config(request, data: MotionGenerateConfigRequest):
         accent_color=data.accent_color,
         duration_seconds=data.duration_seconds,
         fps=data.fps or 30,
+        video_start_offset=data.video_start_offset or 0.0,
+        video_volume=data.video_volume if data.video_volume is not None else 0.15,
+        video_muted=bool(data.video_muted),
+        transition_effect=data.transition_effect or "zoom_in",
     )
     return {
         "success": True,
@@ -1352,6 +1388,10 @@ def render_motion_endpoint(request, data: MotionRenderRequest):
             accent_color=data.accent_color,
             duration_seconds=data.duration_seconds,
             fps=data.fps or 30,
+            video_start_offset=data.video_start_offset or 0.0,
+            video_volume=data.video_volume if data.video_volume is not None else 0.15,
+            video_muted=bool(data.video_muted),
+            transition_effect=data.transition_effect or "zoom_in",
         )
 
     result = render_motion_video(props, composition_id=data.composition_id)

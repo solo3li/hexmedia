@@ -8,6 +8,9 @@ from ai_studio.services.motion_service import (
     generate_word_timestamps,
     build_motion_props,
     render_motion_video,
+    save_uploaded_video,
+    ingest_video_url,
+    probe_video_metadata,
     SUPPORTED_TEMPLATES,
     SUPPORTED_ASPECT_RATIOS,
 )
@@ -133,6 +136,70 @@ class MotionServiceTestCase(TestCase):
         self.assertFalse(result["success"])
         self.assertIn("error", result)
 
+    def test_build_motion_props_with_video_and_transitions(self):
+        props = build_motion_props(
+            text="نصوص فوق فيديو",
+            background_url="https://assets.test/sample.mp4",
+            video_start_offset=2.5,
+            video_volume=0.20,
+            video_muted=True,
+            transition_effect="whip_pan",
+        )
+        self.assertEqual(props["backgroundType"], "video")
+        self.assertEqual(props["videoStartOffset"], 2.5)
+        self.assertEqual(props["videoVolume"], 0.20)
+        self.assertTrue(props["videoMuted"])
+        self.assertEqual(props["transitionEffect"], "whip_pan")
+
+    def test_save_uploaded_video_invalid_format(self):
+        fake_file = MagicMock()
+        fake_file.name = "audio.mp3"
+        fake_file.size = 1024
+        result = save_uploaded_video(fake_file)
+        self.assertFalse(result["success"])
+        self.assertIn("غير مدعومة", result["error"])
+
+    @patch("ai_studio.services.motion_service.probe_video_metadata")
+    @patch("ai_studio.services.motion_service.upload_bytes")
+    def test_save_uploaded_video_success(self, mock_upload, mock_probe):
+        mock_probe.return_value = {"duration": 12.4, "width": 1080, "height": 1920, "has_audio": True}
+        mock_upload.return_value = "https://assets.test/motion/videos/uploaded.mp4"
+
+        fake_file = MagicMock()
+        fake_file.name = "my_story.mp4"
+        fake_file.size = 2048
+        fake_file.read.return_value = b"fake-video-content"
+
+        result = save_uploaded_video(fake_file)
+        self.assertTrue(result["success"])
+        self.assertEqual(result["duration"], 12.4)
+        self.assertEqual(result["width"], 1080)
+        self.assertEqual(result["height"], 1920)
+        self.assertTrue(result["has_audio"])
+        self.assertIn("https://assets.test/motion/videos/uploaded.mp4", result["url"])
+
+    def test_ingest_video_url_invalid_url(self):
+        result = ingest_video_url("ftp://invalid-domain.com/vid.mp4")
+        self.assertFalse(result["success"])
+        self.assertIn("غير صالح", result["error"])
+
+    @patch("ai_studio.services.motion_service.probe_video_metadata")
+    @patch("ai_studio.services.motion_service.upload_bytes")
+    @patch("requests.get")
+    def test_ingest_video_url_direct_video(self, mock_get, mock_upload, mock_probe):
+        mock_resp = MagicMock()
+        mock_resp.iter_content.return_value = [b"chunk1", b"chunk2"]
+        mock_resp.raise_for_status = MagicMock()
+        mock_get.return_value.__enter__.return_value = mock_resp
+
+        mock_probe.return_value = {"duration": 8.0, "width": 1920, "height": 1080, "has_audio": False}
+        mock_upload.return_value = "https://assets.test/motion/videos/direct.mp4"
+
+        result = ingest_video_url("https://example.com/clips/nature.mp4")
+        self.assertTrue(result["success"])
+        self.assertEqual(result["duration"], 8.0)
+        self.assertEqual(result["url"], "https://assets.test/motion/videos/direct.mp4")
+
 
 class MotionApiTestCase(TestCase):
     def setUp(self):
@@ -214,6 +281,46 @@ class MotionApiTestCase(TestCase):
         )
         self.assertEqual(res.status_code, 500)
 
+    @patch("ai_studio.services.motion_service.save_uploaded_video")
+    def test_upload_motion_video_endpoint(self, mock_save):
+        mock_save.return_value = {
+            "success": True,
+            "url": "https://assets.test/motion/videos/uploaded_file.mp4",
+            "duration": 15.0,
+            "width": 1080,
+            "height": 1920,
+            "has_audio": True,
+        }
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        fake_video = SimpleUploadedFile("reel.mp4", b"dummy-bytes", content_type="video/mp4")
+        res = self.client.post("/api/motion/upload-video", {"file": fake_video})
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["duration"], 15.0)
+        self.assertEqual(data["url"], "https://assets.test/motion/videos/uploaded_file.mp4")
+
+    @patch("ai_studio.services.motion_service.ingest_video_url")
+    def test_fetch_motion_video_url_endpoint(self, mock_ingest):
+        mock_ingest.return_value = {
+            "success": True,
+            "url": "https://assets.test/motion/videos/fetched_yt.mp4",
+            "title": "Amazing Motion Graphics",
+            "duration": 20.0,
+            "width": 1920,
+            "height": 1080,
+        }
+        res = self.client.post(
+            "/api/motion/fetch-video-url",
+            data=json.dumps({"url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ"}),
+            content_type="application/json",
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["duration"], 20.0)
+        self.assertEqual(data["title"], "Amazing Motion Graphics")
+
 
 class MotionUiTestCase(TestCase):
     def setUp(self):
@@ -248,6 +355,19 @@ class MotionUiTestCase(TestCase):
         self.assertIn('id="motionExportMP4Btn"', self.html)
         self.assertIn('id="motionResultVideo"', self.html)
         self.assertIn('id="motionDownloadLink"', self.html)
+        # Video ingestion & montage elements
+        self.assertIn('id="motionVideoFileInput"', self.html)
+        self.assertIn('id="motionVideoUrlInput"', self.html)
+        self.assertIn('id="motionFetchUrlBtn"', self.html)
+        self.assertIn('id="motionAttachedVideoCard"', self.html)
+        self.assertIn('id="motionMontageControls"', self.html)
+        self.assertIn('id="motionTrimSlider"', self.html)
+        self.assertIn('id="stageBgVideo"', self.html)
+        # Transition FX elements
+        self.assertIn('id="motionFx_zoom_in"', self.html)
+        self.assertIn('id="motionFx_whip_pan"', self.html)
+        self.assertIn('id="motionFx_glitch"', self.html)
+        self.assertIn('id="motionFx_dissolve"', self.html)
 
     def test_motion_studio_javascript_functions_exist(self):
         """index.html must define the controller functions for Motion Studio."""
@@ -255,6 +375,12 @@ class MotionUiTestCase(TestCase):
         self.assertIn("function closeMotionStudioModal()", self.html)
         self.assertIn("function selectMotionTemplate(", self.html)
         self.assertIn("function selectMotionAspectRatio(", self.html)
+        self.assertIn("function selectMotionVideoSource(", self.html)
+        self.assertIn("function handleMotionVideoFileSelected(", self.html)
+        self.assertIn("function fetchMotionVideoFromUrl(", self.html)
+        self.assertIn("function handleMotionTrimChange(", self.html)
+        self.assertIn("function selectMotionAudioMode(", self.html)
+        self.assertIn("function selectMotionTransitionFx(", self.html)
         self.assertIn("function syncMotionConfigFromInputs()", self.html)
         self.assertIn("function exportMotionVideoMP4()", self.html)
         self.assertIn("function sendMotionVideoToChat()", self.html)

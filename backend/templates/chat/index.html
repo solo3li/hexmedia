@@ -1980,6 +1980,143 @@
               </div>
             </div>
 
+            <!-- Video & Background Source Tabs -->
+            <div class="bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle space-y-3">
+              <div class="flex items-center justify-between">
+                <label class="font-medium text-light flex items-center gap-2">
+                  <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                  </svg>
+                  <span>مصدر الفيديو والخلفية (Video Source & Montage)</span>
+                </label>
+                <span id="motionVideoSourceBadge" class="text-[9px] font-mono text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full border border-cyan-400/20">قالب حركي</span>
+              </div>
+
+              <!-- Source Tabs Buttons -->
+              <div class="grid grid-cols-3 gap-1.5 p-1 bg-obsidian rounded-xl border border-borderSubtle text-[11px]">
+                <button type="button" id="motionSrcTab_procedural" onclick="selectMotionVideoSource('procedural')" class="py-1.5 px-2 rounded-lg font-medium text-center transition bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
+                  قالب حركي
+                </button>
+                <button type="button" id="motionSrcTab_upload" onclick="selectMotionVideoSource('upload')" class="py-1.5 px-2 rounded-lg font-medium text-center transition text-muted hover:text-light">
+                  رفع فيديو
+                </button>
+                <button type="button" id="motionSrcTab_url" onclick="selectMotionVideoSource('url')" class="py-1.5 px-2 rounded-lg font-medium text-center transition text-muted hover:text-light">
+                  رابط يوتيوب/ويب
+                </button>
+              </div>
+
+              <!-- Tab 2: Upload Area -->
+              <div id="motionUploadBox" class="hidden space-y-2">
+                <div class="border-2 border-dashed border-borderSubtle hover:border-cyan-400/50 rounded-xl p-4 text-center cursor-pointer transition bg-surface/50 relative" onclick="document.getElementById('motionVideoFileInput').click()">
+                  <input id="motionVideoFileInput" type="file" accept="video/mp4,video/quicktime,video/webm,video/x-matroska" class="hidden" onchange="handleMotionVideoFileSelected(this.files[0])">
+                  <div class="flex flex-col items-center gap-1.5">
+                    <div class="w-8 h-8 rounded-full bg-cyan-400/10 text-cyan-400 flex items-center justify-center">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                    </div>
+                    <span class="text-light font-medium text-xs">اسحب وأفلت ملف الفيديو هنا أو اضغط للتصفح</span>
+                    <span class="text-muted text-[10px]">يدعم MP4, MOV, WebM حتى 100 ميجابايت</span>
+                  </div>
+                </div>
+                <div id="motionUploadProgress" class="hidden flex items-center justify-between p-2 rounded-xl bg-cyan-400/10 border border-cyan-400/30">
+                  <span class="text-cyan-300 text-[11px] flex items-center gap-2">
+                    <svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <span>جاري رفع وفحص أبعاد الفيديو...</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Tab 3: URL Area -->
+              <div id="motionUrlBox" class="hidden space-y-2">
+                <div class="flex gap-2">
+                  <input id="motionVideoUrlInput" type="url" placeholder="https://www.youtube.com/watch?v=... أو رابط مباشر MP4" class="flex-1 bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs transition">
+                  <button type="button" id="motionFetchUrlBtn" onclick="fetchMotionVideoFromUrl()" class="px-3 py-2 rounded-xl bg-cyan-400/20 hover:bg-cyan-400/30 text-cyan-300 font-medium text-xs transition flex items-center gap-1.5 shrink-0">
+                    <span id="motionFetchBtnText">جلب واستيراد</span>
+                  </button>
+                </div>
+                <p class="text-[10px] text-muted">يتم سحب الفيديو ومعالجته تلقائياً بدقة 1080p وحفظه في مساحة المشروع</p>
+              </div>
+
+              <!-- Attached Video Card (Shows when video is loaded) -->
+              <div id="motionAttachedVideoCard" class="hidden p-2.5 rounded-xl bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-between">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  <div class="w-7 h-7 rounded-lg bg-cyan-400/20 text-cyan-400 flex items-center justify-center shrink-0">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                  </div>
+                  <div class="min-w-0">
+                    <div id="motionAttachedVideoTitle" class="text-light font-medium text-xs truncate max-w-[220px]">video.mp4</div>
+                    <div id="motionAttachedVideoMeta" class="text-[10px] text-cyan-300 font-mono">15.0 ث • 1080x1920</div>
+                  </div>
+                </div>
+                <button type="button" onclick="removeMotionAttachedVideo()" class="p-1.5 rounded-lg text-muted hover:text-red-400 hover:bg-red-400/10 transition" title="إزالة الفيديو">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Video Montage & Trim Controls (Active when video is attached) -->
+              <div id="motionMontageControls" class="hidden space-y-3 pt-2 border-t border-borderSubtle/60">
+                
+                <!-- Trim Start Offset -->
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="text-[11px] font-medium text-light">بداية اقتطاع الفيديو (Trim Offset)</label>
+                    <span id="motionTrimLabel" class="text-[10px] font-mono text-cyan-400">0.0 ث</span>
+                  </div>
+                  <input id="motionTrimSlider" type="range" min="0" max="30" step="0.5" value="0" oninput="handleMotionTrimChange(this.value)" class="w-full accent-cyan-400">
+                </div>
+
+                <!-- Video Audio Ducking / Mute -->
+                <div>
+                  <label class="text-[11px] font-medium text-light block mb-1.5">صوت الفيديو الأصلي (Background Audio)</label>
+                  <div class="grid grid-cols-3 gap-2">
+                    <button type="button" id="motionAudioMode_mute" onclick="selectMotionAudioMode('mute')" class="py-1.5 px-2 rounded-lg border-2 border-cyan-400 bg-cyan-400/10 text-cyan-300 font-medium text-[11px] text-center transition">
+                      🔇 كتم الصوت
+                    </button>
+                    <button type="button" id="motionAudioMode_duck" onclick="selectMotionAudioMode('duck')" class="py-1.5 px-2 rounded-lg border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-[11px] text-center transition">
+                      🔉 خفض 15% (Ducking)
+                    </button>
+                    <button type="button" id="motionAudioMode_full" onclick="selectMotionAudioMode('full')" class="py-1.5 px-2 rounded-lg border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-[11px] text-center transition">
+                      🔊 صوت كامل
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Transitions & Motion FX Selector -->
+              <div class="pt-2 border-t border-borderSubtle/60 space-y-1.5">
+                <label class="text-[11px] font-medium text-light block">تأثير الانتقال الحركي (Motion Transition FX)</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button type="button" id="motionFx_zoom_in" onclick="selectMotionTransitionFx('zoom_in')" class="py-1.5 px-2 rounded-lg border-2 border-cyan-400 bg-cyan-400/10 text-cyan-300 font-medium text-[11px] text-center transition flex items-center justify-center gap-1">
+                    <span>🚀</span>
+                    <span>Zoom In</span>
+                  </button>
+                  <button type="button" id="motionFx_whip_pan" onclick="selectMotionTransitionFx('whip_pan')" class="py-1.5 px-2 rounded-lg border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-[11px] text-center transition flex items-center justify-center gap-1">
+                    <span>⚡</span>
+                    <span>Whip Pan</span>
+                  </button>
+                  <button type="button" id="motionFx_glitch" onclick="selectMotionTransitionFx('glitch')" class="py-1.5 px-2 rounded-lg border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-[11px] text-center transition flex items-center justify-center gap-1">
+                    <span>👾</span>
+                    <span>Glitch</span>
+                  </button>
+                  <button type="button" id="motionFx_dissolve" onclick="selectMotionTransitionFx('dissolve')" class="py-1.5 px-2 rounded-lg border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-[11px] text-center transition flex items-center justify-center gap-1">
+                    <span>🎬</span>
+                    <span>Dissolve</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
             <!-- Aspect Ratio & Duration Row -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle">
               <div>
@@ -2036,6 +2173,10 @@
                 <!-- Dynamic Stage (Matches selected aspect ratio) -->
                 <div id="motionPreviewStage" class="w-[200px] h-[340px] rounded-xl relative overflow-hidden flex flex-col justify-between p-4 shadow-2xl transition-all duration-300 border border-cyan-400/30 bg-gradient-to-b from-[#08080a] via-[#050b14] to-[#010204]">
                   
+                  <!-- Live Video Element for background preview -->
+                  <video id="stageBgVideo" class="absolute inset-0 w-full h-full object-cover hidden pointer-events-none" playsinline muted loop></video>
+                  <div id="stageVideoTint" class="absolute inset-0 bg-black/60 pointer-events-none hidden"></div>
+
                   <!-- Glowing Ambient Backdrop -->
                   <div id="motionStageGlow" class="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(0,240,255,0.25),transparent_70%)] pointer-events-none"></div>
 
@@ -6197,6 +6338,12 @@
     let motionLastTimestamp = null;
     let motionLastExportResult = null;
     let motionDebounceTimer = null;
+    let motionVideoSourceMode = 'procedural';
+    let motionAttachedVideoUrl = '';
+    let motionAttachedVideoDuration = 0;
+    let motionVideoStartOffset = 0.0;
+    let motionVideoAudioMode = 'mute';
+    let motionTransitionEffect = 'zoom_in';
 
     const MOTION_TEMPLATE_META = {
       'dark_neon': {
@@ -6314,6 +6461,195 @@
       syncMotionConfigFromInputs();
     }
 
+    function selectMotionVideoSource(mode) {
+      motionVideoSourceMode = mode;
+      const tProc = document.getElementById('motionSrcTab_procedural');
+      const tUp = document.getElementById('motionSrcTab_upload');
+      const tUrl = document.getElementById('motionSrcTab_url');
+      const bUp = document.getElementById('motionUploadBox');
+      const bUrl = document.getElementById('motionUrlBox');
+      const badge = document.getElementById('motionVideoSourceBadge');
+
+      [tProc, tUp, tUrl].forEach(b => {
+        if (!b) return;
+        b.className = 'py-1.5 px-2 rounded-lg font-medium text-center transition text-muted hover:text-light';
+      });
+
+      if (mode === 'procedural') {
+        if (tProc) tProc.className = 'py-1.5 px-2 rounded-lg font-medium text-center transition bg-cyan-400/20 text-cyan-300 border border-cyan-400/30';
+        if (bUp) bUp.classList.add('hidden');
+        if (bUrl) bUrl.classList.add('hidden');
+        if (badge) badge.textContent = 'قالب حركي';
+        removeMotionAttachedVideo(false);
+      } else if (mode === 'upload') {
+        if (tUp) tUp.className = 'py-1.5 px-2 rounded-lg font-medium text-center transition bg-cyan-400/20 text-cyan-300 border border-cyan-400/30';
+        if (bUp) bUp.classList.remove('hidden');
+        if (bUrl) bUrl.classList.add('hidden');
+        if (badge) badge.textContent = 'فيديو مرفوع';
+      } else if (mode === 'url') {
+        if (tUrl) tUrl.className = 'py-1.5 px-2 rounded-lg font-medium text-center transition bg-cyan-400/20 text-cyan-300 border border-cyan-400/30';
+        if (bUp) bUp.classList.add('hidden');
+        if (bUrl) bUrl.classList.remove('hidden');
+        if (badge) badge.textContent = 'رابط فيديو';
+      }
+    }
+
+    async function handleMotionVideoFileSelected(file) {
+      if (!file) return;
+      const prog = document.getElementById('motionUploadProgress');
+      if (prog) prog.classList.remove('hidden');
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await (typeof authFetch === 'function' ? authFetch('/api/motion/upload-video', {
+          method: 'POST',
+          body: formData,
+        }) : fetch('/api/motion/upload-video', {
+          method: 'POST',
+          body: formData,
+        }));
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.error || 'فشل رفع الفيديو');
+        }
+
+        const data = await res.json();
+        setAttachedMotionVideo(data.url, data.filename || file.name, data.duration, data.width, data.height);
+        showToast('تم رفع ومعالجة الفيديو بنجاح!');
+      } catch (err) {
+        showToast(err.message || 'خطأ أثناء رفع الفيديو');
+      } finally {
+        if (prog) prog.classList.add('hidden');
+      }
+    }
+
+    async function fetchMotionVideoFromUrl() {
+      const urlInput = document.getElementById('motionVideoUrlInput');
+      const url = (urlInput?.value || '').trim();
+      if (!url) {
+        showToast('يرجى كتابة أو لصق رابط فيديو صالح');
+        return;
+      }
+
+      const btn = document.getElementById('motionFetchUrlBtn');
+      const btnText = document.getElementById('motionFetchBtnText');
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.textContent = 'جاري الجلب...';
+
+      try {
+        const res = await (typeof authFetch === 'function' ? authFetch('/api/motion/fetch-video-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url }),
+        }) : fetch('/api/motion/fetch-video-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: url }),
+        }));
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.error || 'فشل جلب واستيراد الفيديو');
+        }
+
+        const data = await res.json();
+        setAttachedMotionVideo(data.url, data.title || 'فيديو مستورد', data.duration, data.width, data.height);
+        showToast('تم جلب الفيديو بنجاح وربطه بالأستوديو!');
+      } catch (err) {
+        showToast(err.message || 'تعذر جلب الفيديو من الرابط');
+      } finally {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.textContent = 'جلب واستيراد';
+      }
+    }
+
+    function setAttachedMotionVideo(url, title, duration, width, height) {
+      motionAttachedVideoUrl = url;
+      motionAttachedVideoDuration = duration || 10.0;
+      motionVideoStartOffset = 0.0;
+
+      const card = document.getElementById('motionAttachedVideoCard');
+      const titleEl = document.getElementById('motionAttachedVideoTitle');
+      const metaEl = document.getElementById('motionAttachedVideoMeta');
+      const controls = document.getElementById('motionMontageControls');
+      const slider = document.getElementById('motionTrimSlider');
+      const label = document.getElementById('motionTrimLabel');
+
+      if (card) card.classList.remove('hidden');
+      if (titleEl) titleEl.textContent = title;
+      if (metaEl) metaEl.textContent = `${(duration || 0).toFixed(1)} ث • ${width || 1080}x${height || 1920}`;
+      if (controls) controls.classList.remove('hidden');
+
+      if (slider) {
+        slider.max = Math.max(0, Math.floor((duration || 10.0) - motionCurrentDuration));
+        slider.value = 0;
+      }
+      if (label) label.textContent = '0.0 ث';
+
+      updateMotionStageVisuals();
+      syncMotionConfigFromInputs();
+    }
+
+    function removeMotionAttachedVideo(shouldSync = true) {
+      motionAttachedVideoUrl = '';
+      motionAttachedVideoDuration = 0;
+      motionVideoStartOffset = 0.0;
+
+      const card = document.getElementById('motionAttachedVideoCard');
+      const controls = document.getElementById('motionMontageControls');
+      if (card) card.classList.add('hidden');
+      if (controls) controls.classList.add('hidden');
+
+      updateMotionStageVisuals();
+      if (shouldSync) syncMotionConfigFromInputs();
+    }
+
+    function handleMotionTrimChange(val) {
+      motionVideoStartOffset = parseFloat(val) || 0.0;
+      const label = document.getElementById('motionTrimLabel');
+      if (label) label.textContent = `${motionVideoStartOffset.toFixed(1)} ث`;
+
+      const vid = document.getElementById('stageBgVideo');
+      if (vid && !vid.classList.contains('hidden')) {
+        vid.currentTime = motionVideoStartOffset + motionCurrentTime;
+      }
+      clearTimeout(motionDebounceTimer);
+      motionDebounceTimer = setTimeout(() => {
+        syncMotionConfigFromInputs();
+      }, 300);
+    }
+
+    function selectMotionAudioMode(mode) {
+      motionVideoAudioMode = mode;
+      ['mute', 'duck', 'full'].forEach(m => {
+        const btn = document.getElementById('motionAudioMode_' + m);
+        if (!btn) return;
+        if (m === mode) {
+          btn.className = 'py-1.5 px-2 rounded-lg border-2 border-cyan-400 bg-cyan-400/10 text-cyan-300 font-medium text-[11px] text-center transition';
+        } else {
+          btn.className = 'py-1.5 px-2 rounded-lg border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-[11px] text-center transition';
+        }
+      });
+      syncMotionConfigFromInputs();
+    }
+
+    function selectMotionTransitionFx(fx) {
+      motionTransitionEffect = fx;
+      ['zoom_in', 'whip_pan', 'glitch', 'dissolve'].forEach(f => {
+        const btn = document.getElementById('motionFx_' + f);
+        if (!btn) return;
+        if (f === fx) {
+          btn.className = 'py-1.5 px-2 rounded-lg border-2 border-cyan-400 bg-cyan-400/10 text-cyan-300 font-medium text-[11px] text-center transition flex items-center justify-center gap-1';
+        } else {
+          btn.className = 'py-1.5 px-2 rounded-lg border border-borderSubtle bg-obsidian text-muted hover:text-light font-medium text-[11px] text-center transition flex items-center justify-center gap-1';
+        }
+      });
+      syncMotionConfigFromInputs();
+    }
+
     function loadMotionPresetText(presetId) {
       const text = MOTION_PRESETS[presetId] || MOTION_PRESETS[1];
       const input = document.getElementById('motionTextInput');
@@ -6379,6 +6715,24 @@
         glow.style.background = `radial-gradient(circle at 50% 30%, ${meta.glow}, transparent 70%)`;
       }
 
+      // Synchronize video background element on stage
+      const vid = document.getElementById('stageBgVideo');
+      const tint = document.getElementById('stageVideoTint');
+      if (vid) {
+        if (motionAttachedVideoUrl) {
+          if (vid.src !== motionAttachedVideoUrl) {
+            vid.src = motionAttachedVideoUrl;
+            vid.load();
+          }
+          vid.classList.remove('hidden');
+          if (tint) tint.classList.remove('hidden');
+        } else {
+          vid.classList.add('hidden');
+          vid.pause();
+          if (tint) tint.classList.add('hidden');
+        }
+      }
+
       // Update Waveform bars color
       document.querySelectorAll('#stageWaveform .wave-bar').forEach(bar => {
         bar.style.backgroundColor = meta.accent;
@@ -6422,6 +6776,12 @@
             aspect_ratio: motionCurrentAspectRatio,
             duration_seconds: motionCurrentDuration,
             audio_url: audioUrl,
+            background_url: motionAttachedVideoUrl || '',
+            background_type: motionAttachedVideoUrl ? 'video' : 'gradient',
+            video_start_offset: motionVideoStartOffset,
+            video_volume: motionVideoAudioMode === 'duck' ? 0.15 : (motionVideoAudioMode === 'full' ? 1.0 : 0.0),
+            video_muted: motionVideoAudioMode === 'mute',
+            transition_effect: motionTransitionEffect,
           }),
         });
 
@@ -6486,6 +6846,12 @@
         motionCurrentTime = 0.0;
       }
 
+      const vid = document.getElementById('stageBgVideo');
+      if (vid && !vid.classList.contains('hidden')) {
+        vid.currentTime = motionVideoStartOffset + motionCurrentTime;
+        vid.play().catch(() => {});
+      }
+
       cancelAnimationFrame(motionAnimFrameId);
       motionAnimFrameId = requestAnimationFrame(motionAnimationStep);
     }
@@ -6496,6 +6862,10 @@
       const pauseIcon = document.getElementById('motionPauseIcon');
       if (playIcon) playIcon.classList.remove('hidden');
       if (pauseIcon) pauseIcon.classList.add('hidden');
+
+      const vid = document.getElementById('stageBgVideo');
+      if (vid) vid.pause();
+
       cancelAnimationFrame(motionAnimFrameId);
     }
 
@@ -6534,6 +6904,15 @@
       const scrubber = document.getElementById('motionScrubber');
       if (scrubber && motionCurrentDuration > 0) {
         scrubber.value = (timeSec / motionCurrentDuration) * 100;
+      }
+
+      // Synchronize video background frame
+      const vid = document.getElementById('stageBgVideo');
+      if (vid && !vid.classList.contains('hidden')) {
+        const targetSec = motionVideoStartOffset + timeSec;
+        if (Math.abs(vid.currentTime - targetSec) > 0.3) {
+          vid.currentTime = targetSec;
+        }
       }
 
       const meta = MOTION_TEMPLATE_META[motionCurrentTemplate] || MOTION_TEMPLATE_META['dark_neon'];
@@ -6593,6 +6972,12 @@
       exportProps.templateId = motionCurrentTemplate;
       exportProps.aspectRatio = motionCurrentAspectRatio;
       exportProps.durationInSeconds = motionCurrentDuration;
+      exportProps.backgroundUrl = motionAttachedVideoUrl || '';
+      exportProps.backgroundType = motionAttachedVideoUrl ? 'video' : 'gradient';
+      exportProps.videoStartOffset = motionVideoStartOffset;
+      exportProps.videoVolume = motionVideoAudioMode === 'duck' ? 0.15 : (motionVideoAudioMode === 'full' ? 1.0 : 0.0);
+      exportProps.videoMuted = motionVideoAudioMode === 'mute';
+      exportProps.transitionEffect = motionTransitionEffect;
       if (motionCurrentWords && motionCurrentWords.length) {
         exportProps.words = motionCurrentWords;
       }

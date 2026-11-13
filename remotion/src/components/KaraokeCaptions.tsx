@@ -7,6 +7,7 @@ interface KaraokeCaptionsProps {
   styleType: "neon" | "cinematic" | "kinetic" | "corporate";
   aspectRatio: "9:16" | "16:9";
   accentColor?: string;
+  transitionEffect?: "whip_pan" | "zoom_in" | "glitch" | "dissolve" | "none";
 }
 
 export const KaraokeCaptions: React.FC<KaraokeCaptionsProps> = ({
@@ -14,6 +15,7 @@ export const KaraokeCaptions: React.FC<KaraokeCaptionsProps> = ({
   styleType,
   aspectRatio,
   accentColor,
+  transitionEffect = "zoom_in",
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -54,6 +56,45 @@ export const KaraokeCaptions: React.FC<KaraokeCaptionsProps> = ({
     (chunkIndex + 1) * chunkSize
   );
 
+  // Chunk transition dynamics
+  const chunkStartSec = visibleWords[0]?.start ?? 0;
+  const chunkStartFrame = Math.round(chunkStartSec * fps);
+  const chunkAge = Math.max(0, frame - chunkStartFrame);
+
+  let chunkTranslateX = 0;
+  let chunkScale = 1.0;
+  let chunkOpacity = 1.0;
+  let chunkFilter = "none";
+
+  if (transitionEffect === "whip_pan") {
+    chunkTranslateX = interpolate(chunkAge, [0, 6], [45, 0], {
+      extrapolateRight: "clamp",
+    });
+    chunkOpacity = interpolate(chunkAge, [0, 4], [0.3, 1.0], {
+      extrapolateRight: "clamp",
+    });
+  } else if (transitionEffect === "zoom_in") {
+    const chunkSpring = spring({
+      frame: chunkAge,
+      fps,
+      config: { damping: 14, stiffness: 170, mass: 0.5 },
+    });
+    chunkScale = interpolate(chunkSpring, [0, 1], [0.88, 1.0]);
+    chunkOpacity = interpolate(chunkAge, [0, 3], [0.2, 1.0], {
+      extrapolateRight: "clamp",
+    });
+  } else if (transitionEffect === "glitch") {
+    if (chunkAge < 6) {
+      const gOffset = (chunkAge % 2 === 0 ? 1 : -1) * (6 - chunkAge) * 3;
+      chunkTranslateX = gOffset;
+      chunkFilter = `drop-shadow(3px 0 #00F0FF) drop-shadow(-3px 0 #FF007F)`;
+    }
+  } else if (transitionEffect === "dissolve") {
+    chunkOpacity = interpolate(chunkAge, [0, 8], [0, 1.0], {
+      extrapolateRight: "clamp",
+    });
+  }
+
   // Font size calculation
   let baseFontSize = aspectRatio === "9:16" ? 64 : 48;
   if (styleType === "kinetic") {
@@ -76,6 +117,10 @@ export const KaraokeCaptions: React.FC<KaraokeCaptionsProps> = ({
         margin: "0 auto",
         lineHeight: 1.5,
         textAlign: "center",
+        transform: `scale(${chunkScale}) translateX(${chunkTranslateX}px)`,
+        opacity: chunkOpacity,
+        filter: chunkFilter,
+        transition: "transform 0.05s ease-out, opacity 0.05s ease-out",
       }}
     >
       {visibleWords.map((item, idx) => {

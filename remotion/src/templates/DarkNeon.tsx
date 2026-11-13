@@ -14,6 +14,10 @@ export const DarkNeon: React.FC<MotionCompositionProps> = ({
   backgroundType = "gradient",
   accentColor = "#00F0FF",
   aspectRatio = "9:16",
+  videoStartOffset = 0,
+  videoMuted = false,
+  videoVolume = 0.15,
+  transitionEffect = "zoom_in",
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
@@ -29,7 +33,11 @@ export const DarkNeon: React.FC<MotionCompositionProps> = ({
         type={backgroundType}
         src={backgroundUrl}
         templateId="dark_neon"
-        overlayOpacity={0.7}
+        overlayOpacity={0.65}
+        videoStartOffset={videoStartOffset}
+        videoMuted={videoMuted}
+        videoVolume={videoVolume}
+        transitionEffect={transitionEffect}
       />
 
       {/* Main Content Layout */}
@@ -129,6 +137,7 @@ export const DarkNeon: React.FC<MotionCompositionProps> = ({
             styleType="neon"
             aspectRatio={aspectRatio}
             accentColor={accentColor}
+            transitionEffect={transitionEffect}
           />
         </div>
 

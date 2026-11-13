@@ -14,6 +14,10 @@ export const TikTokKinetic: React.FC<MotionCompositionProps> = ({
   backgroundType = "gradient",
   accentColor = "#A3E635",
   aspectRatio = "9:16",
+  videoStartOffset = 0,
+  videoMuted = false,
+  videoVolume = 0.15,
+  transitionEffect = "whip_pan",
 }) => {
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
@@ -29,6 +33,10 @@ export const TikTokKinetic: React.FC<MotionCompositionProps> = ({
         src={backgroundUrl}
         templateId="tiktok_kinetic"
         overlayOpacity={0.65}
+        videoStartOffset={videoStartOffset}
+        videoMuted={videoMuted}
+        videoVolume={videoVolume}
+        transitionEffect={transitionEffect}
       />
 
       {/* Top Video Progress Bar */}
@@ -122,6 +130,7 @@ export const TikTokKinetic: React.FC<MotionCompositionProps> = ({
             styleType="kinetic"
             aspectRatio={aspectRatio}
             accentColor={accentColor}
+            transitionEffect={transitionEffect}
           />
         </div>
 

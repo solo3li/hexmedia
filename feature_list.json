@@ -87,6 +87,14 @@
       "dependencies": ["feat-001", "feat-003"],
       "status": "completed",
       "evidence": "Remotion 4.0 root & dynamic metadata scaling in remotion/src; backend/ai_studio/services/motion_service.py with word timestamp synchronization, snake_case props normalization, & Remotion CLI render to MinIO; NinjaAPI endpoints /api/motion/templates, /api/motion/config, /api/motion/render; motionStudioModal with interactive live canvas preview, word highlight sync, audio waveforms, and 1080p MP4 export player; toolsMenu button; MOTION_STUDIO_CARD in chat feed; 15/15 motion tests pass, 229/229 total tests pass in ./init.sh."
+    },
+    {
+      "id": "feat-020",
+      "name": "Advanced Video Montage & Ingestion Studio (Upload, URL & Motion FX)",
+      "description": "Dual video ingestion (direct MP4/MOV/WebM file upload + YouTube/web URL fetch via yt-dlp to MinIO), Remotion <OffthreadVideo> background video engine, video trim offset controls, background audio ducking/muting, kinetic transition FX (Zoom In, Whip Pan, Glitch, Dissolve), live interactive video background preview in motionStudioModal, and full MP4 render pipeline.",
+      "dependencies": ["feat-019"],
+      "status": "completed",
+      "evidence": "yt-dlp and @remotion/transitions installed; backend/ai_studio/services/motion_service.py with save_uploaded_video, ingest_video_url, probe_video_metadata, videoStartOffset, videoVolume, videoMuted, transitionEffect; endpoints /api/motion/upload-video and /api/motion/fetch-video-url; Remotion <OffthreadVideo> in BackgroundMotion.tsx and chunk spring transitions in KaraokeCaptions.tsx; motionStudioModal UI with upload dropzone, URL fetcher, trim slider, ducking controls, and live <video> preview; 22/22 motion tests pass, 236/236 total test suite passes in ./init.sh."
     }
   ]
 }
