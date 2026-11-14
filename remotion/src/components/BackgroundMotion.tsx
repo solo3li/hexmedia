@@ -1,9 +1,11 @@
 import React from "react";
 import { useCurrentFrame, useVideoConfig, interpolate, Img, OffthreadVideo } from "remotion";
+import { SceneClip } from "../types";
 
 interface BackgroundMotionProps {
   type?: "color" | "gradient" | "image" | "video";
   src?: string;
+  scenes?: SceneClip[];
   templateId: "dark_neon" | "cinematic_narrative" | "tiktok_kinetic" | "clean_corporate";
   overlayOpacity?: number;
   videoStartOffset?: number;
@@ -15,6 +17,7 @@ interface BackgroundMotionProps {
 export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
   type = "gradient",
   src,
+  scenes,
   templateId,
   overlayOpacity = 0.60,
   videoStartOffset = 0,
@@ -24,6 +27,8 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps, durationInFrames } = useVideoConfig();
+  const currentTime = frame / fps;
+  const totalDuration = durationInFrames / fps;
 
   // Transition Camera Dynamics
   let zoomStart = 1.0;
@@ -42,7 +47,6 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
     extrapolateRight: "clamp",
   });
   if (transitionEffect === "whip_pan") {
-    // Quick whip transition at beginning
     const whipIn = interpolate(frame, [0, 8], [60, 0], {
       extrapolateRight: "clamp",
     });
@@ -54,7 +58,6 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
   let jitterY = 0;
   let glitchRGB = 0;
   if (transitionEffect === "glitch") {
-    // Glitch pulses every ~30 frames
     const cycle = frame % 30;
     if (cycle < 4) {
       jitterX = (Math.sin(frame * 9) > 0 ? 1 : -1) * (cycle * 4);
@@ -101,7 +104,37 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
     `;
   }
 
-  const startFrame = Math.max(0, Math.round(videoStartOffset * fps));
+  // Multi-Scene Timeline Resolution (A5)
+  let resolvedSrc = src;
+  let resolvedType = type;
+  let activeStartOffset = videoStartOffset;
+
+  if (scenes && scenes.length > 0) {
+    const defaultDurationPerScene = totalDuration / scenes.length;
+    let accumulatedTime = 0;
+    let activeScene = scenes[0];
+
+    for (let i = 0; i < scenes.length; i++) {
+      const sc = scenes[i];
+      const sceneDur = sc.duration && sc.duration > 0 ? sc.duration : defaultDurationPerScene;
+      if (currentTime >= accumulatedTime && currentTime <= (accumulatedTime + sceneDur + 0.05)) {
+        activeScene = sc;
+        break;
+      }
+      accumulatedTime += sceneDur;
+    }
+
+    resolvedSrc = activeScene.url;
+    activeStartOffset = (activeScene.startOffset || 0) + (currentTime - accumulatedTime);
+    if (activeScene.type) {
+      resolvedType = activeScene.type;
+    } else if (resolvedSrc) {
+      const lower = resolvedSrc.toLowerCase();
+      resolvedType = lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mov") || lower.includes("/videos/") ? "video" : "image";
+    }
+  }
+
+  const startFrame = Math.max(0, Math.round(activeStartOffset * fps));
 
   return (
     <div
@@ -117,10 +150,10 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
         transform: `translate(${jitterX}px, ${jitterY}px)`,
       }}
     >
-      {src && type === "video" ? (
+      {resolvedSrc && resolvedType === "video" ? (
         <>
           <OffthreadVideo
-            src={src}
+            src={resolvedSrc}
             startFrom={startFrame}
             muted={videoMuted}
             volume={videoMuted ? 0 : videoVolume}
@@ -129,7 +162,10 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
               height: "100%",
               objectFit: "cover",
               transform: `scale(${zoom}) translate(${panX}px, 0px)`,
-              filter: glitchRGB > 0 ? `drop-shadow(${glitchRGB}px 0 rgba(0,240,255,0.7)) drop-shadow(-${glitchRGB}px 0 rgba(255,0,128,0.7))` : undefined,
+              filter:
+                glitchRGB > 0
+                  ? `drop-shadow(${glitchRGB}px 0 rgba(0,240,255,0.7)) drop-shadow(-${glitchRGB}px 0 rgba(255,0,128,0.7))`
+                  : undefined,
             }}
           />
           {/* Readability & Tint Overlay */}
@@ -146,10 +182,10 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
             }}
           />
         </>
-      ) : src && type === "image" ? (
+      ) : resolvedSrc && resolvedType === "image" ? (
         <>
           <Img
-            src={src}
+            src={resolvedSrc}
             style={{
               width: "100%",
               height: "100%",
@@ -181,40 +217,6 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
           }}
         />
       )}
-
-      {/* Cyberpunk Grid lines for Dark Neon */}
-      {templateId === "dark_neon" && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            width: "100%",
-            height: "35%",
-            backgroundImage: `
-              linear-gradient(to right, rgba(0, 240, 255, 0.08) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(0, 240, 255, 0.08) 1px, transparent 1px)
-            `,
-            backgroundSize: "60px 40px",
-            maskImage: "linear-gradient(to top, rgba(0,0,0,1) 0%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to top, rgba(0,0,0,1) 0%, transparent 100%)",
-            opacity: 0.6,
-          }}
-        />
-      )}
-
-      {/* Subtle Vignette */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: "100%",
-          height: "100%",
-          boxShadow: "inset 0 0 120px rgba(0, 0, 0, 0.85)",
-          pointerEvents: "none",
-        }}
-      />
     </div>
   );
 };

@@ -1255,6 +1255,18 @@ api.add_router("/stt", stt_router)
 # =============================================================================
 # MOTION GRAPHICS STUDIO SCHEMAS & ENDPOINTS (REMOTION)
 # =============================================================================
+class MotionScriptGenerateRequest(Schema):
+    topic: str
+    tone: Optional[str] = "viral"
+
+
+class MotionTTSRequest(Schema):
+    text: str
+    voice_profile: Optional[str] = "Charon"
+    voice_id: Optional[str] = None
+    speed: Optional[float] = 1.0
+
+
 class MotionGenerateConfigRequest(Schema):
     text: Optional[str] = None
     title: Optional[str] = "HexMedia Motion Studio"
@@ -1273,6 +1285,24 @@ class MotionGenerateConfigRequest(Schema):
     video_volume: Optional[float] = 0.15
     video_muted: Optional[bool] = False
     transition_effect: Optional[str] = "zoom_in"
+    font_family: Optional[str] = "IBM Plex Sans Arabic"
+    entry_animation: Optional[str] = "pop"
+    smart_emojis_enabled: Optional[bool] = True
+    word_glow_box: Optional[bool] = True
+    sfx_enabled: Optional[bool] = True
+    sfx_volume: Optional[float] = 0.25
+    bgm_preset: Optional[str] = "cyber_ambient"
+    bgm_url: Optional[str] = None
+    bgm_volume: Optional[float] = 0.25
+    smart_ducking: Optional[bool] = True
+    dynamic_zoom: Optional[bool] = True
+    caption_position_percent: Optional[float] = 50.0
+    scenes: Optional[List[Dict[str, Any]]] = None
+    pip_url: Optional[str] = None
+    pip_position: Optional[str] = "top-left"
+    pip_scale: Optional[float] = 0.28
+    pip_muted: Optional[bool] = True
+    export_format: Optional[str] = "mp4"
 
 
 class MotionRenderRequest(Schema):
@@ -1295,6 +1325,24 @@ class MotionRenderRequest(Schema):
     video_volume: Optional[float] = 0.15
     video_muted: Optional[bool] = False
     transition_effect: Optional[str] = "zoom_in"
+    font_family: Optional[str] = "IBM Plex Sans Arabic"
+    entry_animation: Optional[str] = "pop"
+    smart_emojis_enabled: Optional[bool] = True
+    word_glow_box: Optional[bool] = True
+    sfx_enabled: Optional[bool] = True
+    sfx_volume: Optional[float] = 0.25
+    bgm_preset: Optional[str] = "cyber_ambient"
+    bgm_url: Optional[str] = None
+    bgm_volume: Optional[float] = 0.25
+    smart_ducking: Optional[bool] = True
+    dynamic_zoom: Optional[bool] = True
+    caption_position_percent: Optional[float] = 50.0
+    scenes: Optional[List[Dict[str, Any]]] = None
+    pip_url: Optional[str] = None
+    pip_position: Optional[str] = "top-left"
+    pip_scale: Optional[float] = 0.28
+    pip_muted: Optional[bool] = True
+    export_format: Optional[str] = "mp4"
     composition_id: Optional[str] = None
 
 
@@ -1304,13 +1352,77 @@ class MotionFetchUrlRequest(Schema):
 
 @api.get("/motion/templates", auth=None)
 def get_motion_templates(request):
-    """Returns available motion templates, aspect ratios, and default sample words."""
-    from .services.motion_service import SUPPORTED_TEMPLATES, SUPPORTED_ASPECT_RATIOS, DEFAULT_SAMPLE_WORDS
+    """Returns available motion templates, aspect ratios, sample words, fonts, BGM, and animations."""
+    from .services.motion_service import (
+        SUPPORTED_TEMPLATES,
+        SUPPORTED_ASPECT_RATIOS,
+        DEFAULT_SAMPLE_WORDS,
+        SUPPORTED_FONTS,
+        SUPPORTED_BGM_PRESETS,
+        SUPPORTED_ENTRY_ANIMATIONS,
+    )
     return {
         "templates": SUPPORTED_TEMPLATES,
         "aspect_ratios": SUPPORTED_ASPECT_RATIOS,
         "default_sample_words": DEFAULT_SAMPLE_WORDS,
+        "fonts": SUPPORTED_FONTS,
+        "bgm_presets": SUPPORTED_BGM_PRESETS,
+        "entry_animations": SUPPORTED_ENTRY_ANIMATIONS,
     }
+
+
+@api.post("/motion/generate-script", auth=None)
+def generate_motion_script_endpoint(request, data: MotionScriptGenerateRequest):
+    """Generates viral high-impact hook and script using Gemini 3.8 Flash."""
+    from .services.motion_service import generate_viral_script
+    result = generate_viral_script(data.topic, data.tone)
+    if not result.get("success"):
+        raise HttpError(400, result.get("error", "فشل توليد السكربت الذكي"))
+    return result
+
+
+@api.get("/motion/voices", auth=None)
+def get_motion_voices(request):
+    """Returns prebuilt voices and cloned voices available for speech synthesis."""
+    try:
+        user = get_current_user(request)
+    except Exception:
+        user = None
+
+    prebuilt = ["Charon", "Puck", "Kore", "Fenrir", "Aoede", "alloy", "echo", "fable", "onyx", "nova", "shimmer"]
+    voice_list = [{"id": p.lower(), "name": p, "gender": "neutral", "style": "natural"} for p in prebuilt]
+    if user:
+        try:
+            from tts.models import ClonedVoice
+            voices = ClonedVoice.objects.filter(user=user).order_by("-created_at")
+            for v in voices:
+                voice_list.insert(0, {
+                    "id": str(v.id),
+                    "name": v.name,
+                    "gender": "cloned",
+                    "style": "cloned",
+                    "gemini_voice_id": v.gemini_voice_id,
+                    "sample_audio_url": v.sample_audio_url,
+                })
+        except Exception as e:
+            logger.warning(f"Failed to query ClonedVoice in /motion/voices: {e}")
+
+    return voice_list
+
+
+@api.post("/motion/tts", auth=None)
+def synthesize_motion_tts_endpoint(request, data: MotionTTSRequest):
+    """Directly synthesizes voiceover audio for motion studio and returns audio URL and timestamps."""
+    from .services.motion_service import synthesize_motion_speech
+    try:
+        user = get_current_user(request)
+    except Exception:
+        user = None
+    voice = data.voice_id or data.voice_profile or "Charon"
+    result = synthesize_motion_speech(data.text, voice, user=user)
+    if not result.get("success"):
+        raise HttpError(400, result.get("error", "فشل توليد التعليق الصوتي"))
+    return result
 
 
 @api.post("/motion/upload-video", auth=None)
@@ -1355,6 +1467,24 @@ def generate_motion_config(request, data: MotionGenerateConfigRequest):
         video_volume=data.video_volume if data.video_volume is not None else 0.15,
         video_muted=bool(data.video_muted),
         transition_effect=data.transition_effect or "zoom_in",
+        font_family=data.font_family or "IBM Plex Sans Arabic",
+        entry_animation=data.entry_animation or "pop",
+        smart_emojis_enabled=data.smart_emojis_enabled if data.smart_emojis_enabled is not None else True,
+        word_glow_box=data.word_glow_box if data.word_glow_box is not None else True,
+        sfx_enabled=data.sfx_enabled if data.sfx_enabled is not None else True,
+        sfx_volume=data.sfx_volume if data.sfx_volume is not None else 0.25,
+        bgm_preset=data.bgm_preset or "cyber_ambient",
+        bgm_url=data.bgm_url,
+        bgm_volume=data.bgm_volume if data.bgm_volume is not None else 0.25,
+        smart_ducking=data.smart_ducking if data.smart_ducking is not None else True,
+        dynamic_zoom=data.dynamic_zoom if data.dynamic_zoom is not None else True,
+        caption_position_percent=data.caption_position_percent if data.caption_position_percent is not None else 50.0,
+        scenes=data.scenes or [],
+        pip_url=data.pip_url,
+        pip_position=data.pip_position or "top-left",
+        pip_scale=data.pip_scale if data.pip_scale is not None else 0.28,
+        pip_muted=bool(data.pip_muted if data.pip_muted is not None else True),
+        export_format=data.export_format or "mp4",
     )
     return {
         "success": True,
@@ -1368,7 +1498,7 @@ def generate_motion_config(request, data: MotionGenerateConfigRequest):
 
 @api.post("/motion/render", auth=None)
 def render_motion_endpoint(request, data: MotionRenderRequest):
-    """Renders video via Remotion CLI, uploads MP4 to MinIO, and returns download URL."""
+    """Renders video via Remotion CLI, uploads MP4/GIF to MinIO, and returns download URL."""
     from .services.motion_service import build_motion_props, render_motion_video
     if data.props:
         props = data.props
@@ -1392,12 +1522,31 @@ def render_motion_endpoint(request, data: MotionRenderRequest):
             video_volume=data.video_volume if data.video_volume is not None else 0.15,
             video_muted=bool(data.video_muted),
             transition_effect=data.transition_effect or "zoom_in",
+            font_family=data.font_family or "IBM Plex Sans Arabic",
+            entry_animation=data.entry_animation or "pop",
+            smart_emojis_enabled=data.smart_emojis_enabled if data.smart_emojis_enabled is not None else True,
+            word_glow_box=data.word_glow_box if data.word_glow_box is not None else True,
+            sfx_enabled=data.sfx_enabled if data.sfx_enabled is not None else True,
+            sfx_volume=data.sfx_volume if data.sfx_volume is not None else 0.25,
+            bgm_preset=data.bgm_preset or "cyber_ambient",
+            bgm_url=data.bgm_url,
+            bgm_volume=data.bgm_volume if data.bgm_volume is not None else 0.25,
+            smart_ducking=data.smart_ducking if data.smart_ducking is not None else True,
+            dynamic_zoom=data.dynamic_zoom if data.dynamic_zoom is not None else True,
+            caption_position_percent=data.caption_position_percent if data.caption_position_percent is not None else 50.0,
+            scenes=data.scenes or [],
+            pip_url=data.pip_url,
+            pip_position=data.pip_position or "top-left",
+            pip_scale=data.pip_scale if data.pip_scale is not None else 0.28,
+            pip_muted=bool(data.pip_muted if data.pip_muted is not None else True),
+            export_format=data.export_format or "mp4",
         )
 
     result = render_motion_video(props, composition_id=data.composition_id)
     if not result.get("success"):
         raise HttpError(500, result.get("error", "فشل ريندر فيديو الموشن"))
     return result
+
 
 
 

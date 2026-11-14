@@ -4,6 +4,14 @@ export interface WordTimestamp {
   end: number;   // in seconds
 }
 
+export interface SceneClip {
+  id?: string;
+  url: string;
+  type?: 'video' | 'image' | 'gradient';
+  duration?: number; // in seconds
+  startOffset?: number; // in seconds
+}
+
 export interface MotionCompositionProps {
   title?: string;
   subtitle?: string;
@@ -22,6 +30,38 @@ export interface MotionCompositionProps {
   videoMuted?: boolean;
   videoVolume?: number;
   transitionEffect?: 'whip_pan' | 'zoom_in' | 'glitch' | 'dissolve' | 'none';
+
+  // Kinetic Typography Enhancements (A2)
+  fontFamily?: 'IBM Plex Sans Arabic' | 'Tajawal' | 'Cairo' | 'Amiri' | string;
+  entryAnimation?: 'pop' | 'bounce' | 'wave' | 'fade';
+  smartEmojisEnabled?: boolean;
+  wordGlowBox?: boolean;
+
+  // Sound FX & Sound Design (A3)
+  sfxEnabled?: boolean;
+  sfxVolume?: number;
+
+  // Background Music (BGM) & Smart Ducking (A4)
+  bgmPreset?: 'cinematic_warm' | 'cyber_ambient' | 'lofi_chill' | 'energetic_hook' | 'none';
+  bgmUrl?: string;
+  bgmVolume?: number;
+  smartDucking?: boolean;
+
+  // Multi-Scene Timeline & B-Roll / Picture-in-Picture (A5 & A8)
+  scenes?: SceneClip[];
+  pipUrl?: string;
+  pipPosition?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  pipScale?: number;
+  pipMuted?: boolean;
+
+  // Auto Jump Cuts & Dynamic Zoom (A6)
+  dynamicZoom?: boolean;
+
+  // Canvas Drag & Repositioning (A9)
+  captionPositionPercent?: number; // 25: Top, 50: Center, 75: Bottom
+
+  // High Frame-rate & GIF Export (A10)
+  exportFormat?: 'mp4' | 'gif';
 }
 
 export const sampleArabicWords: WordTimestamp[] = [
@@ -44,4 +84,16 @@ export const defaultMotionProps: MotionCompositionProps = {
   templateId: "dark_neon",
   durationInSeconds: 5.0,
   fps: 30,
+  fontFamily: "IBM Plex Sans Arabic",
+  entryAnimation: "pop",
+  smartEmojisEnabled: true,
+  wordGlowBox: true,
+  sfxEnabled: true,
+  sfxVolume: 0.25,
+  bgmPreset: "cyber_ambient",
+  bgmVolume: 0.25,
+  smartDucking: true,
+  dynamicZoom: true,
+  captionPositionPercent: 50,
+  exportFormat: "mp4",
 };

@@ -11,8 +11,13 @@ from ai_studio.services.motion_service import (
     save_uploaded_video,
     ingest_video_url,
     probe_video_metadata,
+    generate_viral_script,
+    synthesize_motion_speech,
     SUPPORTED_TEMPLATES,
     SUPPORTED_ASPECT_RATIOS,
+    SUPPORTED_FONTS,
+    SUPPORTED_ENTRY_ANIMATIONS,
+    SUPPORTED_BGM_PRESETS,
 )
 
 
@@ -200,6 +205,129 @@ class MotionServiceTestCase(TestCase):
         self.assertEqual(result["duration"], 8.0)
         self.assertEqual(result["url"], "https://assets.test/motion/videos/direct.mp4")
 
+    @patch("ai_studio.services.motion_service.get_gemini_client")
+    def test_generate_viral_script_gemini(self, mock_get_client):
+        mock_response = MagicMock()
+        mock_response.text = json.dumps({
+            "title": "أسرار الفيروسية",
+            "hook": "هل تعلم هذا السر؟",
+            "body": "الذكاء الاصطناعي يغير كل شيء في ثوانٍ",
+            "call_to_action": "تابعنا للمزيد",
+            "full_script": "هل تعلم هذا السر؟ الذكاء الاصطناعي يغير كل شيء في ثوانٍ. تابعنا للمزيد!",
+            "estimated_duration": 6.5
+        })
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+        mock_config = MagicMock()
+        mock_config.llm_model = "gemini-3.8-flash"
+        mock_get_client.return_value = (mock_client, mock_config)
+
+        result = generate_viral_script(topic="الذكاء الاصطناعي في 2026", tone="viral")
+        self.assertTrue(result["success"])
+        self.assertEqual(result["title"], "أسرار الفيروسية")
+        self.assertIn("الذكاء الاصطناعي", result["script"])
+        self.assertEqual(result["estimated_duration"], 6.5)
+
+    @patch("ai_studio.services.motion_service.get_gemini_client")
+    def test_generate_viral_script_fallback(self, mock_get_client):
+        mock_get_client.return_value = (None, None)
+        result = generate_viral_script(topic="إدارة الوقت والإنتاجية", tone="educational")
+        self.assertTrue(result["success"])
+        self.assertIn("إدارة الوقت والإنتاجية", result["script"])
+        self.assertGreater(result["estimated_duration"], 0)
+
+    @patch("ai_studio.services.motion_service.generate_voice_audio")
+    @patch("tts.services.audio_stitcher.convert_to_mp3")
+    @patch("ai_studio.services.motion_service.upload_bytes")
+    def test_synthesize_motion_speech(self, mock_upload, mock_convert, mock_voice_gen):
+        # 44-byte minimal valid WAV header
+        mock_voice_gen.return_value = b"RIFF\x28\x00\x00\x00WAVEfmt \x10\x00\x00\x00\x01\x00\x01\x00\x44\xac\x00\x00\x88\x58\x01\x00\x02\x00\x10\x00data\x04\x00\x00\x00\x00\x00\x00\x00"
+        mock_convert.return_value = b"fake-mp3-bytes"
+        mock_upload.return_value = "https://assets.test/motion/audio/tts_sample.mp3"
+
+        result = synthesize_motion_speech(text="مرحبا بكم في أستوديو هيكس ميديا", voice_profile="alloy")
+        self.assertTrue(result["success"])
+        self.assertEqual(result["audio_url"], "https://assets.test/motion/audio/tts_sample.mp3")
+        self.assertGreater(result["duration"], 0)
+        self.assertEqual(result["voice_id"], "alloy")
+
+    def test_build_motion_props_all_enhancements(self):
+        props = build_motion_props(
+            text="نصوص متطورة مع مؤثرات وموسيقى خلفية وتكبير ديناميكي",
+            font_family="Cairo",
+            entry_animation="bounce",
+            smart_emojis_enabled=True,
+            word_glow_box=True,
+            sfx_enabled=True,
+            sfx_volume=0.75,
+            bgm_preset="cinematic_warm",
+            bgm_url="https://assets.test/bgm.mp3",
+            bgm_volume=0.35,
+            smart_ducking=True,
+            dynamic_zoom=True,
+            caption_position_percent=75,
+            export_format="gif",
+            scenes=[{"url": "https://assets.test/s1.mp4", "duration": 4.0}],
+            pip_url="https://assets.test/pip.mp4",
+            pip_position="bottom-left",
+            pip_scale=0.3,
+            pip_muted=False,
+        )
+        self.assertEqual(props["fontFamily"], "Cairo")
+        self.assertEqual(props["entryAnimation"], "bounce")
+        self.assertTrue(props["smartEmojisEnabled"])
+        self.assertTrue(props["wordGlowBox"])
+        self.assertTrue(props["sfxEnabled"])
+        self.assertEqual(props["sfxVolume"], 0.75)
+        self.assertEqual(props["bgmPreset"], "cinematic_warm")
+        self.assertEqual(props["bgmUrl"], "https://assets.test/bgm.mp3")
+        self.assertEqual(props["bgmVolume"], 0.35)
+        self.assertTrue(props["smartDucking"])
+        self.assertTrue(props["dynamicZoom"])
+        self.assertEqual(props["captionPositionPercent"], 75)
+        self.assertEqual(props["exportFormat"], "gif")
+        self.assertEqual(len(props["scenes"]), 1)
+        self.assertEqual(props["pipUrl"], "https://assets.test/pip.mp4")
+        self.assertEqual(props["pipPosition"], "bottom-left")
+        self.assertEqual(props["pipScale"], 0.3)
+        self.assertFalse(props["pipMuted"])
+
+    @patch("ai_studio.services.motion_service.subprocess.run")
+    @patch("ai_studio.services.motion_service.upload_bytes")
+    def test_render_motion_video_with_60fps(self, mock_upload, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
+        mock_upload.return_value = "https://hexmedia-assets.test/motion/test_60fps.mp4"
+
+        with patch("os.path.exists", return_value=True), \
+             patch("os.path.getsize", return_value=4096), \
+             patch("builtins.open", unittest.mock.mock_open(read_data=b"fake-bytes")):
+            props = build_motion_props(text="اختبار 60 إطار بالثانية")
+            result = render_motion_video(props, fps=60)
+            self.assertTrue(result["success"])
+            self.assertEqual(result["fps"], 60)
+            # Check CLI command contains 60 fps props
+            args, kwargs = mock_run.call_args
+            cmd_str = " ".join(args[0])
+            self.assertIn("props.json", cmd_str)
+
+    @patch("ai_studio.services.motion_service.subprocess.run")
+    @patch("ai_studio.services.motion_service.upload_bytes")
+    def test_render_motion_video_gif_export(self, mock_upload, mock_run):
+        mock_run.return_value = MagicMock(returncode=0, stdout="ok", stderr="")
+        mock_upload.return_value = "https://hexmedia-assets.test/motion/test_animated.gif"
+
+        with patch("os.path.exists", return_value=True), \
+             patch("os.path.getsize", return_value=8192), \
+             patch("builtins.open", unittest.mock.mock_open(read_data=b"fake-gif-bytes")):
+            props = build_motion_props(text="اختبار تصدير صورة متحركة", export_format="gif")
+            result = render_motion_video(props, export_format="gif")
+            self.assertTrue(result["success"])
+            self.assertEqual(result["format"], "gif")
+            self.assertTrue(result["video_url"].endswith(".gif"))
+            # Ensure upload was called with image/gif content type
+            upload_kwargs = mock_upload.call_args[1]
+            self.assertEqual(upload_kwargs.get("content_type"), "image/gif")
+
 
 class MotionApiTestCase(TestCase):
     def setUp(self):
@@ -321,6 +449,124 @@ class MotionApiTestCase(TestCase):
         self.assertEqual(data["duration"], 20.0)
         self.assertEqual(data["title"], "Amazing Motion Graphics")
 
+    @patch("ai_studio.services.motion_service.generate_viral_script")
+    def test_generate_script_endpoint(self, mock_script_gen):
+        mock_script_gen.return_value = {
+            "success": True,
+            "title": "3 نصائح لرواد الأعمال",
+            "hook": "كيف تبدأ مشروعك بنجاح؟",
+            "body": "الخطوة الأولى هي التخطيط الذكي",
+            "call_to_action": "اشترك لمزيد من النصائح",
+            "script": "كيف تبدأ مشروعك بنجاح؟ الخطوة الأولى هي التخطيط الذكي. اشترك لمزيد من النصائح!",
+            "estimated_duration": 5.5,
+        }
+        res = self.client.post(
+            "/api/motion/generate-script",
+            data=json.dumps({"topic": "ريادة الأعمال", "tone": "viral", "estimated_duration": 5.5}),
+            content_type="application/json",
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["title"], "3 نصائح لرواد الأعمال")
+        self.assertIn("التخطيط الذكي", data["script"])
+        self.assertEqual(data["estimated_duration"], 5.5)
+
+    def test_get_motion_voices_endpoint(self):
+        res = self.client.get("/api/motion/voices")
+        self.assertEqual(res.status_code, 200)
+        voices = res.json()
+        self.assertIsInstance(voices, list)
+        self.assertGreater(len(voices), 0)
+        v_ids = [v["id"] for v in voices]
+        self.assertIn("alloy", v_ids)
+        self.assertIn("echo", v_ids)
+
+    @patch("ai_studio.services.motion_service.synthesize_motion_speech")
+    def test_motion_tts_endpoint(self, mock_tts):
+        mock_tts.return_value = {
+            "success": True,
+            "audio_url": "https://assets.test/motion/audio/tts_gen.mp3",
+            "duration": 4.8,
+            "voice_id": "onyx",
+        }
+        res = self.client.post(
+            "/api/motion/tts",
+            data=json.dumps({"text": "تجربة تحويل النص إلى صوت", "voice_id": "onyx", "speed": 1.0}),
+            content_type="application/json",
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["audio_url"], "https://assets.test/motion/audio/tts_gen.mp3")
+        self.assertEqual(data["duration"], 4.8)
+        self.assertEqual(data["voice_id"], "onyx")
+
+    def test_generate_motion_config_with_all_enhancements(self):
+        payload = {
+            "text": "نصوص تجريبية مع تحسينات شاملة",
+            "font_family": "Cairo",
+            "entry_animation": "bounce",
+            "smart_emojis_enabled": True,
+            "word_glow_box": True,
+            "sfx_enabled": True,
+            "bgm_preset": "cyber_ambient",
+            "smart_ducking": True,
+            "dynamic_zoom": True,
+            "caption_position_percent": 75,
+            "export_format": "gif",
+        }
+        res = self.client.post(
+            "/api/motion/config",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        props = data["props"]
+        self.assertEqual(props["fontFamily"], "Cairo")
+        self.assertEqual(props["entryAnimation"], "bounce")
+        self.assertTrue(props["smartEmojisEnabled"])
+        self.assertTrue(props["wordGlowBox"])
+        self.assertTrue(props["sfxEnabled"])
+        self.assertEqual(props["bgmPreset"], "cyber_ambient")
+        self.assertTrue(props["smartDucking"])
+        self.assertTrue(props["dynamicZoom"])
+        self.assertEqual(props["captionPositionPercent"], 75)
+        self.assertEqual(props["exportFormat"], "gif")
+
+    @patch("ai_studio.services.motion_service.render_motion_video")
+    def test_render_motion_endpoint_with_fps_and_gif(self, mock_render):
+        mock_render.return_value = {
+            "success": True,
+            "video_url": "https://hexmedia-assets.test/motion/rendered_gif.gif",
+            "download_url": "https://hexmedia-assets.test/motion/rendered_gif.gif",
+            "duration_seconds": 3.0,
+            "aspect_ratio": "9:16",
+            "template_id": "tiktok_kinetic",
+            "format": "gif",
+            "fps": 60,
+        }
+        payload = {
+            "template_id": "tiktok_kinetic",
+            "aspect_ratio": "9:16",
+            "fps": 60,
+            "export_format": "gif",
+            "props": {"text": "تصدير GIF بدقة 60 إطار"},
+        }
+        res = self.client.post(
+            "/api/motion/render",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertTrue(data["success"])
+        self.assertEqual(data["fps"], 60)
+        self.assertEqual(data["format"], "gif")
+        self.assertEqual(data["video_url"], "https://hexmedia-assets.test/motion/rendered_gif.gif")
+
 
 class MotionUiTestCase(TestCase):
     def setUp(self):
@@ -354,6 +600,7 @@ class MotionUiTestCase(TestCase):
         # Export elements
         self.assertIn('id="motionExportMP4Btn"', self.html)
         self.assertIn('id="motionResultVideo"', self.html)
+        self.assertIn('id="motionResultImg"', self.html)
         self.assertIn('id="motionDownloadLink"', self.html)
         # Video ingestion & montage elements
         self.assertIn('id="motionVideoFileInput"', self.html)
@@ -368,6 +615,25 @@ class MotionUiTestCase(TestCase):
         self.assertIn('id="motionFx_whip_pan"', self.html)
         self.assertIn('id="motionFx_glitch"', self.html)
         self.assertIn('id="motionFx_dissolve"', self.html)
+        # Enhanced Kinetic Typography, Audio & TTS controls
+        self.assertIn('id="motionAiScriptBox"', self.html)
+        self.assertIn('id="motionAiTopicInput"', self.html)
+        self.assertIn('id="motionRunAiScriptBtn"', self.html)
+        self.assertIn('id="motionFontSelect"', self.html)
+        self.assertIn('id="motionEntryAnimationSelect"', self.html)
+        self.assertIn('id="motionSmartEmojisToggle"', self.html)
+        self.assertIn('id="motionWordGlowToggle"', self.html)
+        self.assertIn('id="motionDynamicZoomToggle"', self.html)
+        self.assertIn('id="motionSfxToggle"', self.html)
+        self.assertIn('id="motionCaptionPosSlider"', self.html)
+        self.assertIn('id="motionTtsVoiceSelect"', self.html)
+        self.assertIn('id="motionGenerateTtsBtn"', self.html)
+        self.assertIn('id="motionBgmSelect"', self.html)
+        self.assertIn('id="motionSmartDuckingToggle"', self.html)
+        self.assertIn('id="motionFps_30"', self.html)
+        self.assertIn('id="motionFps_60"', self.html)
+        self.assertIn('id="motionFormat_mp4"', self.html)
+        self.assertIn('id="motionFormat_gif"', self.html)
 
     def test_motion_studio_javascript_functions_exist(self):
         """index.html must define the controller functions for Motion Studio."""
@@ -384,5 +650,17 @@ class MotionUiTestCase(TestCase):
         self.assertIn("function syncMotionConfigFromInputs()", self.html)
         self.assertIn("function exportMotionVideoMP4()", self.html)
         self.assertIn("function sendMotionVideoToChat()", self.html)
+        self.assertIn("function toggleMotionAiScriptBox()", self.html)
+        self.assertIn("function generateMotionAiScript()", self.html)
+        self.assertIn("function loadMotionVoices()", self.html)
+        self.assertIn("function synthesizeMotionTTS()", self.html)
+        self.assertIn("function handleMotionFontChange(", self.html)
+        self.assertIn("function handleMotionEntryAnimationChange(", self.html)
+        self.assertIn("function handleMotionToggleChange()", self.html)
+        self.assertIn("function selectMotionCaptionPosPreset(", self.html)
+        self.assertIn("function handleMotionCaptionPosSlider(", self.html)
+        self.assertIn("function handleMotionBgmChange(", self.html)
+        self.assertIn("function selectMotionFps(", self.html)
+        self.assertIn("function selectMotionExportFormat(", self.html)
         self.assertIn("MOTION_STUDIO_CARD", self.html)
 

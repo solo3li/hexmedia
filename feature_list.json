@@ -94,7 +94,14 @@
       "description": "Dual video ingestion (direct MP4/MOV/WebM file upload + YouTube/web URL fetch via yt-dlp to MinIO), Remotion <OffthreadVideo> background video engine, video trim offset controls, background audio ducking/muting, kinetic transition FX (Zoom In, Whip Pan, Glitch, Dissolve), live interactive video background preview in motionStudioModal, and full MP4 render pipeline.",
       "dependencies": ["feat-019"],
       "status": "completed",
-      "evidence": "yt-dlp and @remotion/transitions installed; backend/ai_studio/services/motion_service.py with save_uploaded_video, ingest_video_url, probe_video_metadata, videoStartOffset, videoVolume, videoMuted, transitionEffect; endpoints /api/motion/upload-video and /api/motion/fetch-video-url; Remotion <OffthreadVideo> in BackgroundMotion.tsx and chunk spring transitions in KaraokeCaptions.tsx; motionStudioModal UI with upload dropzone, URL fetcher, trim slider, ducking controls, and live <video> preview; 22/22 motion tests pass, 236/236 total test suite passes in ./init.sh."
+    },
+    {
+      "id": "feat-021",
+      "name": "Motion Graphics Studio 10-Feature Suite (AI Viral Script, SFX, BGM Ducking, TTS, 60fps & GIF)",
+      "description": "Comprehensive upgrade of HexMedia Motion Studio: (1) AI Viral Script & Hook Generator via Gemini Flash (POST /api/motion/generate-script); (2) Kinetic Typography with Smart Emoji triggers, Word Glow Box, entry animations (Pop, Bounce, Wave, Fade), and Arabic font families (Tajawal, Cairo, IBM Plex Sans Arabic, Amiri); (3) Procedural Sound Design & SFX (Whoosh, Pop, Click); (4) Procedural BGM Library with Smart Ducking (12% dialogue, 40% silence); (5) Multi-Scene Timeline & Picture-in-Picture (PiP) overlays; (6) Auto Jump Cuts & Dynamic Zoom; (7) Direct Voice Cloning & TTS synthesis (POST /api/motion/tts, GET /api/motion/voices); (8) Canvas Vertical Repositioning (Top, Center, Bottom, Slider); (9) High Framerate (60fps) & GIF Export via Remotion CLI and ffmpeg palette generation.",
+      "dependencies": ["feat-019", "feat-020"],
+      "status": "completed",
+      "evidence": "Zero-dependency procedural audio engine in remotion/src/audio/soundPresets.ts; Remotion components SoundDesign.tsx, BackgroundAudio.tsx, PictureInPicture.tsx, KaraokeCaptions.tsx; backend services generate_viral_script, synthesize_motion_speech, render_motion_video with 60fps and GIF export; NinjaAPI endpoints /motion/generate-script, /motion/voices, /motion/tts; motionStudioModal UI controls; 33/33 tests pass in backend/ai_studio/tests_motion.py; all 247/247 tests pass cleanly in ./init.sh."
     }
   ]
 }

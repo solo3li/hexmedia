@@ -24,10 +24,10 @@
     })();
   </script>
   
-  <!-- Google Fonts: IBM Plex Sans Arabic & JetBrains Mono -->
+  <!-- Google Fonts: IBM Plex Sans Arabic, Cairo, Tajawal, Amiri & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -1891,20 +1891,48 @@
           <div class="lg:col-span-7 space-y-4">
             
             <!-- Script / Textarea Input -->
-            <div class="bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle space-y-2">
+            <div class="bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle space-y-2.5">
               <div class="flex items-center justify-between">
                 <label class="font-medium text-light flex items-center gap-2">
                   <span>العبارة أو النص المراد تحريكه</span>
                   <span id="motionWordCountBadge" class="text-[10px] font-mono text-cyan-400 bg-cyan-400/10 px-1.5 py-0.2 rounded border border-cyan-400/20">8 كلمات</span>
                 </label>
-                <div class="flex items-center gap-1.5">
-                  <button type="button" onclick="loadMotionPresetText(1)" class="text-[10px] text-muted hover:text-cyan-400 hover:underline">نموذج 1</button>
-                  <span class="text-muted/40">•</span>
-                  <button type="button" onclick="loadMotionPresetText(2)" class="text-[10px] text-muted hover:text-cyan-400 hover:underline">سوشيال كينيتك</button>
-                  <span class="text-muted/40">•</span>
-                  <button type="button" onclick="loadMotionPresetText(3)" class="text-[10px] text-muted hover:text-cyan-400 hover:underline">رواية سينمائية</button>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="motionGenerateScriptBtn" onclick="toggleMotionAiScriptBox()" class="px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-500/20 to-purple-500/20 hover:from-cyan-500/30 hover:to-purple-500/30 border border-cyan-400/30 text-cyan-300 font-medium text-[10px] flex items-center gap-1.5 transition active:scale-95 shadow-sm">
+                    <span>✨ توليد سكربت بالذكاء الاصطناعي</span>
+                  </button>
+                  <div class="hidden sm:flex items-center gap-1.5">
+                    <button type="button" onclick="loadMotionPresetText(1)" class="text-[10px] text-muted hover:text-cyan-400 hover:underline">نموذج 1</button>
+                    <span class="text-muted/40">•</span>
+                    <button type="button" onclick="loadMotionPresetText(2)" class="text-[10px] text-muted hover:text-cyan-400 hover:underline">سوشيال كينيتك</button>
+                    <span class="text-muted/40">•</span>
+                    <button type="button" onclick="loadMotionPresetText(3)" class="text-[10px] text-muted hover:text-cyan-400 hover:underline">رواية سينمائية</button>
+                  </div>
                 </div>
               </div>
+
+              <!-- AI Viral Script & Hook Generator Section (A1) -->
+              <div id="motionAiScriptBox" class="hidden p-3 rounded-xl bg-gradient-to-br from-cyan-950/40 via-obsidian to-purple-950/30 border border-cyan-400/40 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 text-cyan-300 font-semibold text-[11px]">
+                    <span>⚡ مولد السكربت والخطاف الفيروسي (AI Viral Script & Hook)</span>
+                  </div>
+                  <button type="button" onclick="toggleMotionAiScriptBox()" class="text-muted hover:text-light text-xs">✕</button>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input id="motionAiTopicInput" type="text" placeholder="اكتب فكرة أو موضوع الفيديو... مثلاً: 3 أسرار للنجاح بالذكاء الاصطناعي في 2026" class="flex-1 bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs transition">
+                  <select id="motionAiToneSelect" class="bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs">
+                    <option value="viral">حماسي وفيروسي (Viral)</option>
+                    <option value="cinematic">درامي وسينمائي (Dramatic)</option>
+                    <option value="educational">تعليمي وتقني (Educational)</option>
+                    <option value="corporate">أعمال رسمي (Corporate)</option>
+                  </select>
+                  <button type="button" id="motionRunAiScriptBtn" onclick="generateMotionAiScript()" class="px-4 py-2 rounded-xl bg-cyan-400 hover:opacity-90 text-obsidian font-semibold text-xs transition active:scale-95 flex items-center justify-center gap-1.5 shrink-0">
+                    <span id="motionRunAiScriptText">توليد السكربت</span>
+                  </button>
+                </div>
+              </div>
+
               <textarea id="motionTextInput" rows="3" oninput="handleMotionTextInput()" placeholder="اكتب أو الصق العبارة أو السيناريو لتحريكه وتزامن الكلمات..." class="w-full bg-obsidian border border-borderSubtle rounded-xl p-3 text-light focus:outline-none focus:border-cyan-400 text-xs leading-relaxed transition resize-none">أهلاً بكم في أستوديو HexMedia للموشن جرافيكس البرمجي وحركات النصوص التفاعلية</textarea>
             </div>
 
@@ -2117,7 +2145,158 @@
 
             </div>
 
-            <!-- Aspect Ratio & Duration Row -->
+            <!-- Kinetic Typography, Font & Movement Card (A2, A6, A9) -->
+            <div class="bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle space-y-3">
+              <div class="flex items-center justify-between">
+                <label class="font-medium text-light flex items-center gap-2">
+                  <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                    <line x1="9" y1="20" x2="15" y2="20"></line>
+                    <line x1="12" y1="4" x2="12" y2="20"></line>
+                  </svg>
+                  <span>الخط العربي والحركة (Kinetic Typography)</span>
+                </label>
+                <span id="motionFontBadge" class="text-[9px] font-mono text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full border border-cyan-400/20">Tajawal • Pop</span>
+              </div>
+
+              <!-- Font & Entry Animation Row -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label class="text-[11px] font-medium text-light block mb-1">الخط العربي (Arabic Font)</label>
+                  <select id="motionFontSelect" onchange="handleMotionFontChange(this.value)" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs">
+                    <option value="Tajawal">Tajawal (تجوال - عصري متوازن)</option>
+                    <option value="Cairo">Cairo (القاهرة - عريض وجريء)</option>
+                    <option value="IBM Plex Sans Arabic">IBM Plex Sans Arabic (تقني دقيق)</option>
+                    <option value="Amiri">Amiri (أميري - كلاسيكي فخم)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="text-[11px] font-medium text-light block mb-1">حركة دخول الكلمات (Entry Animation)</label>
+                  <select id="motionEntryAnimationSelect" onchange="handleMotionEntryAnimationChange(this.value)" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs">
+                    <option value="pop">Pop & Spring (قفز ناعم سريع)</option>
+                    <option value="bounce">Bounce In (ارتداد حركي)</option>
+                    <option value="wave">Wave Stagger (موجة متتابعة)</option>
+                    <option value="fade">Smooth Fade (تلاشي سينمائي)</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Feature Toggles Grid (Smart Emoji, Word Glow, Jump Cuts, SFX) -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-borderSubtle/60 text-[11px]">
+                <label class="flex items-center gap-1.5 p-2 rounded-xl bg-obsidian border border-borderSubtle hover:border-cyan-400/40 cursor-pointer transition select-none">
+                  <input type="checkbox" id="motionSmartEmojisToggle" checked onchange="handleMotionToggleChange()" class="accent-cyan-400 rounded">
+                  <span class="text-light">✨ إيموجي ذكي</span>
+                </label>
+                <label class="flex items-center gap-1.5 p-2 rounded-xl bg-obsidian border border-borderSubtle hover:border-cyan-400/40 cursor-pointer transition select-none">
+                  <input type="checkbox" id="motionWordGlowToggle" checked onchange="handleMotionToggleChange()" class="accent-cyan-400 rounded">
+                  <span class="text-light">🌟 توهج الكلمة</span>
+                </label>
+                <label class="flex items-center gap-1.5 p-2 rounded-xl bg-obsidian border border-borderSubtle hover:border-cyan-400/40 cursor-pointer transition select-none">
+                  <input type="checkbox" id="motionDynamicZoomToggle" checked onchange="handleMotionToggleChange()" class="accent-cyan-400 rounded">
+                  <span class="text-light">🎬 قفزات زوم</span>
+                </label>
+                <label class="flex items-center gap-1.5 p-2 rounded-xl bg-obsidian border border-borderSubtle hover:border-cyan-400/40 cursor-pointer transition select-none">
+                  <input type="checkbox" id="motionSfxToggle" checked onchange="handleMotionToggleChange()" class="accent-cyan-400 rounded">
+                  <span class="text-light">🔊 مؤثرات SFX</span>
+                </label>
+              </div>
+
+              <!-- Vertical Caption Positioning (A9) -->
+              <div class="pt-2 border-t border-borderSubtle/60 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label class="text-[11px] font-medium text-light">موضع النص على الشاشة (Vertical Position)</label>
+                  <span id="motionCaptionPosLabel" class="text-[10px] font-mono text-cyan-400">وسط (50%)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex gap-1">
+                    <button type="button" id="capPosBtn_25" onclick="selectMotionCaptionPosPreset(25)" class="py-1 px-2 rounded-lg bg-obsidian border border-borderSubtle hover:border-cyan-400/40 text-muted hover:text-light text-[10px] font-medium transition">
+                      أعلى (25%)
+                    </button>
+                    <button type="button" id="capPosBtn_50" onclick="selectMotionCaptionPosPreset(50)" class="py-1 px-2 rounded-lg bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 text-[10px] font-medium transition">
+                      وسط (50%)
+                    </button>
+                    <button type="button" id="capPosBtn_75" onclick="selectMotionCaptionPosPreset(75)" class="py-1 px-2 rounded-lg bg-obsidian border border-borderSubtle hover:border-cyan-400/40 text-muted hover:text-light text-[10px] font-medium transition">
+                      أسفل (75%)
+                    </button>
+                  </div>
+                  <input id="motionCaptionPosSlider" type="range" min="15" max="85" step="1" value="50" oninput="handleMotionCaptionPosSlider(this.value)" class="flex-1 accent-cyan-400">
+                </div>
+              </div>
+            </div>
+
+            <!-- Audio, TTS & BGM Studio (A3, A4, A7) -->
+            <div class="bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle space-y-3">
+              <div class="flex items-center justify-between">
+                <label class="font-medium text-light flex items-center gap-2">
+                  <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 18V5l12-2v13"></path>
+                    <circle cx="6" cy="18" r="3"></circle>
+                    <circle cx="18" cy="16" r="3"></circle>
+                  </svg>
+                  <span>الصوت والتعليق والموسيقى (Audio & BGM Studio)</span>
+                </label>
+                <span id="motionAudioStatusBadge" class="text-[9px] font-mono text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded-full border border-cyan-400/20">جاهز للتوليد</span>
+              </div>
+
+              <!-- Direct Voice Cloning / TTS Synthesis (A7) -->
+              <div class="p-2.5 rounded-xl bg-obsidian border border-borderSubtle space-y-2">
+                <div class="flex items-center justify-between text-[11px] font-medium text-light">
+                  <span class="flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                      <line x1="12" y1="19" x2="12" y2="23"></line>
+                      <line x1="8" y1="23" x2="16" y2="23"></line>
+                    </svg>
+                    <span>توليد تعليق صوتي بالذكاء الاصطناعي (Direct Voice TTS)</span>
+                  </span>
+                  <span class="text-[10px] text-muted">مباشر إلى مسار الصوت</span>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <select id="motionTtsVoiceSelect" class="flex-1 bg-surface border border-borderSubtle rounded-xl px-2.5 py-1.5 text-light focus:outline-none focus:border-cyan-400 text-xs">
+                    <option value="alloy">صوت افتراضي (Alloy)</option>
+                  </select>
+                  <button type="button" id="motionGenerateTtsBtn" onclick="synthesizeMotionTTS()" class="px-3.5 py-1.5 rounded-xl bg-cyan-400/20 hover:bg-cyan-400/30 border border-cyan-400/40 text-cyan-300 font-medium text-xs transition active:scale-95 flex items-center justify-center gap-1.5 shrink-0">
+                    <svg class="w-3.5 h-3.5 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    </svg>
+                    <span id="motionTtsBtnText">توليد الصوت</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- BGM Library & Ducking (A4) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <div>
+                  <label class="text-[11px] font-medium text-light block mb-1">موسيقى الخلفية (BGM Presets)</label>
+                  <select id="motionBgmSelect" onchange="handleMotionBgmChange(this.value)" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs">
+                    <option value="none">بدون موسيقى (None)</option>
+                    <option value="cinematic_warm">سينمائي دافئ (Cinematic Warm)</option>
+                    <option value="cyber_ambient">سايبر أمبينت (Cyber Ambient)</option>
+                    <option value="lofi_chill">لو-فاي هادئ (Lo-Fi Chill)</option>
+                    <option value="energetic_hook">حماسي وخطاف (Energetic Hook)</option>
+                  </select>
+                </div>
+                <div class="flex flex-col justify-end">
+                  <label class="flex items-center gap-2 p-2 rounded-xl bg-obsidian border border-borderSubtle hover:border-cyan-400/40 cursor-pointer transition select-none text-[11px]">
+                    <input type="checkbox" id="motionSmartDuckingToggle" checked onchange="handleMotionToggleChange()" class="accent-cyan-400 rounded">
+                    <div>
+                      <span class="text-light font-medium block">خفض ذكي (Smart Ducking)</span>
+                      <span class="text-muted text-[9px] block">12% أثناء الكلام و 40% في الصمت</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Audio URL Input -->
+              <div class="pt-1">
+                <label class="text-[11px] font-medium text-light block mb-1">رابط ملف الصوت النهائي (Audio URL)</label>
+                <input id="motionAudioUrlInput" type="url" placeholder="https://... رابط MP3 للمزامنة (يتم تعبئته آلياً عبر زر التوليد أعلاه أو يدوي)" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs transition">
+              </div>
+            </div>
+
+            <!-- Aspect Ratio, Duration & FPS / Format Row (A10) -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-obsidian/40 p-3.5 rounded-2xl border border-borderSubtle">
               <div>
                 <label class="font-medium text-light block mb-1.5">المقاس والأبعاد (Aspect Ratio)</label>
@@ -2144,12 +2323,33 @@
                 </div>
                 <input id="motionDurationInput" type="range" min="2.0" max="20.0" step="0.5" value="5.0" oninput="handleMotionDurationChange(this.value)" class="w-full accent-cyan-400">
               </div>
-            </div>
 
-            <!-- Optional Audio URL -->
-            <div class="bg-obsidian/40 p-3 rounded-2xl border border-borderSubtle">
-              <label class="font-medium text-light block mb-1">رابط الصوت الخلفي / التعليق (اختياري)</label>
-              <input id="motionAudioUrlInput" type="url" placeholder="https://... رابط ملف صوتي MP3 اختياري للدمج والمزامنة" class="w-full bg-obsidian border border-borderSubtle rounded-xl px-3 py-2 text-light focus:outline-none focus:border-cyan-400 text-xs transition">
+              <!-- FPS and Export Format Row (A10) -->
+              <div class="sm:col-span-2 pt-2 border-t border-borderSubtle/60 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] font-medium text-light">معدل الإطارات:</span>
+                  <div class="flex items-center gap-1 bg-obsidian p-0.5 rounded-xl border border-borderSubtle text-xs">
+                    <button type="button" id="motionFps_30" onclick="selectMotionFps(30)" class="px-3 py-1 rounded-lg bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 font-medium text-[11px] transition">
+                      30 FPS (سريع)
+                    </button>
+                    <button type="button" id="motionFps_60" onclick="selectMotionFps(60)" class="px-3 py-1 rounded-lg text-muted hover:text-light font-medium text-[11px] transition">
+                      60 FPS (فائق السلاسة)
+                    </button>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] font-medium text-light">صيغة التصدير:</span>
+                  <div class="flex items-center gap-1 bg-obsidian p-0.5 rounded-xl border border-borderSubtle text-xs">
+                    <button type="button" id="motionFormat_mp4" onclick="selectMotionExportFormat('mp4')" class="px-3 py-1 rounded-lg bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 font-medium text-[11px] transition">
+                      فيديو MP4
+                    </button>
+                    <button type="button" id="motionFormat_gif" onclick="selectMotionExportFormat('gif')" class="px-3 py-1 rounded-lg text-muted hover:text-light font-medium text-[11px] transition">
+                      متحرك GIF
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -2259,8 +2459,9 @@
                 <span id="motionResultMetaBadge" class="text-[9px] font-mono text-cyan-400 bg-cyan-400/10 px-2 py-0.5 rounded border border-cyan-400/20">1080p MP4</span>
               </div>
 
-              <div class="w-full rounded-xl overflow-hidden bg-black border border-borderSubtle shadow-inner">
+              <div class="w-full rounded-xl overflow-hidden bg-black border border-borderSubtle shadow-inner flex items-center justify-center min-h-[160px]">
                 <video id="motionResultVideo" controls playsinline class="w-full max-h-[220px] object-contain"></video>
+                <img id="motionResultImg" class="w-full max-h-[220px] object-contain hidden" alt="Motion Result GIF">
               </div>
 
               <div class="flex items-center gap-2">
@@ -6344,6 +6545,294 @@
     let motionVideoStartOffset = 0.0;
     let motionVideoAudioMode = 'mute';
     let motionTransitionEffect = 'zoom_in';
+    let motionCurrentFontFamily = 'Tajawal';
+    let motionCurrentEntryAnimation = 'pop';
+    let motionSmartEmojisEnabled = true;
+    let motionWordGlowBox = true;
+    let motionDynamicZoom = true;
+    let motionSfxEnabled = true;
+    let motionCaptionPositionPercent = 50;
+    let motionCurrentBgmPreset = 'none';
+    let motionSmartDucking = true;
+    let motionCurrentFps = 30;
+    let motionCurrentExportFormat = 'mp4';
+
+    function toggleMotionAiScriptBox() {
+      const box = document.getElementById('motionAiScriptBox');
+      if (box) {
+        box.classList.toggle('hidden');
+      }
+    }
+
+    async function generateMotionAiScript() {
+      const topicInput = document.getElementById('motionAiTopicInput');
+      const toneSelect = document.getElementById('motionAiToneSelect');
+      const topic = (topicInput?.value || '').trim();
+      const tone = toneSelect?.value || 'viral';
+
+      if (!topic) {
+        showToast('يرجى كتابة فكرة أو موضوع الفيديو أولاً');
+        return;
+      }
+
+      const btn = document.getElementById('motionRunAiScriptBtn');
+      const btnText = document.getElementById('motionRunAiScriptText');
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.textContent = 'جاري التوليد...';
+
+      try {
+        const res = await (typeof authFetch === 'function' ? authFetch('/api/motion/generate-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: topic,
+            tone: tone,
+            language: 'ar',
+            estimated_duration: motionCurrentDuration,
+          }),
+        }) : fetch('/api/motion/generate-script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic: topic,
+            tone: tone,
+            language: 'ar',
+            estimated_duration: motionCurrentDuration,
+          }),
+        }));
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.error || 'فشل توليد السكربت بالذكاء الاصطناعي');
+        }
+
+        const data = await res.json();
+        const textInput = document.getElementById('motionTextInput');
+        const titleInput = document.getElementById('motionTitleInput');
+        const durInput = document.getElementById('motionDurationInput');
+
+        if (textInput && data.script) {
+          textInput.value = data.script;
+        }
+        if (titleInput && data.title) {
+          titleInput.value = data.title;
+        }
+        if (durInput && data.estimated_duration) {
+          handleMotionDurationChange(data.estimated_duration);
+        }
+
+        handleMotionTextInput();
+        showToast('تم توليد السكربت والخطاف الفيروسي بنجاح ✨!');
+        toggleMotionAiScriptBox();
+      } catch (err) {
+        showToast(err.message || 'خطأ أثناء توليد السكربت', true);
+      } finally {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.textContent = 'توليد السكربت';
+      }
+    }
+
+    async function loadMotionVoices() {
+      const select = document.getElementById('motionTtsVoiceSelect');
+      if (!select) return;
+
+      try {
+        const res = await fetch('/api/motion/voices');
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            select.innerHTML = '';
+            data.forEach(v => {
+              const opt = document.createElement('option');
+              opt.value = v.id;
+              opt.textContent = `${v.name} (${v.gender === 'female' ? 'أنثى' : 'ذكر'}) - ${v.style || 'طبيعي'}`;
+              select.appendChild(opt);
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not load motion voices:', e);
+      }
+      if (select.children.length <= 1) {
+        select.innerHTML = `
+          <option value="alloy">Alloy (متوازن - عربي/إنجليزي)</option>
+          <option value="echo">Echo (عميق ورخيم)</option>
+          <option value="fable">Fable (سردي ودافئ)</option>
+          <option value="onyx">Onyx (رسمي وجريء)</option>
+          <option value="nova">Nova (حماسي وواضح)</option>
+          <option value="shimmer">Shimmer (أنثوي رقيق)</option>
+        `;
+      }
+    }
+
+    async function synthesizeMotionTTS() {
+      const text = (document.getElementById('motionTextInput')?.value || '').trim();
+      if (!text) {
+        showToast('يرجى كتابة نص لتوليد التعليق الصوتي');
+        return;
+      }
+
+      const voiceSelect = document.getElementById('motionTtsVoiceSelect');
+      const voiceId = voiceSelect?.value || 'alloy';
+      const btn = document.getElementById('motionGenerateTtsBtn');
+      const btnText = document.getElementById('motionTtsBtnText');
+
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.textContent = 'جاري التوليد...';
+
+      showToast('جاري توليد التعليق الصوتي بالذكاء الاصطناعي...');
+
+      try {
+        const res = await (typeof authFetch === 'function' ? authFetch('/api/motion/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: text,
+            voice_id: voiceId,
+            speed: 1.0,
+          }),
+        }) : fetch('/api/motion/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: text,
+            voice_id: voiceId,
+            speed: 1.0,
+          }),
+        }));
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || errData.error || 'فشل توليد الصوت');
+        }
+
+        const data = await res.json();
+        const audioInput = document.getElementById('motionAudioUrlInput');
+        if (audioInput && data.audio_url) {
+          audioInput.value = data.audio_url;
+        }
+
+        if (data.duration && data.duration > 0) {
+          handleMotionDurationChange(Math.max(2.0, Math.min(60.0, data.duration)));
+        }
+
+        showToast('تم توليد التعليق الصوتي ومزامنته مع الفيديو!');
+        syncMotionConfigFromInputs();
+      } catch (err) {
+        showToast(err.message || 'خطأ أثناء توليد الصوت', true);
+      } finally {
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.textContent = 'توليد الصوت';
+      }
+    }
+
+    function handleMotionFontChange(val) {
+      motionCurrentFontFamily = val;
+      const badge = document.getElementById('motionFontBadge');
+      if (badge) {
+        badge.textContent = `${motionCurrentFontFamily} • ${motionCurrentEntryAnimation}`;
+      }
+      updateMotionStageVisuals();
+      syncMotionConfigFromInputs();
+    }
+
+    function handleMotionEntryAnimationChange(val) {
+      motionCurrentEntryAnimation = val;
+      const badge = document.getElementById('motionFontBadge');
+      if (badge) {
+        badge.textContent = `${motionCurrentFontFamily} • ${motionCurrentEntryAnimation}`;
+      }
+      syncMotionConfigFromInputs();
+    }
+
+    function handleMotionToggleChange() {
+      motionSmartEmojisEnabled = !!document.getElementById('motionSmartEmojisToggle')?.checked;
+      motionWordGlowBox = !!document.getElementById('motionWordGlowToggle')?.checked;
+      motionDynamicZoom = !!document.getElementById('motionDynamicZoomToggle')?.checked;
+      motionSfxEnabled = !!document.getElementById('motionSfxToggle')?.checked;
+      motionSmartDucking = !!document.getElementById('motionSmartDuckingToggle')?.checked;
+      syncMotionConfigFromInputs();
+    }
+
+    function selectMotionCaptionPosPreset(pct) {
+      motionCaptionPositionPercent = pct;
+      const slider = document.getElementById('motionCaptionPosSlider');
+      if (slider) slider.value = pct;
+      const label = document.getElementById('motionCaptionPosLabel');
+      if (label) {
+        const text = pct <= 35 ? `أعلى (${pct}%)` : (pct >= 65 ? `أسفل (${pct}%)` : `وسط (${pct}%)`);
+        label.textContent = text;
+      }
+      [25, 50, 75].forEach(p => {
+        const btn = document.getElementById('capPosBtn_' + p);
+        if (!btn) return;
+        if (p === pct) {
+          btn.className = 'py-1 px-2 rounded-lg bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 text-[10px] font-medium transition';
+        } else {
+          btn.className = 'py-1 px-2 rounded-lg bg-obsidian border border-borderSubtle hover:border-cyan-400/40 text-muted hover:text-light text-[10px] font-medium transition';
+        }
+      });
+      updateMotionStageVisuals();
+      syncMotionConfigFromInputs();
+    }
+
+    function handleMotionCaptionPosSlider(val) {
+      motionCaptionPositionPercent = parseInt(val, 10) || 50;
+      const label = document.getElementById('motionCaptionPosLabel');
+      if (label) {
+        const text = motionCaptionPositionPercent <= 35 ? `أعلى (${motionCaptionPositionPercent}%)` : (motionCaptionPositionPercent >= 65 ? `أسفل (${motionCaptionPositionPercent}%)` : `وسط (${motionCaptionPositionPercent}%)`);
+        label.textContent = text;
+      }
+      [25, 50, 75].forEach(p => {
+        const btn = document.getElementById('capPosBtn_' + p);
+        if (!btn) return;
+        if (Math.abs(p - motionCaptionPositionPercent) <= 5) {
+          btn.className = 'py-1 px-2 rounded-lg bg-cyan-400/20 border border-cyan-400/40 text-cyan-300 text-[10px] font-medium transition';
+        } else {
+          btn.className = 'py-1 px-2 rounded-lg bg-obsidian border border-borderSubtle hover:border-cyan-400/40 text-muted hover:text-light text-[10px] font-medium transition';
+        }
+      });
+      updateMotionStageVisuals();
+      clearTimeout(motionDebounceTimer);
+      motionDebounceTimer = setTimeout(() => {
+        syncMotionConfigFromInputs();
+      }, 300);
+    }
+
+    function handleMotionBgmChange(val) {
+      motionCurrentBgmPreset = val;
+      syncMotionConfigFromInputs();
+    }
+
+    function selectMotionFps(fps) {
+      motionCurrentFps = fps;
+      const btn30 = document.getElementById('motionFps_30');
+      const btn60 = document.getElementById('motionFps_60');
+      if (fps === 60) {
+        if (btn60) btn60.className = 'px-3 py-1 rounded-lg bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 font-medium text-[11px] transition';
+        if (btn30) btn30.className = 'px-3 py-1 rounded-lg text-muted hover:text-light font-medium text-[11px] transition';
+      } else {
+        if (btn30) btn30.className = 'px-3 py-1 rounded-lg bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 font-medium text-[11px] transition';
+        if (btn60) btn60.className = 'px-3 py-1 rounded-lg text-muted hover:text-light font-medium text-[11px] transition';
+      }
+    }
+
+    function selectMotionExportFormat(fmt) {
+      motionCurrentExportFormat = fmt;
+      const btnMp4 = document.getElementById('motionFormat_mp4');
+      const btnGif = document.getElementById('motionFormat_gif');
+      const exportBtnText = document.getElementById('motionExportBtnText');
+      if (fmt === 'gif') {
+        if (btnGif) btnGif.className = 'px-3 py-1 rounded-lg bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 font-medium text-[11px] transition';
+        if (btnMp4) btnMp4.className = 'px-3 py-1 rounded-lg text-muted hover:text-light font-medium text-[11px] transition';
+        if (exportBtnText) exportBtnText.textContent = 'تصدير متحرك GIF';
+      } else {
+        if (btnMp4) btnMp4.className = 'px-3 py-1 rounded-lg bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 font-medium text-[11px] transition';
+        if (btnGif) btnGif.className = 'px-3 py-1 rounded-lg text-muted hover:text-light font-medium text-[11px] transition';
+        if (exportBtnText) exportBtnText.textContent = 'تصدير فيديو MP4';
+      }
+    }
 
     const MOTION_TEMPLATE_META = {
       'dark_neon': {
@@ -6405,6 +6894,7 @@
       if (modal) {
         modal.classList.remove('hidden');
       }
+      loadMotionVoices();
       syncMotionConfigFromInputs();
     }
 
@@ -6752,6 +7242,14 @@
         stSpk.style.color = meta.accent;
         stSpk.style.borderColor = meta.accent + '40';
       }
+
+      // Font family and vertical positioning for words container
+      const wordsBox = document.getElementById('motionWordsBox');
+      if (wordsBox) {
+        wordsBox.style.fontFamily = `'${motionCurrentFontFamily}', system-ui, sans-serif`;
+        const offsetPct = (motionCaptionPositionPercent - 50) * 1.5;
+        wordsBox.style.transform = `translateY(${offsetPct}px)`;
+      }
     }
 
     async function syncMotionConfigFromInputs() {
@@ -6782,6 +7280,19 @@
             video_volume: motionVideoAudioMode === 'duck' ? 0.15 : (motionVideoAudioMode === 'full' ? 1.0 : 0.0),
             video_muted: motionVideoAudioMode === 'mute',
             transition_effect: motionTransitionEffect,
+            font_family: motionCurrentFontFamily,
+            entry_animation: motionCurrentEntryAnimation,
+            smart_emojis_enabled: motionSmartEmojisEnabled,
+            word_glow_box: motionWordGlowBox,
+            sfx_enabled: motionSfxEnabled,
+            sfx_volume: 0.6,
+            bgm_preset: motionCurrentBgmPreset,
+            bgm_url: '',
+            bgm_volume: 0.3,
+            smart_ducking: motionSmartDucking,
+            dynamic_zoom: motionDynamicZoom,
+            caption_position_percent: motionCaptionPositionPercent,
+            export_format: motionCurrentExportFormat,
           }),
         });
 
@@ -6950,11 +7461,11 @@
 
       btn.disabled = true;
       btn.classList.add('opacity-70', 'cursor-not-allowed');
-      if (btnText) btnText.textContent = 'جاري الريندر...';
+      if (btnText) btnText.textContent = motionCurrentExportFormat === 'gif' ? 'جاري استخراج GIF...' : 'جاري الريندر...';
       if (progressBox) progressBox.classList.remove('hidden');
       if (resultBox) resultBox.classList.add('hidden');
 
-      showToast('بدأ ريندر فيديو الموشن جرافيكس عبر Remotion CLI...');
+      showToast(motionCurrentExportFormat === 'gif' ? 'بدأ استخراج صورة GIF المتحركة عبر FFmpeg...' : 'بدأ ريندر فيديو الموشن جرافيكس عبر Remotion CLI...');
 
       const text = (document.getElementById('motionTextInput')?.value || '').trim();
       const title = (document.getElementById('motionTitleInput')?.value || 'HexMedia Motion Studio').trim();
@@ -6978,6 +7489,19 @@
       exportProps.videoVolume = motionVideoAudioMode === 'duck' ? 0.15 : (motionVideoAudioMode === 'full' ? 1.0 : 0.0);
       exportProps.videoMuted = motionVideoAudioMode === 'mute';
       exportProps.transitionEffect = motionTransitionEffect;
+      exportProps.fontFamily = motionCurrentFontFamily;
+      exportProps.entryAnimation = motionCurrentEntryAnimation;
+      exportProps.smartEmojisEnabled = motionSmartEmojisEnabled;
+      exportProps.wordGlowBox = motionWordGlowBox;
+      exportProps.sfxEnabled = motionSfxEnabled;
+      exportProps.sfxVolume = 0.6;
+      exportProps.bgmPreset = motionCurrentBgmPreset;
+      exportProps.bgmUrl = '';
+      exportProps.bgmVolume = 0.3;
+      exportProps.smartDucking = motionSmartDucking;
+      exportProps.dynamicZoom = motionDynamicZoom;
+      exportProps.captionPositionPercent = motionCaptionPositionPercent;
+      exportProps.exportFormat = motionCurrentExportFormat;
       if (motionCurrentWords && motionCurrentWords.length) {
         exportProps.words = motionCurrentWords;
       }
@@ -6987,6 +7511,8 @@
         template_id: motionCurrentTemplate,
         aspect_ratio: motionCurrentAspectRatio,
         duration_seconds: motionCurrentDuration,
+        fps: motionCurrentFps,
+        export_format: motionCurrentExportFormat,
       };
 
       try {
@@ -7012,24 +7538,56 @@
         if (resultBox) resultBox.classList.remove('hidden');
 
         const videoEl = document.getElementById('motionResultVideo');
-        if (videoEl) {
-          videoEl.src = data.video_url;
-          videoEl.load();
-        }
-
+        const imgEl = document.getElementById('motionResultImg');
         const dlLink = document.getElementById('motionDownloadLink');
-        if (dlLink) {
-          dlLink.href = data.download_url || data.video_url;
+        const isGif = data.format === 'gif' || (data.video_url && data.video_url.endsWith('.gif'));
+
+        if (isGif) {
+          if (videoEl) videoEl.classList.add('hidden');
+          if (imgEl) {
+            imgEl.src = data.video_url;
+            imgEl.classList.remove('hidden');
+          }
+          if (dlLink) {
+            dlLink.href = data.download_url || data.video_url;
+            dlLink.innerHTML = `
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>تحميل الصورة المتحركة GIF</span>
+            `;
+          }
+        } else {
+          if (imgEl) imgEl.classList.add('hidden');
+          if (videoEl) {
+            videoEl.src = data.video_url;
+            videoEl.classList.remove('hidden');
+            videoEl.load();
+          }
+          if (dlLink) {
+            dlLink.href = data.download_url || data.video_url;
+            dlLink.innerHTML = `
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>تحميل الفيديو MP4</span>
+            `;
+          }
         }
 
         const metaBadge = document.getElementById('motionResultMetaBadge');
         if (metaBadge) {
           const dur = (data.duration_seconds || motionCurrentDuration).toFixed(1);
           const sizeKb = data.file_size ? (data.file_size / 1024).toFixed(0) + ' KB' : '';
-          metaBadge.textContent = `${data.aspect_ratio || motionCurrentAspectRatio} • ${dur}ث • ${sizeKb}`;
+          const fpsBadge = data.fps ? `${data.fps}fps` : `${motionCurrentFps}fps`;
+          metaBadge.textContent = `${data.aspect_ratio || motionCurrentAspectRatio} • ${fpsBadge} • ${isGif ? 'GIF' : 'MP4'} • ${dur}ث • ${sizeKb}`;
         }
 
-        showToast('تم ريندر وتصدير فيديو الموشن جرافيكس بنجاح 🎬!');
+        showToast(isGif ? 'تم استخراج صورة GIF بنجاح 🖼️!' : 'تم ريندر وتصدير فيديو الموشن جرافيكس بنجاح 🎬!');
 
       } catch (err) {
         if (progressBox) progressBox.classList.add('hidden');
@@ -7037,7 +7595,7 @@
       } finally {
         btn.disabled = false;
         btn.classList.remove('opacity-70', 'cursor-not-allowed');
-        if (btnText) btnText.textContent = 'تصدير فيديو MP4';
+        if (btnText) btnText.textContent = motionCurrentExportFormat === 'gif' ? 'تصدير متحرك GIF' : 'تصدير فيديو MP4';
       }
     }
 

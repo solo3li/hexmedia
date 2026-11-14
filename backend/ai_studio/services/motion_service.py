@@ -1,13 +1,17 @@
+import io
 import json
 import logging
 import os
+import re
 import subprocess
 import tempfile
 import urllib.parse
 import uuid
+import wave
 from typing import Dict, Any, List, Optional
 from django.conf import settings
 from .minio_service import upload_bytes
+from .gemini_service import get_gemini_client, generate_voice_audio
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +193,7 @@ def ingest_video_url(url: str) -> Dict[str, Any]:
             "has_audio": meta["has_audio"],
         }
 
+
 SUPPORTED_TEMPLATES = [
     {
         "id": "dark_neon",
@@ -229,6 +234,28 @@ SUPPORTED_ASPECT_RATIOS = [
     {"id": "16:9", "name": "عرضي سينمائي / يوتيوب (16:9)", "width": 1920, "height": 1080},
 ]
 
+SUPPORTED_FONTS = [
+    {"id": "IBM Plex Sans Arabic", "name": "IBM Plex Sans Arabic (معاصر وواضح)"},
+    {"id": "Tajawal", "name": "Tajawal (تجوال - هندسي حديث)"},
+    {"id": "Cairo", "name": "Cairo (كايرو - عريض وقوي للخطافات)"},
+    {"id": "Amiri", "name": "Amiri (أميري - كلاسيكي سينمائي)"},
+]
+
+SUPPORTED_BGM_PRESETS = [
+    {"id": "cyber_ambient", "name": "Cyber Ambient (سايبر فضائي)"},
+    {"id": "cinematic_warm", "name": "Cinematic Warm (سينمائي دافئ)"},
+    {"id": "lofi_chill", "name": "Lo-Fi Chill (لوفاي هادئ)"},
+    {"id": "energetic_hook", "name": "Energetic Hook (إيقاع حماسي)"},
+    {"id": "none", "name": "بدون موسيقى خلفية"},
+]
+
+SUPPORTED_ENTRY_ANIMATIONS = [
+    {"id": "pop", "name": "Pop (انبثاق سريع)"},
+    {"id": "bounce", "name": "Bounce (قفزة ارتدادية)"},
+    {"id": "wave", "name": "Wave (موجة تموجية)"},
+    {"id": "fade", "name": "Fade (تلاشي متدرج)"},
+]
+
 DEFAULT_SAMPLE_WORDS = [
     {"word": "أهلاً", "start": 0.1, "end": 0.6},
     {"word": "بكم", "start": 0.6, "end": 1.0},
@@ -258,10 +285,8 @@ def generate_word_timestamps(
 
     num_words = len(tokens)
     if duration_seconds is None or duration_seconds <= 0:
-        # Standard speech rate: ~0.42s per word + 0.8s padding
         duration_seconds = max(2.5, round(num_words * 0.42 + 0.8, 1))
 
-    # Clamp duration to a sensible minimum to prevent timestamp inversion
     duration_seconds = max(1.0, float(duration_seconds))
 
     lead_in = 0.15
@@ -280,6 +305,151 @@ def generate_word_timestamps(
         })
 
     return words
+
+
+def generate_viral_script(topic: str, tone: Optional[str] = "viral") -> Dict[str, Any]:
+    """
+    Calls Gemini Flash to generate a high-impact viral video script from topic/idea.
+    Includes catchy hook, engaging body, call to action, title, subtitle, and estimated duration.
+    Falls back gracefully if API key or client is unavailable.
+    """
+    clean_topic = (topic or "").strip()
+    if not clean_topic:
+        clean_topic = "أسرار الذكاء الاصطناعي وتأثيره على المستقبل"
+
+    client, config = get_gemini_client()
+    if client:
+        try:
+            from google.genai import types
+            prompt = f"""
+أنت خبير محتوى فيروسي (Viral Content Creator) ومصمم سكربتات ريلز وتيك توك وشورتس فائقة الانتشار.
+قم بإنشاء سكربت فيديو كينيتك موشن جرافيكس عالي الجاذبية والتأثير حول الموضوع التالي:
+"{clean_topic}"
+النبرة المطلوبة: {tone or "viral حماسية وشيقة"}
+
+القواعد:
+1. hook: خطاف افتتاحي قوي جداً في جملة واحدة تخطف الانتباه خلال أول 3 ثوانٍ.
+2. body: جملتان إلى ثلاث جمل متتالية تشرح الفكرة أو الفائدة الأساسية بأسلوب سريع ومثير.
+3. call_to_action: دعوة تفاعلية لاتخاذ إجراء (متابعة، تعليق، مشاركة).
+4. title: عنوان رئيسي قصير جداً للفيديو (3-4 كلمات).
+5. subtitle: تصنيف فرعي قصير جذاب (مثل: "سر حصري", "نصيحة تقنية", "تحذير هام").
+6. full_script: النص الكامل مجمعاً للقراءة بالصوت (Hook + Body + CTA) بدون فواصل إضافية.
+7. estimated_duration: تقدير واقعي لمدة القراءة بالثواني (بين 4.0 و 15.0 ثانية).
+
+أخرج النتيجة كـ JSON نقي فقط بدون أي كود ماركداون:
+{{
+  "title": "...",
+  "subtitle": "...",
+  "hook": "...",
+  "body": "...",
+  "call_to_action": "...",
+  "full_script": "...",
+  "estimated_duration": 6.5
+}}
+"""
+            resp = client.models.generate_content(
+                model=config.llm_model or "gemini-3.8-flash",
+                contents=[prompt],
+                config=types.GenerateContentConfig(
+                    temperature=0.7,
+                )
+            )
+            raw_text = resp.text or ""
+            raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text.strip(), flags=re.MULTILINE)
+            raw_text = re.sub(r"\s*```$", "", raw_text.strip(), flags=re.MULTILINE)
+            data = json.loads(raw_text)
+            full_script = data.get("full_script") or f"{data.get('hook', '')} {data.get('body', '')} {data.get('call_to_action', '')}".strip()
+            word_count = len(full_script.split())
+            est_dur = float(data.get("estimated_duration") or max(3.5, round(word_count * 0.42 + 0.8, 1)))
+            return {
+                "success": True,
+                "topic": clean_topic,
+                "title": data.get("title", f"أسرار {clean_topic[:20]}"),
+                "subtitle": data.get("subtitle", "اكتشاف حصري ⚡"),
+                "hook": data.get("hook", f"هل تعرف السر وراء {clean_topic}؟"),
+                "body": data.get("body", "كل شيء يتغير بسرعة فائقة ومن لا يواكب سيفوته الكثير."),
+                "call_to_action": data.get("call_to_action", "اشترك وتابع للمزيد 🔥"),
+                "script": full_script,
+                "full_script": full_script,
+                "estimated_duration": est_dur,
+            }
+        except Exception as e:
+            logger.warning(f"Gemini script generation fallback: {e}")
+
+    # Fallback heuristic viral script
+    hook = f"هل تعرف ما الذي يحدث حقاً في {clean_topic}؟ 🚀"
+    body = "الحقيقة أن معظم الناس يغفلون عن هذه النقطة الأساسية، لكنها تغير كل قواعد اللعبة للأفضل تماماً."
+    cta = "تابعنا الآن للمزيد من الأسرار اليومية! 🔥"
+    full_script = f"{hook} {body} {cta}"
+    word_count = len(full_script.split())
+    dur = max(4.0, round(word_count * 0.42 + 0.8, 1))
+
+    return {
+        "success": True,
+        "topic": clean_topic,
+        "title": f"أسرار {clean_topic[:20]}",
+        "subtitle": "اكتشاف حصري ⚡",
+        "hook": hook,
+        "body": body,
+        "call_to_action": cta,
+        "script": full_script,
+        "full_script": full_script,
+        "estimated_duration": dur,
+    }
+
+
+def synthesize_motion_speech(
+    text: str,
+    voice_profile: Optional[str] = "Charon",
+    user=None,
+) -> Dict[str, Any]:
+    """
+    Synthesizes speech for motion studio using Gemini TTS or ClonedVoice,
+    converts to MP3, uploads to MinIO, and returns word timestamps and audio URL.
+    """
+    clean_text = (text or "").strip()
+    if not clean_text:
+        return {"success": False, "error": "النص المطلوب تحويله لصوت فارغ"}
+
+    voice = voice_profile or "Charon"
+
+    try:
+        from tts.services.audio_stitcher import convert_to_mp3
+        wav_bytes = generate_voice_audio(
+            clean_text,
+            voice_name=voice,
+            emotion="neutral",
+            language="ar",
+            dialect="msa",
+        )
+
+        mp3_bytes = convert_to_mp3(wav_bytes)
+        s3_key = f"motion/tts_{uuid.uuid4().hex[:12]}.mp3"
+        audio_url = upload_bytes(mp3_bytes, s3_key, content_type="audio/mpeg")
+
+        dur = 3.5
+        try:
+            with wave.open(io.BytesIO(wav_bytes), "rb") as wf:
+                calc_dur = round(wf.getnframes() / float(wf.getframerate() or 24000), 1)
+                dur = calc_dur if calc_dur > 0 else max(2.5, round(len(clean_text.split()) * 0.42 + 0.8, 1))
+        except Exception:
+            dur = max(2.5, round(len(clean_text.split()) * 0.42 + 0.8, 1))
+
+        words = generate_word_timestamps(clean_text, duration_seconds=dur)
+
+        return {
+            "success": True,
+            "audio_url": audio_url,
+            "duration": dur,
+            "duration_seconds": dur,
+            "words": words,
+            "voice_profile": voice,
+            "voice_id": voice,
+            "s3_key": s3_key,
+        }
+    except Exception as e:
+        logger.error(f"synthesize_motion_speech error: {e}")
+        return {"success": False, "error": f"فشل توليد التعليق الصوتي: {str(e)}"}
 
 
 def build_motion_props(
@@ -301,6 +471,24 @@ def build_motion_props(
     video_volume: Optional[float] = 0.15,
     video_muted: Optional[bool] = False,
     transition_effect: Optional[str] = "zoom_in",
+    font_family: Optional[str] = "IBM Plex Sans Arabic",
+    entry_animation: Optional[str] = "pop",
+    smart_emojis_enabled: Optional[bool] = True,
+    word_glow_box: Optional[bool] = True,
+    sfx_enabled: Optional[bool] = True,
+    sfx_volume: Optional[float] = 0.25,
+    bgm_preset: Optional[str] = "cyber_ambient",
+    bgm_url: Optional[str] = None,
+    bgm_volume: Optional[float] = 0.25,
+    smart_ducking: Optional[bool] = True,
+    dynamic_zoom: Optional[bool] = True,
+    caption_position_percent: Optional[float] = 50.0,
+    scenes: Optional[List[Dict[str, Any]]] = None,
+    pip_url: Optional[str] = None,
+    pip_position: Optional[str] = "top-left",
+    pip_scale: Optional[float] = 0.28,
+    pip_muted: Optional[bool] = True,
+    export_format: Optional[str] = "mp4",
 ) -> Dict[str, Any]:
     """
     Constructs a validated Remotion MotionCompositionProps dictionary.
@@ -312,7 +500,6 @@ def build_motion_props(
     if aspect_ratio not in ["9:16", "16:9"]:
         aspect_ratio = "9:16"
 
-    # Find template defaults
     tpl_meta = next((t for t in SUPPORTED_TEMPLATES if t["id"] == template_id), SUPPORTED_TEMPLATES[0])
 
     if not words:
@@ -327,7 +514,6 @@ def build_motion_props(
     duration_seconds = min(60.0, max(1.5, float(duration_seconds)))
     fps = max(15, min(60, int(fps or 30)))
 
-    # Determine background type: if background_url looks like a video or background_type is video
     resolved_bg_type = background_type
     if not resolved_bg_type and background_url:
         bg_lower = background_url.lower()
@@ -352,6 +538,24 @@ def build_motion_props(
         "videoVolume": float(video_volume if video_volume is not None else 0.15),
         "videoMuted": bool(video_muted),
         "transitionEffect": str(transition_effect or "zoom_in"),
+        "fontFamily": str(font_family or "IBM Plex Sans Arabic"),
+        "entryAnimation": str(entry_animation or "pop"),
+        "smartEmojisEnabled": bool(smart_emojis_enabled if smart_emojis_enabled is not None else True),
+        "wordGlowBox": bool(word_glow_box if word_glow_box is not None else True),
+        "sfxEnabled": bool(sfx_enabled if sfx_enabled is not None else True),
+        "sfxVolume": float(sfx_volume if sfx_volume is not None else 0.25),
+        "bgmPreset": str(bgm_preset or "cyber_ambient"),
+        "bgmUrl": str(bgm_url or ""),
+        "bgmVolume": float(bgm_volume if bgm_volume is not None else 0.25),
+        "smartDucking": bool(smart_ducking if smart_ducking is not None else True),
+        "dynamicZoom": bool(dynamic_zoom if dynamic_zoom is not None else True),
+        "captionPositionPercent": float(caption_position_percent if caption_position_percent is not None else 50.0),
+        "scenes": scenes or [],
+        "pipUrl": str(pip_url or ""),
+        "pipPosition": str(pip_position or "top-left"),
+        "pipScale": float(pip_scale if pip_scale is not None else 0.28),
+        "pipMuted": bool(pip_muted if pip_muted is not None else True),
+        "exportFormat": str(export_format or "mp4"),
     }
 
 
@@ -359,10 +563,12 @@ def render_motion_video(
     props: Dict[str, Any],
     composition_id: Optional[str] = None,
     remotion_dir: Optional[str] = None,
+    fps: Optional[int] = None,
+    export_format: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Renders an MP4 motion graphic using the Remotion CLI, uploads to MinIO,
-    and returns accessible playback and download URLs.
+    Renders an MP4 motion graphic or animated GIF using the Remotion CLI,
+    uploads to MinIO, and returns accessible playback and download URLs.
     """
     if remotion_dir is None:
         remotion_dir = os.path.join(settings.BASE_DIR.parent, "remotion")
@@ -379,12 +585,36 @@ def render_motion_video(
     norm_tpl = props.get("templateId") or props.get("template_id") or "dark_neon"
     norm_aspect = props.get("aspectRatio") or props.get("aspect_ratio") or "9:16"
     norm_dur = props.get("durationInSeconds") or props.get("duration_seconds")
-    norm_fps = props.get("fps") or 30
+    norm_fps = fps or props.get("fps") or 30
 
     norm_v_offset = props.get("videoStartOffset") or props.get("video_start_offset") or 0.0
     norm_v_vol = props.get("videoVolume") if props.get("videoVolume") is not None else props.get("video_volume", 0.15)
     norm_v_muted = props.get("videoMuted") if props.get("videoMuted") is not None else props.get("video_muted", False)
     norm_trans = props.get("transitionEffect") or props.get("transition_effect") or "zoom_in"
+
+    norm_font = props.get("fontFamily") or props.get("font_family") or "IBM Plex Sans Arabic"
+    norm_entry = props.get("entryAnimation") or props.get("entry_animation") or "pop"
+    norm_smart_emoji = props.get("smartEmojisEnabled") if props.get("smartEmojisEnabled") is not None else props.get("smart_emojis_enabled", True)
+    norm_glow_box = props.get("wordGlowBox") if props.get("wordGlowBox") is not None else props.get("word_glow_box", True)
+
+    norm_sfx_en = props.get("sfxEnabled") if props.get("sfxEnabled") is not None else props.get("sfx_enabled", True)
+    norm_sfx_vol = props.get("sfxVolume") if props.get("sfxVolume") is not None else props.get("sfx_volume", 0.25)
+
+    norm_bgm_pre = props.get("bgmPreset") or props.get("bgm_preset") or "cyber_ambient"
+    norm_bgm_url = props.get("bgmUrl") or props.get("bgm_url")
+    norm_bgm_vol = props.get("bgmVolume") if props.get("bgmVolume") is not None else props.get("bgm_volume", 0.25)
+    norm_duck = props.get("smartDucking") if props.get("smartDucking") is not None else props.get("smart_ducking", True)
+    norm_dyn_zoom = props.get("dynamicZoom") if props.get("dynamicZoom") is not None else props.get("dynamic_zoom", True)
+
+    norm_pos = props.get("captionPositionPercent") if props.get("captionPositionPercent") is not None else props.get("caption_position_percent", 50.0)
+    norm_scenes = props.get("scenes") or []
+
+    norm_pip_url = props.get("pipUrl") or props.get("pip_url")
+    norm_pip_pos = props.get("pipPosition") or props.get("pip_position") or "top-left"
+    norm_pip_scale = props.get("pipScale") if props.get("pipScale") is not None else props.get("pip_scale", 0.28)
+    norm_pip_muted = props.get("pipMuted") if props.get("pipMuted") is not None else props.get("pip_muted", True)
+
+    norm_format = export_format or props.get("exportFormat") or props.get("export_format") or "mp4"
 
     normalized_props = build_motion_props(
         text=norm_text,
@@ -405,8 +635,25 @@ def render_motion_video(
         video_volume=float(norm_v_vol),
         video_muted=bool(norm_v_muted),
         transition_effect=str(norm_trans),
+        font_family=str(norm_font),
+        entry_animation=str(norm_entry),
+        smart_emojis_enabled=bool(norm_smart_emoji),
+        word_glow_box=bool(norm_glow_box),
+        sfx_enabled=bool(norm_sfx_en),
+        sfx_volume=float(norm_sfx_vol),
+        bgm_preset=str(norm_bgm_pre),
+        bgm_url=norm_bgm_url,
+        bgm_volume=float(norm_bgm_vol),
+        smart_ducking=bool(norm_duck),
+        dynamic_zoom=bool(norm_dyn_zoom),
+        caption_position_percent=float(norm_pos),
+        scenes=norm_scenes,
+        pip_url=norm_pip_url,
+        pip_position=str(norm_pip_pos),
+        pip_scale=float(norm_pip_scale),
+        pip_muted=bool(norm_pip_muted),
+        export_format=str(norm_format),
     )
-    # Merge with original props so any custom metadata is preserved
     merged_props = {**props, **normalized_props}
 
     aspect_ratio = merged_props.get("aspectRatio", "9:16")
@@ -462,12 +709,53 @@ def render_motion_video(
         if not os.path.exists(out_mp4) or os.path.getsize(out_mp4) == 0:
             return {"success": False, "error": "لم يتم العثور على ملف الفيديو الناتج من الريندر"}
 
+        # Handle GIF Export if requested
+        export_fmt = merged_props.get("exportFormat", "mp4").lower()
+        if export_fmt == "gif":
+            out_gif = os.path.join(tmpdir, "rendered.gif")
+            cmd_gif = [
+                "ffmpeg",
+                "-y",
+                "-i", out_mp4,
+                "-vf", "fps=15,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse",
+                "-loop", "0",
+                out_gif,
+            ]
+            try:
+                subprocess.run(cmd_gif, capture_output=True, text=True, timeout=60, check=True)
+                if os.path.exists(out_gif) and os.path.getsize(out_gif) > 0:
+                    with open(out_gif, "rb") as gf:
+                        gif_bytes = gf.read()
+
+                    s3_gif_key = f"motion/motion_{uuid.uuid4().hex[:12]}.gif"
+                    gif_url = upload_bytes(gif_bytes, s3_gif_key, content_type="image/gif")
+
+                    return {
+                        "success": True,
+                        "video_url": gif_url,
+                        "gif_url": gif_url,
+                        "download_url": gif_url,
+                        "s3_key": s3_gif_key,
+                        "composition_id": composition_id,
+                        "duration_seconds": duration_seconds,
+                        "total_frames": total_frames,
+                        "aspect_ratio": aspect_ratio,
+                        "template_id": merged_props.get("templateId"),
+                        "file_size": len(gif_bytes),
+                        "export_format": "gif",
+                        "format": "gif",
+                        "fps": fps,
+                        "message": "تم ريندر وتصدير صورة GIF المتحركة بنجاح 🎬!",
+                    }
+            except Exception as e:
+                logger.warning(f"GIF conversion fallback to MP4: {e}")
+
         with open(out_mp4, "rb") as vf:
             video_bytes = vf.read()
 
         file_size = len(video_bytes)
         s3_key = f"motion/motion_{uuid.uuid4().hex[:12]}.mp4"
-        public_url = upload_bytes(video_bytes, s3_key, "video/mp4")
+        public_url = upload_bytes(video_bytes, s3_key, content_type="video/mp4")
 
         return {
             "success": True,
@@ -480,5 +768,8 @@ def render_motion_video(
             "aspect_ratio": aspect_ratio,
             "template_id": merged_props.get("templateId"),
             "file_size": file_size,
+            "export_format": "mp4",
+            "format": "mp4",
+            "fps": fps,
             "message": "تم ريندر وتصدير فيديو الموشن جرافيكس بنجاح 🎬!",
         }

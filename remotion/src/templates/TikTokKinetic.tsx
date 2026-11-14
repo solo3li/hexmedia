@@ -1,42 +1,111 @@
 import React from "react";
-import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, useCurrentFrame, useVideoConfig, Audio } from "remotion";
 import { BackgroundMotion } from "../components/BackgroundMotion";
 import { KaraokeCaptions } from "../components/KaraokeCaptions";
 import { AudioWaveform } from "../components/AudioWaveform";
+import { SoundDesign } from "../components/SoundDesign";
+import { BackgroundAudio } from "../components/BackgroundAudio";
+import { PictureInPicture } from "../components/PictureInPicture";
 import { MotionCompositionProps } from "../types";
 
-export const TikTokKinetic: React.FC<MotionCompositionProps> = ({
-  title = "TIKTOK / REELS KINETIC",
-  subtitle = "VIRAL HOOK",
-  speakerName = "HexMedia Shorts",
-  words = [],
-  backgroundUrl,
-  backgroundType = "gradient",
-  accentColor = "#A3E635",
-  aspectRatio = "9:16",
-  videoStartOffset = 0,
-  videoMuted = false,
-  videoVolume = 0.15,
-  transitionEffect = "whip_pan",
-}) => {
+export const TikTokKinetic: React.FC<MotionCompositionProps> = (props) => {
+  const {
+    title = "TIKTOK / REELS KINETIC",
+    subtitle = "VIRAL HOOK",
+    speakerName = "HexMedia Shorts",
+    words = [],
+    audioUrl,
+    backgroundUrl,
+    backgroundType = "gradient",
+    scenes,
+    accentColor = "#A3E635",
+    aspectRatio = "9:16",
+    videoStartOffset = 0,
+    videoMuted = false,
+    videoVolume = 0.15,
+    transitionEffect = "whip_pan",
+    fontFamily = "IBM Plex Sans Arabic",
+    entryAnimation = "pop",
+    smartEmojisEnabled = true,
+    wordGlowBox = true,
+    sfxEnabled = true,
+    sfxVolume = 0.25,
+    bgmPreset = "energetic_hook",
+    bgmUrl,
+    bgmVolume = 0.25,
+    smartDucking = true,
+    dynamicZoom = true,
+    captionPositionPercent = 50,
+    pipUrl,
+    pipPosition = "top-left",
+    pipScale = 0.28,
+    pipMuted = true,
+  } = props;
+
   const frame = useCurrentFrame();
   const { durationInFrames } = useVideoConfig();
 
   const isVertical = aspectRatio === "9:16";
   const progressPercent = Math.min(100, Math.max(0, (frame / durationInFrames) * 100));
 
+  const captionJustify =
+    captionPositionPercent <= 35
+      ? "flex-start"
+      : captionPositionPercent >= 65
+      ? "flex-end"
+      : "center";
+  const captionPadTop = captionPositionPercent <= 35 ? "40px" : undefined;
+  const captionPadBottom = captionPositionPercent >= 65 ? "40px" : undefined;
+
   return (
-    <AbsoluteFill style={{ fontFamily: '"IBM Plex Sans Arabic", sans-serif', color: "#FFF" }}>
-      {/* Dynamic Purple/Violet Mesh Background */}
+    <AbsoluteFill
+      style={{
+        fontFamily: `"${fontFamily || "IBM Plex Sans Arabic"}", sans-serif`,
+        color: "#FFF",
+      }}
+    >
+      {/* Dynamic Purple/Violet Mesh Background with Multi-Scene support */}
       <BackgroundMotion
         type={backgroundType}
         src={backgroundUrl}
+        scenes={scenes}
         templateId="tiktok_kinetic"
         overlayOpacity={0.65}
         videoStartOffset={videoStartOffset}
         videoMuted={videoMuted}
         videoVolume={videoVolume}
         transitionEffect={transitionEffect}
+      />
+
+      {/* Picture-in-Picture B-Roll Overlay */}
+      <PictureInPicture
+        url={pipUrl}
+        position={pipPosition}
+        scale={pipScale}
+        muted={pipMuted}
+        aspectRatio={aspectRatio}
+        accentColor={accentColor}
+      />
+
+      {/* Voice Audio Track */}
+      {audioUrl && <Audio src={audioUrl} />}
+
+      {/* Background Music with Smart Ducking */}
+      <BackgroundAudio
+        bgmPreset={bgmPreset}
+        bgmUrl={bgmUrl}
+        bgmVolume={bgmVolume}
+        smartDucking={smartDucking}
+        words={words}
+      />
+
+      {/* Auto Sound Design SFX cues */}
+      <SoundDesign
+        words={words}
+        aspectRatio={aspectRatio}
+        templateId="tiktok_kinetic"
+        sfxEnabled={sfxEnabled}
+        sfxVolume={sfxVolume}
       />
 
       {/* Top Video Progress Bar */}
@@ -98,43 +167,57 @@ export const TikTokKinetic: React.FC<MotionCompositionProps> = ({
           >
             {speakerName}
           </span>
-          <span
-            style={{
-              backgroundColor: accentColor,
-              color: "#000",
-              fontSize: isVertical ? "13px" : "11px",
-              fontWeight: 800,
-              padding: "2px 8px",
-              borderRadius: "9999px",
-              textTransform: "uppercase",
-            }}
-          >
-            LIVE
-          </span>
         </div>
 
-        {/* Center: Punchy Kinetic Words */}
+        {/* Center Captions Area (with dynamic vertical repositioning) */}
         <div
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
+            justifyContent: captionJustify,
+            paddingTop: captionPadTop,
+            paddingBottom: captionPadBottom,
             width: "100%",
             flex: 1,
-            gap: "24px",
+            gap: isVertical ? "30px" : "20px",
+            margin: isVertical ? "30px 0" : "15px 0",
           }}
         >
+          {/* Viral Subtitle Hook Tag */}
+          <div
+            style={{
+              fontSize: isVertical ? "22px" : "18px",
+              fontWeight: 800,
+              backgroundColor: "rgba(255, 230, 0, 0.15)",
+              color: "#FFE600",
+              border: "1.5px solid #FFE600",
+              borderRadius: "12px",
+              padding: "4px 18px",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              boxShadow: "0 0 15px rgba(255, 230, 0, 0.3)",
+            }}
+          >
+            {subtitle}
+          </div>
+
           <KaraokeCaptions
             words={words}
             styleType="kinetic"
             aspectRatio={aspectRatio}
             accentColor={accentColor}
             transitionEffect={transitionEffect}
+            fontFamily={fontFamily}
+            entryAnimation={entryAnimation}
+            smartEmojisEnabled={smartEmojisEnabled}
+            wordGlowBox={wordGlowBox}
+            dynamicZoom={dynamicZoom}
+            captionPositionPercent={captionPositionPercent}
           />
         </div>
 
-        {/* Bottom Waveform & Channel Tag */}
+        {/* Bottom Bar: Mini Equalizer & Title */}
         <div
           style={{
             width: "100%",
@@ -145,10 +228,10 @@ export const TikTokKinetic: React.FC<MotionCompositionProps> = ({
           }}
         >
           <AudioWaveform
-            barCount={isVertical ? 24 : 40}
-            height={isVertical ? 80 : 56}
+            barCount={isVertical ? 32 : 52}
+            height={isVertical ? 64 : 48}
             color={accentColor}
-            secondaryColor="#C084FC"
+            secondaryColor="#A855F7"
             styleType="kinetic"
           />
 
@@ -156,11 +239,12 @@ export const TikTokKinetic: React.FC<MotionCompositionProps> = ({
             style={{
               fontSize: isVertical ? "16px" : "14px",
               fontWeight: 600,
-              color: "rgba(255, 255, 255, 0.7)",
-              fontFamily: '"JetBrains Mono", monospace',
+              color: "rgba(255, 255, 255, 0.8)",
+              letterSpacing: "1px",
+              textTransform: "uppercase",
             }}
           >
-            #Reels #TikTok #ViralMotion 🚀
+            {title}
           </div>
         </div>
       </AbsoluteFill>
