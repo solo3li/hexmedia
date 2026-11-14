@@ -30,10 +30,17 @@
 - **9. High Framerate (60fps) & Animated GIF Export (A10)**:
   - Added 60fps export option and GIF export toggle via ffmpeg two-pass palette optimization (`palettegen` / `paletteuse`) in `render_motion_video`.
   - Supported live GIF preview and download in `motionStudioModal`.
+- **Review & Hardening Fixes (Skeptical Pass)**:
+  - Fixed fatal multi-scene speed doubling and offset skipping in `BackgroundMotion.tsx` by wrapping scene transitions in Remotion `<Sequence>`.
+  - Added continuous vertical repositioning in `KaraokeCaptions.tsx` so the rendered video precisely follows the percentage slider.
+  - Calibrated smart ducking volume in `BackgroundAudio.tsx` to exact 12% dialogue and 40% silence without double-attenuating default base volume.
+  - Integrated Click SFX in `SoundDesign.tsx` alongside Whoosh and Pop, eliminating whoosh sound clash at frame 0.
+  - Prevented duplicate emoji attachments in `KaraokeCaptions.tsx` for words already containing emojis.
+  - Hardened JSON extraction with regex in `generate_viral_script` against conversational preambles/markdown fences.
 - **Verification**:
   - TypeScript validation: `npx tsc --noEmit` passed with 0 errors in `remotion/`.
-  - 33/33 tests pass in `backend/ai_studio/tests_motion.py`.
-  - Full test suite: 247/247 tests pass in `./init.sh` with zero failures.
+  - 37/37 tests pass in `backend/ai_studio/tests_motion.py`.
+  - Full test suite: 251/251 tests pass in `./init.sh` with zero failures.
 
 ---
 

@@ -354,10 +354,14 @@ def generate_viral_script(topic: str, tone: Optional[str] = "viral") -> Dict[str
                     temperature=0.7,
                 )
             )
-            raw_text = resp.text or ""
-            raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text.strip(), flags=re.MULTILINE)
-            raw_text = re.sub(r"\s*```$", "", raw_text.strip(), flags=re.MULTILINE)
-            data = json.loads(raw_text)
+            raw_text = (resp.text or "").strip()
+            json_match = re.search(r"\{[\s\S]*\}", raw_text)
+            if json_match:
+                data = json.loads(json_match.group(0))
+            else:
+                cleaned = re.sub(r"^```(?:json)?\s*", "", raw_text, flags=re.MULTILINE)
+                cleaned = re.sub(r"\s*```$", "", cleaned, flags=re.MULTILINE).strip()
+                data = json.loads(cleaned)
             full_script = data.get("full_script") or f"{data.get('hook', '')} {data.get('body', '')} {data.get('call_to_action', '')}".strip()
             word_count = len(full_script.split())
             est_dur = float(data.get("estimated_duration") or max(3.5, round(word_count * 0.42 + 0.8, 1)))

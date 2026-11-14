@@ -40,6 +40,8 @@ const SMART_EMOJI_KEYWORDS: [RegExp, string][] = [
 
 function getWordEmoji(rawWord: string): string | null {
   if (!rawWord) return null;
+  // If word already contains an emoji, avoid duplicating
+  if (/\p{Extended_Pictographic}/u.test(rawWord)) return null;
   const clean = rawWord.replace(/[^\w\u0600-\u06FF]/g, "").trim();
   for (const [pattern, emoji] of SMART_EMOJI_KEYWORDS) {
     if (pattern.test(clean)) {
@@ -165,6 +167,8 @@ export const KaraokeCaptions: React.FC<KaraokeCaptionsProps> = ({
   }
 
   const effectiveFontFamily = fontFamily ? `"${fontFamily}", sans-serif` : '"IBM Plex Sans Arabic", sans-serif';
+  const posPct = captionPositionPercent !== undefined ? captionPositionPercent : 50;
+  const verticalShift = (posPct - 50) * (aspectRatio === "9:16" ? 9 : 5);
 
   return (
     <div
@@ -180,7 +184,7 @@ export const KaraokeCaptions: React.FC<KaraokeCaptionsProps> = ({
         margin: "0 auto",
         lineHeight: 1.5,
         textAlign: "center",
-        transform: `scale(${chunkScale * jumpCutScale}) translateX(${chunkTranslateX}px)`,
+        transform: `scale(${chunkScale * jumpCutScale}) translate(${chunkTranslateX}px, ${verticalShift}px)`,
         opacity: chunkOpacity,
         filter: chunkFilter,
         transition: "transform 0.05s ease-out, opacity 0.05s ease-out",

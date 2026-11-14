@@ -47,9 +47,10 @@ export const BackgroundAudio: React.FC<BackgroundAudioProps> = ({
       (w) => t >= Math.max(0, w.start - 0.08) && t <= (w.end + 0.12)
     );
 
-    // Ducking rules: 12% during speech, 40% in silence / breaks
+    // Ducking rules: 12% (0.12) during speech, 40% (0.40) in silence / breaks
     const duckFactor = isSpeaking ? 0.12 : 0.40;
-    return baseVol * duckFactor;
+    const multiplier = (bgmVolume !== undefined && bgmVolume !== 0.25) ? (bgmVolume / 0.25) : 1.0;
+    return Math.min(1.0, Math.max(0.0, duckFactor * multiplier));
   };
 
   return (

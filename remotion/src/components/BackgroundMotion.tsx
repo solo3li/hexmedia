@@ -1,5 +1,5 @@
 import React from "react";
-import { useCurrentFrame, useVideoConfig, interpolate, Img, OffthreadVideo } from "remotion";
+import { useCurrentFrame, useVideoConfig, interpolate, Img, OffthreadVideo, Sequence } from "remotion";
 import { SceneClip } from "../types";
 
 interface BackgroundMotionProps {
@@ -104,37 +104,102 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
     `;
   }
 
-  // Multi-Scene Timeline Resolution (A5)
-  let resolvedSrc = src;
-  let resolvedType = type;
-  let activeStartOffset = videoStartOffset;
-
+  // Multi-Scene Timeline or Single Background
   if (scenes && scenes.length > 0) {
     const defaultDurationPerScene = totalDuration / scenes.length;
-    let accumulatedTime = 0;
-    let activeScene = scenes[0];
+    let accumulatedFrames = 0;
 
-    for (let i = 0; i < scenes.length; i++) {
-      const sc = scenes[i];
-      const sceneDur = sc.duration && sc.duration > 0 ? sc.duration : defaultDurationPerScene;
-      if (currentTime >= accumulatedTime && currentTime <= (accumulatedTime + sceneDur + 0.05)) {
-        activeScene = sc;
-        break;
-      }
-      accumulatedTime += sceneDur;
-    }
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
+          overflow: "hidden",
+          backgroundColor: baseBackground,
+          zIndex: 0,
+          transform: `translate(${jitterX}px, ${jitterY}px)`,
+        }}
+      >
+        {scenes.map((sc, idx) => {
+          const sceneDur = sc.duration && sc.duration > 0 ? sc.duration : defaultDurationPerScene;
+          const sceneFrames = Math.max(1, Math.round(sceneDur * fps));
+          const fromFrame = accumulatedFrames;
+          accumulatedFrames += sceneFrames;
 
-    resolvedSrc = activeScene.url;
-    activeStartOffset = (activeScene.startOffset || 0) + (currentTime - accumulatedTime);
-    if (activeScene.type) {
-      resolvedType = activeScene.type;
-    } else if (resolvedSrc) {
-      const lower = resolvedSrc.toLowerCase();
-      resolvedType = lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mov") || lower.includes("/videos/") ? "video" : "image";
-    }
+          const isVid =
+            sc.type === "video" ||
+            (!sc.type &&
+              (sc.url.toLowerCase().endsWith(".mp4") ||
+                sc.url.toLowerCase().endsWith(".webm") ||
+                sc.url.toLowerCase().endsWith(".mov") ||
+                sc.url.includes("/videos/")));
+
+          const startOffsetFrames = Math.max(0, Math.round((sc.startOffset || 0) * fps));
+
+          return (
+            <Sequence key={sc.id || idx} from={fromFrame} durationInFrames={sceneFrames}>
+              {isVid ? (
+                <OffthreadVideo
+                  src={sc.url}
+                  startFrom={startOffsetFrames}
+                  muted={videoMuted}
+                  volume={videoMuted ? 0 : videoVolume}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transform: `scale(${zoom}) translate(${panX}px, 0px)`,
+                    filter:
+                      glitchRGB > 0
+                        ? `drop-shadow(${glitchRGB}px 0 rgba(0,240,255,0.7)) drop-shadow(-${glitchRGB}px 0 rgba(255,0,128,0.7))`
+                        : undefined,
+                  }}
+                />
+              ) : (
+                <Img
+                  src={sc.url}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    transform: `scale(${zoom}) translate(${panX}px, 0px)`,
+                  }}
+                />
+              )}
+            </Sequence>
+          );
+        })}
+
+        {/* Readability & Tint Overlay */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: `rgba(9, 10, 15, ${overlayOpacity})`,
+            background: gradientOverlay,
+            mixBlendMode: "multiply",
+          }}
+        />
+      </div>
+    );
   }
 
-  const startFrame = Math.max(0, Math.round(activeStartOffset * fps));
+  // Single Background Mode
+  let resolvedType = type;
+  if (!resolvedType && src) {
+    const lower = src.toLowerCase();
+    resolvedType =
+      lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mov") || lower.includes("/videos/")
+        ? "video"
+        : "image";
+  }
+  const startFrame = Math.max(0, Math.round(videoStartOffset * fps));
 
   return (
     <div
@@ -150,10 +215,10 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
         transform: `translate(${jitterX}px, ${jitterY}px)`,
       }}
     >
-      {resolvedSrc && resolvedType === "video" ? (
+      {src && resolvedType === "video" ? (
         <>
           <OffthreadVideo
-            src={resolvedSrc}
+            src={src}
             startFrom={startFrame}
             muted={videoMuted}
             volume={videoMuted ? 0 : videoVolume}
@@ -182,10 +247,10 @@ export const BackgroundMotion: React.FC<BackgroundMotionProps> = ({
             }}
           />
         </>
-      ) : resolvedSrc && resolvedType === "image" ? (
+      ) : src && resolvedType === "image" ? (
         <>
           <Img
-            src={resolvedSrc}
+            src={src}
             style={{
               width: "100%",
               height: "100%",

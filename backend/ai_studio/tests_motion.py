@@ -236,6 +236,40 @@ class MotionServiceTestCase(TestCase):
         self.assertIn("إدارة الوقت والإنتاجية", result["script"])
         self.assertGreater(result["estimated_duration"], 0)
 
+    @patch("ai_studio.services.motion_service.get_gemini_client")
+    def test_generate_viral_script_gemini_markdown_with_commentary(self, mock_get_client):
+        mock_response = MagicMock()
+        mock_response.text = (
+            "Here is the generated script:\n```json\n"
+            + json.dumps({
+                "title": "ذكاء خارق",
+                "subtitle": "حصري",
+                "hook": "هل جربت هذا بعد؟",
+                "body": "التغيير بدأ الآن بالفعل",
+                "call_to_action": "تابعنا",
+                "full_script": "هل جربت هذا بعد؟ التغيير بدأ الآن بالفعل تابعنا",
+                "estimated_duration": 5.0,
+            })
+            + "\n```\nHope you find this engaging!"
+        )
+        mock_client = MagicMock()
+        mock_client.models.generate_content.return_value = mock_response
+        mock_config = MagicMock()
+        mock_config.llm_model = "gemini-3.8-flash"
+        mock_get_client.return_value = (mock_client, mock_config)
+
+        result = generate_viral_script(topic="الذكاء في العمل")
+        self.assertTrue(result["success"])
+        self.assertEqual(result["title"], "ذكاء خارق")
+        self.assertEqual(result["estimated_duration"], 5.0)
+
+    @patch("ai_studio.services.motion_service.get_gemini_client")
+    def test_generate_viral_script_empty_topic(self, mock_get_client):
+        mock_get_client.return_value = (None, None)
+        result = generate_viral_script(topic="   ")
+        self.assertTrue(result["success"])
+        self.assertIn("الذكاء الاصطناعي", result["topic"])
+
     @patch("ai_studio.services.motion_service.generate_voice_audio")
     @patch("tts.services.audio_stitcher.convert_to_mp3")
     @patch("ai_studio.services.motion_service.upload_bytes")
@@ -250,6 +284,16 @@ class MotionServiceTestCase(TestCase):
         self.assertEqual(result["audio_url"], "https://assets.test/motion/audio/tts_sample.mp3")
         self.assertGreater(result["duration"], 0)
         self.assertEqual(result["voice_id"], "alloy")
+
+    def test_synthesize_motion_speech_empty_text(self):
+        result = synthesize_motion_speech(text="   ")
+        self.assertFalse(result["success"])
+        self.assertIn("فارغ", result["error"])
+
+    def test_build_motion_props_continuous_caption_positions(self):
+        for pos in [15, 25, 42, 50, 68, 75, 85]:
+            props = build_motion_props(caption_position_percent=pos)
+            self.assertEqual(props["captionPositionPercent"], float(pos))
 
     def test_build_motion_props_all_enhancements(self):
         props = build_motion_props(

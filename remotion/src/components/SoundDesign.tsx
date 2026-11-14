@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Audio, Sequence, useVideoConfig } from "remotion";
 import { WordTimestamp } from "../types";
-import { getWhooshSfxDataUri, getPopSfxDataUri } from "../audio/soundPresets";
+import { getWhooshSfxDataUri, getPopSfxDataUri, getClickSfxDataUri } from "../audio/soundPresets";
 
 interface SoundDesignProps {
   words?: WordTimestamp[];
@@ -22,6 +22,7 @@ export const SoundDesign: React.FC<SoundDesignProps> = ({
 
   const whooshUri = useMemo(() => getWhooshSfxDataUri(), []);
   const popUri = useMemo(() => getPopSfxDataUri(), []);
+  const clickUri = useMemo(() => getClickSfxDataUri(), []);
 
   if (!sfxEnabled || words.length === 0) {
     return null;
@@ -31,8 +32,9 @@ export const SoundDesign: React.FC<SoundDesignProps> = ({
   const chunkSize = aspectRatio === "9:16" ? (templateId === "tiktok_kinetic" ? 3 : 4) : 7;
   const chunkCount = Math.ceil(words.length / chunkSize);
 
+  // Transition frames strictly between chunk changes (cuts)
   const transitionFrames: number[] = [];
-  for (let c = 0; c < chunkCount; c++) {
+  for (let c = 1; c < chunkCount; c++) {
     const chunkWord = words[c * chunkSize];
     if (chunkWord) {
       const frameStart = Math.max(0, Math.round(chunkWord.start * fps));
@@ -42,7 +44,7 @@ export const SoundDesign: React.FC<SoundDesignProps> = ({
 
   return (
     <>
-      {/* Whoosh sound on chunk transitions */}
+      {/* Whoosh sound on phrase cuts & chunk transitions (A3) */}
       {transitionFrames.map((f, idx) => (
         <Sequence
           key={`whoosh-${idx}-${f}`}
@@ -53,10 +55,9 @@ export const SoundDesign: React.FC<SoundDesignProps> = ({
         </Sequence>
       ))}
 
-      {/* Subtle pop sound on key word emphasis (first word of each chunk and middle punch words) */}
+      {/* Pop sound on chunk opening key word emphasis */}
       {words.map((w, idx) => {
-        // Only trigger pop on chunk starts or every 4th word to avoid clutter
-        if (idx % chunkSize !== 0 && idx % 3 !== 0) return null;
+        if (idx % chunkSize !== 0) return null;
         const popFrame = Math.max(0, Math.round(w.start * fps));
         return (
           <Sequence
@@ -64,7 +65,22 @@ export const SoundDesign: React.FC<SoundDesignProps> = ({
             from={popFrame}
             durationInFrames={Math.round(fps * 0.12)}
           >
-            <Audio src={popUri} volume={sfxVolume * 0.65} />
+            <Audio src={popUri} volume={sfxVolume * 0.7} />
+          </Sequence>
+        );
+      })}
+
+      {/* Crisp click SFX on rhythmic subtitle step words */}
+      {words.map((w, idx) => {
+        if (idx % chunkSize === 0 || idx % 2 !== 0) return null;
+        const clickFrame = Math.max(0, Math.round(w.start * fps));
+        return (
+          <Sequence
+            key={`click-${idx}-${clickFrame}`}
+            from={clickFrame}
+            durationInFrames={Math.round(fps * 0.08)}
+          >
+            <Audio src={clickUri} volume={sfxVolume * 0.5} />
           </Sequence>
         );
       })}
